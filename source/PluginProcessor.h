@@ -1,9 +1,11 @@
 #pragma once
 
+#include "MySynth.h"
+#include "juce_dsp/juce_dsp.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #if (MSVC)
-#include "ipps.h"
+    #include "ipps.h"
 #endif
 
 class PluginProcessor : public juce::AudioProcessor
@@ -35,9 +37,25 @@ public:
     const juce::String getProgramName (int index) override;
     void changeProgramName (int index, const juce::String& newName) override;
 
+    juce::MidiBuffer& getMidiMessages() { return midiBuffer; }
+
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    static juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
+
+    juce::MidiKeyboardState keyboardState;
+    juce::AudioProcessorValueTreeState parameters { *this, nullptr, "parameters", createLayout() };
+
 private:
+    // juce::dsp::ProcessorChain<
+    //     juce::dsp::Oscillator<float>,
+    //     juce::dsp::LadderFilter<float>,
+    //     juce::dsp::Gain<float>>
+    //     processorChain;
+
+    juce::MidiBuffer midiBuffer;
+
+    MySynth synth;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };
