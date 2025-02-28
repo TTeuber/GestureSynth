@@ -12,9 +12,9 @@ PluginProcessor::PluginProcessor()
     #endif
               .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
 #endif
-      )
+              ),
+      synth (&parameters)
 {
-    synth.setUpSynth();
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayout()
@@ -26,6 +26,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
     using Normalize = juce::NormalisableRange<float>;
 
     layout.add (make_unique<Parameter> ("volume", "Volume", 0.0f, 1.0f, 1.0f));
+
     layout.add (make_unique<Parameter> ("ampAttack", "Amp Attack", 0.0f, 1.0f, 0.01f));
     layout.add (make_unique<Parameter> ("ampDecay", "Amp Decay", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("ampSustain", "Amp Sustain", 0.0f, 1.0f, 0.5f));
@@ -34,6 +35,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
     layout.add (make_unique<Parameter> ("filterFrequency", "Filter Frequency", Normalize (20.f, 20000.f, 0.01f, 0.25f), 1000.0f));
     layout.add (make_unique<Parameter> ("filterEnvelopeAmount", "Filter Envelope Amount", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("filterResonance", "Filter Resonance", 0.0f, 1.0f, 0.5f));
+
     layout.add (make_unique<Parameter> ("filterAttack", "Filter Attack", 0.0f, 1.0f, 0.01f));
     layout.add (make_unique<Parameter> ("filterDecay", "Filter Decay", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("filterSustain", "Filter Sustain", 0.0f, 1.0f, 0.5f));
@@ -42,9 +44,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
     return layout;
 }
 
-PluginProcessor::~PluginProcessor()
-{
-}
+PluginProcessor::~PluginProcessor() = default;
 
 //==============================================================================
 const juce::String PluginProcessor::getName() const
@@ -167,29 +167,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-        juce::ignoreUnused (channelData);
-        // ...do something to the data...
-    }
-
-    float volume = *parameters.getRawParameterValue ("volume");
-    if (volume != synth.getVolume())
-        synth.setVolume (volume);
-
-    float filterCutoff = *parameters.getRawParameterValue ("filterFrequency");
-    if (filterCutoff != synth.getFilterCutoff())
-        synth.setFilterCutoff (filterCutoff);
-
-    float filterEnvAmount = *parameters.getRawParameterValue ("filterEnvelopeAmount");
-    if (filterEnvAmount != synth.getFilterEnvelopeAmount())
-        synth.setFilterEnvelopeAmount (filterEnvAmount);
-
-    float filterResonance = *parameters.getRawParameterValue ("filterResonance");
-    if (filterResonance != synth.getFilterResonance())
-        synth.setFilterResonance (filterResonance);
-
+    synth.updateParameters();
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
@@ -221,7 +199,7 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 }
 
 //==============================================================================
-// This creates new instances of the plugin..
+// This creates new instances of the plugin...
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new PluginProcessor();

@@ -9,7 +9,6 @@ MySynthVoice::MySynthVoice()
 {
     ampADSR.setSampleRate (currentSampleRate);
 
-    // Set default ADSR parameters
     ampEnvParams.attack = 0.1f;
     ampEnvParams.decay = 0.5f;
     ampEnvParams.sustain = 0.2f;
@@ -35,7 +34,7 @@ bool MySynthVoice::canPlaySound (juce::SynthesiserSound* sound)
 void MySynthVoice::prepare (double sampleRate, int samplesPerBlock, int numChannels)
 {
     juce::dsp::ProcessSpec spec {};
-    currentSampleRate = sampleRate;
+    currentSampleRate = static_cast<float> (sampleRate);
     ampADSR.setSampleRate (sampleRate);
     filterADSR.setSampleRate (sampleRate);
     spec.sampleRate = sampleRate;
@@ -43,12 +42,11 @@ void MySynthVoice::prepare (double sampleRate, int samplesPerBlock, int numChann
     spec.numChannels = numChannels;
 
     osc.prepare (spec);
-    // osc.reset();
 }
 void MySynthVoice::startNote (int midiNoteNumber, float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
     osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)));
-    setVolume (volume * velocity);
+    this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
     ampADSR.noteOn();
     filterADSR.noteOn();
 }
@@ -88,26 +86,20 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int 
     const juce::dsp::ProcessContextReplacing<float> context (block);
 
     osc.process (context);
-    // for (int sample = 0; sample < numSamples; ++sample)
-    // {
-    //     osc.processNextSample(tempData[sample]);
-    // }
 
-    // ampADSR.applyEnvelopeToBuffer (tempBuffer, 0, numSamples);
-    // smoothedGain.applyGain (tempData, numSamples);
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        float envVal = ampADSR.getNextSample();
+        float targetEnvVal = ampADSR.getNextSample();
 
         float filterEnvVal = filterADSR.getNextSample();
         osc.setFilterCutoff (filterCutoff * pow (2, filterEnvVal * filterEnvelopeAmount * 10));
 
-        if (currentGain < envVal)
-            currentGain = juce::jmin (currentGain + slewRate, envVal);
-        else if (currentGain > envVal)
-            currentGain = juce::jmax (currentGain - slewRate, envVal);
-        tempDataL[sample] *= currentGain;
-        tempDataR[sample] *= currentGain;
+        if (currentEnvVal < targetEnvVal)
+            currentEnvVal = juce::jmin (currentEnvVal + slewRate, targetEnvVal);
+        else if (currentEnvVal > targetEnvVal)
+            currentEnvVal = juce::jmax (currentEnvVal - slewRate, targetEnvVal);
+        tempDataL[sample] *= currentEnvVal * velocity * volume;
+        tempDataR[sample] *= currentEnvVal * velocity * volume;
     }
 
     outputBuffer.addFrom (0, startSample, tempBuffer, 0, 0, numSamples);

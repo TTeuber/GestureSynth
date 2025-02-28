@@ -4,47 +4,25 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p), keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     processorRef.keyboardState.addListener (this);
+
     addAndMakeVisible (keyboardComponent);
 
-    Dial volumeDial { volumeSlider, "volume", volumeLabel, "Volume", processorRef, (std::move (volumeAttachment)) };
-    addDial (volumeDial);
+    addAndMakeVisible (volumeDial);
+    addAndMakeVisible (filterFrequencyDial);
+    addAndMakeVisible (filterEnvelopeAmountDial);
+    addAndMakeVisible (filterResonanceDial);
 
-    Dial ampAttackDial { ampAttackSlider, "ampAttack", ampAttackLabel, "Amp Attack", processorRef, (std::move (ampAttackAttachment)) };
-    addDial (ampAttackDial);
+    addAndMakeVisible (ampAttackDial);
+    addAndMakeVisible (ampDecayDial);
+    addAndMakeVisible (ampSustainDial);
+    addAndMakeVisible (ampReleaseDial);
 
-    Dial ampDecayDial { ampDecaySlider, "ampDecay", ampDecayLabel, "Amp Decay", processorRef, (std::move (ampDecayAttachment)) };
-    addDial (ampDecayDial);
-
-    Dial ampSustainDial { ampSustainSlider, "ampSustain", ampSustainLabel, "Amp Sustain", processorRef, (std::move (ampSustainAttachment)) };
-    addDial (ampSustainDial);
-
-    Dial ampReleaseDial { ampReleaseSlider, "ampRelease", ampReleaseLabel, "Amp Release", processorRef, (std::move (ampReleaseAttachment)) };
-    addDial (ampReleaseDial);
-
-    Dial filterFrequencyDial { filterFrequencySlider, "filterFrequency", filterFrequencyLabel, "Filter Frequency", processorRef, (std::move (filterFrequencyAttachment)) };
-    addDial (filterFrequencyDial);
-
-    Dial filterEnvelopeAmountDial { filterEnvelopeAmountSlider, "filterEnvelopeAmount", filterEnvelopeAmountLabel, "Filter Envelope Amount", processorRef, (std::move (filterEnvelopeAmountAttachment)) };
-    addDial (filterEnvelopeAmountDial);
-
-    Dial filterResonanceDial { filterResonanceSlider, "filterResonance", filterResonanceLabel, "Filter Resonance", processorRef, (std::move (filterResonanceAttachment)) };
-    addDial (filterResonanceDial);
+    addAndMakeVisible (filterAttackDial);
+    addAndMakeVisible (filterDecayDial);
+    addAndMakeVisible (filterSustainDial);
+    addAndMakeVisible (filterReleaseDial);
 
     setSize (800, 600);
-}
-
-std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> PluginEditor::addDial (Dial& d)
-{
-    d.slider.setSliderStyle (juce::Slider::RotaryVerticalDrag);
-    d.slider.setTextBoxStyle (juce::Slider::NoTextBox, false, 100, 25);
-    addAndMakeVisible (d.slider);
-    d.attachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (
-        processorRef.parameters, d.paramId, d.slider);
-    addAndMakeVisible (d.label);
-    d.label.setText (d.labelText, juce::dontSendNotification);
-    d.label.setJustificationType (juce::Justification::centred);
-
-    return std::move (d.attachment);
 }
 
 PluginEditor::~PluginEditor()
@@ -63,29 +41,35 @@ void PluginEditor::paint (juce::Graphics& g)
 
 void PluginEditor::resized()
 {
-    auto area = getLocalBounds();
+    juce::Rectangle<int> area = getLocalBounds();
     area.removeFromBottom (50);
     keyboardComponent.setBounds (10, getHeight() - 80, getWidth() - 20, 70);
 
-    int containerHeight = 120;
-    auto containerA = area.removeFromTop (containerHeight);
-    auto containerB = area.removeFromTop (containerHeight);
+    constexpr int containerHeight = 120;
 
-    auto placeDial = [] (juce::Label& label, juce::Slider& slider, juce::Rectangle<int>& container) {
-        auto subContainer = container.removeFromLeft (container.getWidth() / 4);
-        label.setBounds (subContainer.removeFromBottom (20));
-        slider.setBounds (subContainer.reduced (5));
-    };
+    juce::Rectangle<int> containerA = area.removeFromTop (containerHeight);
+    const int sectionAWidth = containerA.getWidth() / 4;
 
-    placeDial (volumeLabel, volumeSlider, containerA);
-    placeDial (filterFrequencyLabel, filterFrequencySlider, containerA);
-    placeDial (filterEnvelopeAmountLabel, filterEnvelopeAmountSlider, containerA);
-    placeDial (filterResonanceLabel, filterResonanceSlider, containerA);
+    juce::Rectangle<int> containerB = area.removeFromTop (containerHeight);
+    const int sectionBWidth = containerB.getWidth() / 4;
 
-    placeDial (ampAttackLabel, ampAttackSlider, containerB);
-    placeDial (ampDecayLabel, ampDecaySlider, containerB);
-    placeDial (ampSustainLabel, ampSustainSlider, containerB);
-    placeDial (ampReleaseLabel, ampReleaseSlider, containerB);
+    juce::Rectangle<int> containerC = area.removeFromTop (containerHeight);
+    const int sectionCWidth = containerC.getWidth() / 4;
+
+    volumeDial.setBounds (containerA.removeFromLeft (sectionAWidth));
+    filterFrequencyDial.setBounds (containerA.removeFromLeft (sectionAWidth));
+    filterEnvelopeAmountDial.setBounds (containerA.removeFromLeft (sectionAWidth));
+    filterResonanceDial.setBounds (containerA.removeFromLeft (sectionAWidth));
+
+    ampAttackDial.setBounds (containerB.removeFromLeft (sectionBWidth));
+    ampDecayDial.setBounds (containerB.removeFromLeft (sectionBWidth));
+    ampSustainDial.setBounds (containerB.removeFromLeft (sectionBWidth));
+    ampReleaseDial.setBounds (containerB.removeFromLeft (sectionBWidth));
+
+    filterAttackDial.setBounds (containerC.removeFromLeft (sectionCWidth));
+    filterDecayDial.setBounds (containerC.removeFromLeft (sectionCWidth));
+    filterSustainDial.setBounds (containerC.removeFromLeft (sectionCWidth));
+    filterReleaseDial.setBounds (containerC.removeFromLeft (sectionCWidth));
 }
 
 void PluginEditor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)

@@ -3,6 +3,7 @@
 #include "CustomOscillator.h"
 #include <juce_dsp/juce_dsp.h>
 
+class MySynth;
 class MySynthSound : public juce::SynthesiserSound
 {
 public:
@@ -54,8 +55,57 @@ public:
         osc.setFilterResonance (newFilterResonance);
     }
 
+    void setAmpAttack (const float newAttack)
+    {
+        ampEnvParams.attack = newAttack;
+        ampADSR.setParameters (ampEnvParams);
+    }
+
+    void setAmpDecay (const float newDecay)
+    {
+        ampEnvParams.decay = newDecay;
+        ampADSR.setParameters (ampEnvParams);
+    }
+
+    void setAmpSustain (const float newSustain)
+    {
+        ampEnvParams.sustain = newSustain;
+        ampADSR.setParameters (ampEnvParams);
+    }
+
+    void setAmpRelease (const float newRelease)
+    {
+        ampEnvParams.release = newRelease;
+        ampADSR.setParameters (ampEnvParams);
+    }
+
+    void setFilterAttack (const float newAttack)
+    {
+        filterEnvParams.attack = newAttack;
+        filterADSR.setParameters (filterEnvParams);
+    }
+
+    void setFilterDecay (const float newDecay)
+    {
+        filterEnvParams.decay = newDecay;
+        filterADSR.setParameters (filterEnvParams);
+    }
+
+    void setFilterSustain (const float newSustain)
+    {
+        filterEnvParams.sustain = newSustain;
+        filterADSR.setParameters (filterEnvParams);
+    }
+
+    void setFilterRelease (const float newRelease)
+    {
+        filterEnvParams.release = newRelease;
+        filterADSR.setParameters (filterEnvParams);
+    }
+
 private:
     CustomOscillator osc;
+    // MySynth& synth; // TODO: use synth to get parameters
 
     float phase = 0.0f;
     float phaseIncrement = 0.0f;
@@ -64,11 +114,11 @@ private:
     float frequency = 0.0f;
     float currentSampleRate = 48000.0f;
 
-    float currentGain = 0.0f;
-    float targetGain = 0.0f;
+    float currentEnvVal = 0.0f;
     float slewRate = 0.005f;
 
     float volume = 1.0f;
+    float velocity = 0.0f;
 
     float filterCutoff = 0.0f;
     bool filterEnvelopeActive = true;

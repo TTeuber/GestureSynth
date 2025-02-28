@@ -48,12 +48,6 @@ public:
     juce::AudioProcessorValueTreeState parameters { *this, nullptr, "parameters", createLayout() };
 
 private:
-    // juce::dsp::ProcessorChain<
-    //     juce::dsp::Oscillator<float>,
-    //     juce::dsp::LadderFilter<float>,
-    //     juce::dsp::Gain<float>>
-    //     processorChain;
-
     juce::MidiBuffer midiBuffer;
 
     MySynth synth;
