@@ -3,7 +3,7 @@
 MySynth::MySynth (juce::AudioProcessorValueTreeState* p) : parameters (p)
 {
     clearVoices();
-    for (int i = 0; i < 8; ++i)
+    for (int i = 0; i < 16; ++i)
         addVoice (new MySynthVoice());
 
     clearSounds();
