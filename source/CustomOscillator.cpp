@@ -29,6 +29,13 @@ CustomOscillator::CustomOscillator()
     auto& filter = processorChain.template get<filterIndex>();
     filter.setCutoffFrequencyHz (2000.0f);
     filter.setResonance (0.0f);
+
+    auto& chorus = processorChain.template get<chorusIndex>();
+    chorus.setRate (0.5f);
+    chorus.setDepth (0.5f);
+    chorus.setFeedback (0.3f);
+    chorus.setCentreDelay (7.0f);
+    chorus.setMix (0.5f);
 }
 void CustomOscillator::setFrequency (float newValue, bool force)
 {

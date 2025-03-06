@@ -17,5 +17,6 @@ private:
 
     juce::Slider slider;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;
+    juce::StringRef labelText;
     juce::Label parameterLabel;
 };

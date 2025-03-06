@@ -27,7 +27,9 @@ struct ParameterUpdater
 void MySynth::updateParameters()
 {
     std::vector<ParameterUpdater> parameterUpdaters = {
-        { "volume", masterVolume, [this] (float value) { applyToAllVoices ([value] (MySynthVoice* voice) { voice->setVolume (value); }); } },
+        { "volume", masterVolume, [this] (float value) {
+             applyToAllVoices ([value] (MySynthVoice* voice) { voice->setVolume (value); });
+         } },
         { "filterFrequency", filterCutoff, [this] (float value) { applyToAllVoices ([value] (MySynthVoice* voice) { voice->setFilterCutoff (value); }); } },
         { "filterEnvelopeAmount", filterEnvelopeAmount, [this] (float value) { applyToAllVoices ([value] (MySynthVoice* voice) { voice->setFilterEnvelopeAmount (value); }); } },
         { "filterResonance", filterResonance, [this] (float value) { applyToAllVoices ([value] (MySynthVoice* voice) { voice->setFilterResonance (value); }); } },

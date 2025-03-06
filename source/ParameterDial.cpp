@@ -1,6 +1,6 @@
 #include "ParameterDial.h"
 
-ParameterDial::ParameterDial (PluginProcessor& p, juce::StringRef id, juce::StringRef label) : processor (p)
+ParameterDial::ParameterDial (PluginProcessor& p, juce::StringRef id, const juce::StringRef label) : processor (p), labelText (label)
 {
     slider.setSliderStyle (juce::Slider::RotaryVerticalDrag);
     slider.setTextBoxStyle (juce::Slider::NoTextBox, false, 100, 25);
@@ -11,15 +11,24 @@ ParameterDial::ParameterDial (PluginProcessor& p, juce::StringRef id, juce::Stri
     parameterLabel.setText (label, juce::dontSendNotification);
     parameterLabel.setJustificationType (juce::Justification::centred);
 
+    slider.onValueChange = [this] {
+        parameterLabel.setText (juce::String (slider.getValue()), juce::dontSendNotification);
+    };
+
+    slider.onDragEnd = [this] {
+        parameterLabel.setText (labelText, juce::dontSendNotification);
+    };
+
+    parameterLabel.setEditable (true);
+    parameterLabel.onEditorHide = [this] {
+        slider.setValue (parameterLabel.getText().getFloatValue());
+    };
+
     setSize (200, 300);
 }
 
 void ParameterDial::paint (juce::Graphics& g)
 {
-    // g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-    //
-    // g.setColour (juce::Colours::white);
-    // g.setFont (16.0f);
 }
 
 void ParameterDial::resized()

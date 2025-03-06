@@ -12,6 +12,9 @@ public:
     void setFilterCutoff (float newCutoff);
     void setFilterResonance (float newResonance);
 
+    void setChorusRate (float newRate) { processorChain.get<chorusIndex>().setRate (newRate); }
+    void setChorusDepth (float newDepth) { processorChain.get<chorusIndex>().setDepth (newDepth); }
+
     void prepare (const juce::dsp::ProcessSpec& spec) { processorChain.prepare (spec); }
     void reset() noexcept { processorChain.reset(); }
     template <typename ProcessContext>
@@ -25,6 +28,7 @@ private:
         osc1Index,
         osc2Index,
         filterIndex,
+        chorusIndex,
         gainIndex
     };
 
@@ -34,6 +38,7 @@ private:
         juce::dsp::Oscillator<float>,
         juce::dsp::Oscillator<float>,
         juce::dsp::LadderFilter<float>,
+        juce::dsp::Chorus<float>,
         juce::dsp::Gain<float>>
         processorChain;
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ADSRGraph.h"
 #include "ParameterDial.h"
 #include "PluginProcessor.h"
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -32,6 +33,9 @@ private:
     ParameterDial filterDecayDial = { processorRef, "filterDecay", "Filter Decay" };
     ParameterDial filterSustainDial = { processorRef, "filterSustain", "Filter Sustain" };
     ParameterDial filterReleaseDial = { processorRef, "filterRelease", "Filter Release" };
+
+    ADSRGraph ampADSRGraph = { processorRef.parameters, "ampAttack", "ampDecay", "ampSustain", "ampRelease" };
+    ADSRGraph filterADSRGraph = { processorRef.parameters, "filterAttack", "filterDecay", "filterSustain", "filterRelease" };
 
     void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
     void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/) override;

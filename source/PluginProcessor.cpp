@@ -25,21 +25,21 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
     using Parameter = juce::AudioParameterFloat;
     using Normalize = juce::NormalisableRange<float>;
 
-    layout.add (make_unique<Parameter> ("volume", "Volume", 0.0f, 1.0f, 1.0f));
-
-    layout.add (make_unique<Parameter> ("ampAttack", "Amp Attack", 0.0f, 1.0f, 0.01f));
-    layout.add (make_unique<Parameter> ("ampDecay", "Amp Decay", 0.0f, 1.0f, 0.5f));
-    layout.add (make_unique<Parameter> ("ampSustain", "Amp Sustain", 0.0f, 1.0f, 0.5f));
-    layout.add (make_unique<Parameter> ("ampRelease", "Amp Release", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> ("volume", "Volume", 0.0f, 1.0f, 0.5f));
 
     layout.add (make_unique<Parameter> ("filterFrequency", "Filter Frequency", Normalize (20.f, 20000.f, 0.01f, 0.25f), 1000.0f));
     layout.add (make_unique<Parameter> ("filterEnvelopeAmount", "Filter Envelope Amount", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("filterResonance", "Filter Resonance", 0.0f, 1.0f, 0.5f));
 
-    layout.add (make_unique<Parameter> ("filterAttack", "Filter Attack", 0.0f, 1.0f, 0.01f));
-    layout.add (make_unique<Parameter> ("filterDecay", "Filter Decay", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> ("ampAttack", "Amp Attack", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.0f));
+    layout.add (make_unique<Parameter> ("ampDecay", "Amp Decay", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
+    layout.add (make_unique<Parameter> ("ampSustain", "Amp Sustain", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> ("ampRelease", "Amp Release", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
+
+    layout.add (make_unique<Parameter> ("filterAttack", "Filter Attack", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.0f));
+    layout.add (make_unique<Parameter> ("filterDecay", "Filter Decay", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
     layout.add (make_unique<Parameter> ("filterSustain", "Filter Sustain", 0.0f, 1.0f, 0.5f));
-    layout.add (make_unique<Parameter> ("filterRelease", "Filter Release", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> ("filterRelease", "Filter Release", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
 
     return layout;
 }
