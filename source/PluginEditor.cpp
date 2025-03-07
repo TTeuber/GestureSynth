@@ -25,7 +25,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (ampADSRGraph);
     addAndMakeVisible (filterADSRGraph);
 
-    setSize (800, 800);
+    setSize (600, 600);
 }
 
 PluginEditor::~PluginEditor()
@@ -47,7 +47,7 @@ void PluginEditor::resized()
     area.removeFromBottom (50);
     keyboardComponent.setBounds (10, getHeight() - 80, getWidth() - 20, 70);
 
-    constexpr int containerHeight = 120;
+    int containerHeight = area.getHeight() / 6;
 
     juce::Rectangle<int> basicContainer = area.removeFromTop (containerHeight);
     const int sectionAWidth = basicContainer.getWidth() / 4;

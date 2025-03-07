@@ -2,14 +2,17 @@
 
 // clang-format off
 ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
-    juce::StringRef attackParam,
-    juce::StringRef decayParam,
-    juce::StringRef sustainParam,
-    juce::StringRef releaseParam)
+    const juce::StringRef attackParam,
+    const juce::StringRef decayParam,
+    const juce::StringRef sustainParam,
+    const juce::StringRef releaseParam)
     : parameters(p), attackId(attackParam), decayId(decayParam), sustainId(sustainParam), releaseId(releaseParam)
 // clang-format on
 {
-    parameters.state.addListener (this);
+    parameters.addParameterListener (attackId, this);
+    parameters.addParameterListener (decayId, this);
+    parameters.addParameterListener (sustainId, this);
+    parameters.addParameterListener (releaseId, this);
 
     selectedPoint = None;
 
@@ -25,20 +28,25 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
 
 ADSRGraph::~ADSRGraph()
 {
-    parameters.state.removeListener (this);
+    // parameters.state.removeListener (this);
+    parameters.removeParameterListener (attackId, this);
+    parameters.removeParameterListener (decayId, this);
+    parameters.removeParameterListener (sustainId, this);
+    parameters.removeParameterListener (releaseId, this);
 }
 
-void ADSRGraph::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
+void ADSRGraph::parameterChanged (const juce::String& parameterID, float newValue)
 {
-    // Update the ADSRGraph based on the changed parameters
-    auto attack = parameters.getRawParameterValue (attackId)->load();
-    auto decay = parameters.getRawParameterValue (decayId)->load();
-    auto sustain = parameters.getRawParameterValue (sustainId)->load();
-    auto release = parameters.getRawParameterValue (releaseId)->load();
+    if (parameterID == attackId)
+        attackTime = newValue;
+    else if (parameterID == decayId)
+        decayTime = newValue;
+    else if (parameterID == sustainId)
+        sustainLevel = (1 - newValue) * static_cast<float> (getHeight());
+    else if (parameterID == releaseId)
+        releaseTime = newValue;
 
-    // Ensure the graph reflects these new values
-    setParameters (attack, decay, sustain, release);
-    repaint(); // Redraw the ADSR graph
+    repaint();
 }
 
 void ADSRGraph::setParameters (const float attack, const float decay, const float sustain, const float release)
@@ -55,14 +63,14 @@ void ADSRGraph::paint (juce::Graphics& g)
     g.fillAll (juce::Colours::grey);
     g.setColour (juce::Colours::white);
 
-    auto bounds = getLocalBounds().toFloat();
-    float width = bounds.getWidth();
-    float height = bounds.getHeight();
+    const auto bounds = getLocalBounds().toFloat();
+    const float width = bounds.getWidth();
+    const float height = bounds.getHeight();
 
     juce::Path adsrPath;
-    attackPoint = { attackTime / durationWidth * width, 0 };
-    decayPoint = { (attackTime + decayTime) / durationWidth * width, sustainLevel };
-    releasePoint = { (attackTime + decayTime + releaseTime) / durationWidth * width, height };
+    attackPoint = { attackTime / durationWidth * width - xOffset, 0 };
+    decayPoint = { (attackTime + decayTime) / durationWidth * width - xOffset, sustainLevel };
+    releasePoint = { (attackTime + decayTime + releaseTime) / durationWidth * width - xOffset, height };
 
     juce::Path attackCircle;
     attackCircle.addEllipse (attackPoint.getX() - 10, attackPoint.getY() - 10, 20, 20);
@@ -81,14 +89,23 @@ void ADSRGraph::paint (juce::Graphics& g)
     adsrPath.lineTo (decayPoint);
     adsrPath.lineTo (releasePoint);
 
-    for (float i = 0; i < durationWidth; i += 1.0f)
+    for (float i = 0; i < durationWidth * 3; i += 1.0f)
     {
-        const auto x = width / durationWidth * (i + 1);
+        const auto markerPosition = width / durationWidth * (i + 1);
 
         juce::Path marker;
-        marker.startNewSubPath (x, 0);
-        marker.lineTo (x, height);
-        g.strokePath (marker, juce::PathStrokeType (1.0f));
+        marker.startNewSubPath (markerPosition - xOffset, 0);
+        marker.lineTo (markerPosition - xOffset, height);
+        g.strokePath (marker, juce::PathStrokeType (2.0f));
+        g.drawText (juce::String (i + 1), markerPosition - (durationWidth / 10) - xOffset, height - 20, 20, 20, juce::Justification::centred);
+
+        if (durationWidth < 6.0f)
+        {
+            juce::Path subMarker;
+            subMarker.startNewSubPath (markerPosition - xOffset - width / durationWidth / 2, 0);
+            subMarker.lineTo (markerPosition - xOffset - width / durationWidth / 2, height);
+            g.strokePath (subMarker, juce::PathStrokeType (1.0f));
+        }
     }
 
     g.strokePath (adsrPath, juce::PathStrokeType (4.0f));
@@ -129,7 +146,7 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
     else if (selectedPoint == Decay)
     {
         const auto decayPosition = juce::jlimit (attackPoint.getX(), width, event.position.x);
-        decayTime = ((decayPosition - attackPoint.getX()) / width) * durationWidth;
+        decayTime = (decayPosition - attackPoint.getX()) / width * durationWidth;
         parameters.getParameter (decayId)->setValueNotifyingHost (parameters.getParameterRange (decayId).convertTo0to1 (decayTime));
 
         sustainLevel = juce::jlimit (0.0f, height, event.position.y);
@@ -149,7 +166,9 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
 
 void ADSRGraph::mouseWheelMove (const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
 {
-    durationWidth *= 1 + wheel.deltaY;
+    // durationWidth *= 1 + wheel.deltaY;
+
+    xOffset = juce::jlimit (0.0f, static_cast<float> (getWidth()) * 2, xOffset - wheel.deltaX * 100);
 
     repaint();
 }
