@@ -1,12 +1,15 @@
 #include "ADSRGraph.h"
 
+#include <utility>
+
 // clang-format off
 ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
     const juce::StringRef attackParam,
     const juce::StringRef decayParam,
     const juce::StringRef sustainParam,
-    const juce::StringRef releaseParam)
-    : parameters(p), attackId(attackParam), decayId(decayParam), sustainId(sustainParam), releaseId(releaseParam)
+    const juce::StringRef releaseParam,
+    std::shared_ptr<MyADSR*> adsr)
+    : parameters(p), attackId(attackParam), decayId(decayParam), sustainId(sustainParam), releaseId(releaseParam), myADSR(std::move(adsr))
 // clang-format on
 {
     parameters.addParameterListener (attackId, this);
@@ -60,8 +63,8 @@ void ADSRGraph::setParameters (const float attack, const float decay, const floa
 
 void ADSRGraph::paint (juce::Graphics& g)
 {
-    g.fillAll (juce::Colours::grey);
-    g.setColour (juce::Colours::white);
+    g.fillAll (juce::Colour::fromRGB (30, 35, 35));
+    g.setColour (juce::Colour::fromRGB (200, 200, 200));
 
     const auto bounds = getLocalBounds().toFloat();
     const float width = bounds.getWidth();
@@ -84,7 +87,7 @@ void ADSRGraph::paint (juce::Graphics& g)
     releaseCircle.addEllipse (releasePoint.getX() - 10, releasePoint.getY() - 10, 20, 20);
     g.fillPath (releaseCircle);
 
-    adsrPath.startNewSubPath (0, height);
+    adsrPath.startNewSubPath (0 - xOffset, height);
     adsrPath.lineTo (attackPoint);
     adsrPath.lineTo (decayPoint);
     adsrPath.lineTo (releasePoint);
@@ -109,6 +112,12 @@ void ADSRGraph::paint (juce::Graphics& g)
     }
 
     g.strokePath (adsrPath, juce::PathStrokeType (4.0f));
+}
+
+void ADSRGraph::showTime()
+{
+    if (myADSR != nullptr && *myADSR != nullptr)
+        timePoint = (*myADSR)->getTimePoint();
 }
 
 void ADSRGraph::mouseDown (const juce::MouseEvent& event)

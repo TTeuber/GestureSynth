@@ -1,11 +1,14 @@
 #include "MySynthVoice.h"
 
+#include <utility>
+
 float MySynthVoice::frequencyToPhaseIncrement (const float frequency) const
 {
     return 2.0f * juce::MathConstants<float>::pi * frequency / currentSampleRate;
 }
 
-MySynthVoice::MySynthVoice()
+MySynthVoice::MySynthVoice (std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr)
+    : ampADSRPtr (std::move (ampEnvPtr)), filterADSRPtr (std::move (filterEnvPtr))
 {
     ampADSR.setSampleRate (currentSampleRate);
 
@@ -48,7 +51,9 @@ void MySynthVoice::startNote (int midiNoteNumber, float velocity, juce::Synthesi
     osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)));
     this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
     ampADSR.noteOn();
+    *ampADSRPtr = &ampADSR;
     filterADSR.noteOn();
+    *filterADSRPtr = &filterADSR;
 }
 
 void MySynthVoice::stopNote (float velocity, bool allowTailOff)

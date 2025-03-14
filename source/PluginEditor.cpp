@@ -4,6 +4,9 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p), keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     processorRef.keyboardState.addListener (this);
+    processorRef.onTick (std::function<void()> ([this]() {
+        ampADSRGraph.showTime();
+    }));
 
     addAndMakeVisible (keyboardComponent);
 
@@ -25,7 +28,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (ampADSRGraph);
     addAndMakeVisible (filterADSRGraph);
 
-    setSize (600, 600);
+    setSize (windowWidth, windowHeight);
 }
 
 PluginEditor::~PluginEditor()
@@ -47,18 +50,19 @@ void PluginEditor::resized()
     area.removeFromBottom (50);
     keyboardComponent.setBounds (10, getHeight() - 80, getWidth() - 20, 70);
 
-    int containerHeight = area.getHeight() / 6;
+    const int containerHeight = area.getHeight() / 8;
+    juce::Rectangle<int> newArea = area.removeFromRight (windowWidth / 2);
 
     juce::Rectangle<int> basicContainer = area.removeFromTop (containerHeight);
     const int sectionAWidth = basicContainer.getWidth() / 4;
 
-    juce::Rectangle<int> ampADSRContainer = area.removeFromTop (containerHeight * 1.5);
+    juce::Rectangle<int> ampADSRContainer = area.removeFromTop (containerHeight);
     ampADSRGraph.setBounds (ampADSRContainer.reduced (10));
 
     juce::Rectangle<int> ampDialContainer = area.removeFromTop (containerHeight);
     const int sectionBWidth = ampDialContainer.getWidth() / 4;
 
-    juce::Rectangle<int> filterADSRContainer = area.removeFromTop (containerHeight * 1.5);
+    juce::Rectangle<int> filterADSRContainer = area.removeFromTop (containerHeight);
     filterADSRGraph.setBounds (filterADSRContainer.reduced (10));
 
     juce::Rectangle<int> filterDialContainer = area.removeFromTop (containerHeight);

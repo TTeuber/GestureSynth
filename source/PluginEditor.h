@@ -17,6 +17,9 @@ public:
     void resized() override;
 
 private:
+    int windowHeight = 800;
+    int windowWidth = 800;
+
     PluginProcessor& processorRef;
 
     juce::MidiKeyboardComponent keyboardComponent;
@@ -34,8 +37,8 @@ private:
     ParameterDial filterSustainDial = { processorRef, "filterSustain", "Filter Sustain" };
     ParameterDial filterReleaseDial = { processorRef, "filterRelease", "Filter Release" };
 
-    ADSRGraph ampADSRGraph = { processorRef.parameters, "ampAttack", "ampDecay", "ampSustain", "ampRelease" };
-    ADSRGraph filterADSRGraph = { processorRef.parameters, "filterAttack", "filterDecay", "filterSustain", "filterRelease" };
+    ADSRGraph ampADSRGraph = { processorRef.parameters, "ampAttack", "ampDecay", "ampSustain", "ampRelease", processorRef.getSynth().getAmpADSRPtr() };
+    ADSRGraph filterADSRGraph = { processorRef.parameters, "filterAttack", "filterDecay", "filterSustain", "filterRelease", processorRef.getSynth().getFilterADSRPtr() };
 
     void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
     void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/) override;

@@ -2,6 +2,7 @@
 
 #include "MySynth.h"
 #include "juce_dsp/juce_dsp.h"
+#include <functional>
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #if (MSVC)
@@ -47,9 +48,25 @@ public:
     juce::MidiKeyboardState keyboardState;
     juce::AudioProcessorValueTreeState parameters { *this, nullptr, "parameters", createLayout() };
 
+    MySynth& getSynth() { return synth; }
+
+    void tick() const
+    {
+        for (auto& func : functions)
+            func();
+    }
+
+    void onTick (const std::function<void()>& func)
+    {
+        functions.push_back (func);
+    }
+
 private:
     juce::MidiBuffer midiBuffer;
 
     MySynth synth;
+
+    std::vector<std::function<void()>> functions = {};
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

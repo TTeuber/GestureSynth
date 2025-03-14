@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CustomOscillator.h"
+#include "MyADSR.h"
 #include <juce_dsp/juce_dsp.h>
 
 class MySynth;
@@ -14,7 +15,8 @@ public:
 class MySynthVoice : public juce::SynthesiserVoice
 {
 public:
-    MySynthVoice();
+    MySynthVoice (std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr);
+
     bool canPlaySound (juce::SynthesiserSound* sound) override;
     void prepare (double sampleRate, int samplesPerBlock, int numChannels);
 
@@ -28,6 +30,9 @@ public:
     void renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
 
     [[nodiscard]] float frequencyToPhaseIncrement (float frequency) const;
+
+    std::shared_ptr<MyADSR*> getAmpPtr() { return ampADSRPtr; }
+    std::shared_ptr<MyADSR*> getFilterPtr() { return filterADSRPtr; }
 
     [[nodiscard]] float getVolume() const { return volume; }
 
@@ -125,9 +130,12 @@ private:
     float filterEnvelopeAmount = 0.0f;
     float filterResonance = 0.0f;
 
-    juce::ADSR ampADSR;
-    juce::ADSR filterADSR;
+    MyADSR ampADSR;
+    std::shared_ptr<MyADSR*> ampADSRPtr;
 
-    juce::ADSR::Parameters ampEnvParams;
-    juce::ADSR::Parameters filterEnvParams;
+    MyADSR filterADSR;
+    std::shared_ptr<MyADSR*> filterADSRPtr;
+
+    MyADSR::Parameters ampEnvParams = { 0.1f, 0.5f, 0.2f, 0.7f, 1.0f, 1.0f, 1.0f };
+    MyADSR::Parameters filterEnvParams = { 0.1f, 0.5f, 0.0f, 0.5f, 1.0f, 1.0f, 1.0f };
 };

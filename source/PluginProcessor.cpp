@@ -13,7 +13,7 @@ PluginProcessor::PluginProcessor()
               .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
 #endif
               ),
-      synth (&parameters)
+      synth (parameters)
 {
 }
 
@@ -169,6 +169,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     synth.updateParameters();
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    tick();
 }
 
 //==============================================================================

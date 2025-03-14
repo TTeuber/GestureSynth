@@ -1,10 +1,10 @@
 #include "MySynth.h"
 
-MySynth::MySynth (juce::AudioProcessorValueTreeState* p) : parameters (p)
+MySynth::MySynth (juce::AudioProcessorValueTreeState& p) : parameters (p)
 {
     clearVoices();
     for (int i = 0; i < 16; ++i)
-        addVoice (new MySynthVoice());
+        addVoice (new MySynthVoice (ampEnvPtr, filterEnvPtr));
 
     clearSounds();
     addSound (new MySynthSound());
@@ -45,7 +45,7 @@ void MySynth::updateParameters()
 
     for (const auto& updater : parameterUpdaters)
     {
-        float newValue = *parameters->getRawParameterValue (updater.name);
+        const float newValue = *parameters.getRawParameterValue (updater.name);
         updateParameter (updater.valueRef, newValue, updater.setter);
     }
 }
