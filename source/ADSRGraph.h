@@ -7,7 +7,7 @@
 
 #include <utility>
 
-class ADSRGraph final : public juce::Component, juce::AudioProcessorValueTreeState::Listener
+class ADSRGraph final : public juce::Component, juce::AudioProcessorValueTreeState::Listener, juce::Timer
 {
 public:
     ADSRGraph (juce::AudioProcessorValueTreeState& p,
@@ -17,9 +17,12 @@ public:
         juce::StringRef releaseParam,
         std::shared_ptr<MyADSR*> adsr);
     ~ADSRGraph() override;
+    void timerCallback() override;
     void parameterChanged (const juce::String& parameterID, float newValue) override;
     void setParameters (float attack, float decay, float sustain, float release);
     void paint (juce::Graphics& g) override;
+    void drawCurve (juce::Graphics& g, int attackX, int decayX, int releaseX) const;
+    float getCurveY (float x, int width, int height, int attackX, int decayX, int releaseX) const;
     void showTime();
     void mouseDown (const juce::MouseEvent& event) override;
     void mouseUp (const juce::MouseEvent& event) override;

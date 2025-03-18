@@ -35,14 +35,20 @@ private:
     float filterResonance = 0.0f;
 
     float ampAttack = 0.0f;
+    float ampAttackCurve = 1.0f;
     float ampDecay = 0.0f;
+    float ampDecayCurve = 1.0f;
     float ampSustain = 0.0f;
     float ampRelease = 0.0f;
+    float ampReleaseCurve = 1.0f;
 
     float filterAttack = 0.0f;
+    float filterAttackCurve = 1.0f;
     float filterDecay = 0.0f;
+    float filterDecayCurve = 1.0f;
     float filterSustain = 0.0f;
     float filterRelease = 0.0f;
+    float filterReleaseCurve = 1.0f;
 
     std::shared_ptr<MyADSR*> ampEnvPtr = std::make_shared<MyADSR*>();
     std::shared_ptr<MyADSR*> filterEnvPtr = std::make_shared<MyADSR*>();

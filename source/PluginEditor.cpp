@@ -4,9 +4,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p), keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     processorRef.keyboardState.addListener (this);
-    processorRef.onTick (std::function<void()> ([this]() {
-        ampADSRGraph.showTime();
-    }));
 
     addAndMakeVisible (keyboardComponent);
 

@@ -32,14 +32,20 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
     layout.add (make_unique<Parameter> ("filterResonance", "Filter Resonance", 0.0f, 1.0f, 0.5f));
 
     layout.add (make_unique<Parameter> ("ampAttack", "Amp Attack", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.0f));
+    layout.add (make_unique<Parameter> ("ampAttackCurve", "Amp Attack Curve", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("ampDecay", "Amp Decay", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
+    layout.add (make_unique<Parameter> ("ampDecayCurve", "Amp Decay Curve", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("ampSustain", "Amp Sustain", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("ampRelease", "Amp Release", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
+    layout.add (make_unique<Parameter> ("ampReleaseCurve", "Amp Release Curve", 0.0f, 1.0f, 0.5f));
 
     layout.add (make_unique<Parameter> ("filterAttack", "Filter Attack", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.0f));
+    layout.add (make_unique<Parameter> ("filterAttackCurve", "Filter Attack Curve", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("filterDecay", "Filter Decay", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
+    layout.add (make_unique<Parameter> ("filterDecayCurve", "Filter Decay Curve", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("filterSustain", "Filter Sustain", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("filterRelease", "Filter Release", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
+    layout.add (make_unique<Parameter> ("filterReleaseCurve", "Filter Release Curve", 0.0f, 1.0f, 0.5f));
 
     return layout;
 }
@@ -169,7 +175,6 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     synth.updateParameters();
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
-    tick();
 }
 
 //==============================================================================

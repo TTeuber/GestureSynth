@@ -66,9 +66,21 @@ public:
         ampADSR.setParameters (ampEnvParams);
     }
 
+    void setAmpAttackCurve (const float newCurve)
+    {
+        ampEnvParams.attackExponent = newCurve;
+        ampADSR.setParameters (ampEnvParams);
+    }
+
     void setAmpDecay (const float newDecay)
     {
         ampEnvParams.decay = newDecay;
+        ampADSR.setParameters (ampEnvParams);
+    }
+
+    void setAmpDecayCurve (const float newCurve)
+    {
+        ampEnvParams.decayExponent = newCurve;
         ampADSR.setParameters (ampEnvParams);
     }
 
@@ -84,15 +96,33 @@ public:
         ampADSR.setParameters (ampEnvParams);
     }
 
+    void setAmpReleaseCurve (const float newCurve)
+    {
+        ampEnvParams.releaseExponent = newCurve;
+        ampADSR.setParameters (ampEnvParams);
+    }
+
     void setFilterAttack (const float newAttack)
     {
         filterEnvParams.attack = newAttack;
         filterADSR.setParameters (filterEnvParams);
     }
 
+    void setFilterAttackCurve (const float newCurve)
+    {
+        filterEnvParams.attackExponent = newCurve;
+        filterADSR.setParameters (filterEnvParams);
+    }
+
     void setFilterDecay (const float newDecay)
     {
         filterEnvParams.decay = newDecay;
+        filterADSR.setParameters (filterEnvParams);
+    }
+
+    void setFilterDecayCurve (const float newCurve)
+    {
+        filterEnvParams.decayExponent = newCurve;
         filterADSR.setParameters (filterEnvParams);
     }
 
@@ -108,9 +138,14 @@ public:
         filterADSR.setParameters (filterEnvParams);
     }
 
+    void setFilterReleaseCurve (const float newCurve)
+    {
+        filterEnvParams.releaseExponent = newCurve;
+        filterADSR.setParameters (filterEnvParams);
+    }
+
 private:
     CustomOscillator osc;
-    // MySynth& synth; // TODO: use synth to get parameters
 
     float phase = 0.0f;
     float phaseIncrement = 0.0f;
@@ -136,6 +171,6 @@ private:
     MyADSR filterADSR;
     std::shared_ptr<MyADSR*> filterADSRPtr;
 
-    MyADSR::Parameters ampEnvParams = { 0.1f, 0.5f, 0.2f, 0.7f, 1.0f, 1.0f, 1.0f };
-    MyADSR::Parameters filterEnvParams = { 0.1f, 0.5f, 0.0f, 0.5f, 1.0f, 1.0f, 1.0f };
+    MyADSR::Parameters ampEnvParams = { 0.1f, 0.5f, 0.2f, 0.7f };
+    MyADSR::Parameters filterEnvParams = { 0.1f, 0.5f, 0.0f, 0.5f };
 };

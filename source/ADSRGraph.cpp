@@ -27,6 +27,8 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
     totalDuration = attackTime + decayTime + releaseTime;
 
     setSize (400, 200);
+
+    startTimerHz (60);
 }
 
 ADSRGraph::~ADSRGraph()
@@ -70,7 +72,6 @@ void ADSRGraph::paint (juce::Graphics& g)
     const float width = bounds.getWidth();
     const float height = bounds.getHeight();
 
-    juce::Path adsrPath;
     attackPoint = { attackTime / durationWidth * width - xOffset, 0 };
     decayPoint = { (attackTime + decayTime) / durationWidth * width - xOffset, sustainLevel };
     releasePoint = { (attackTime + decayTime + releaseTime) / durationWidth * width - xOffset, height };
@@ -87,10 +88,16 @@ void ADSRGraph::paint (juce::Graphics& g)
     releaseCircle.addEllipse (releasePoint.getX() - 10, releasePoint.getY() - 10, 20, 20);
     g.fillPath (releaseCircle);
 
-    adsrPath.startNewSubPath (0 - xOffset, height);
-    adsrPath.lineTo (attackPoint);
-    adsrPath.lineTo (decayPoint);
-    adsrPath.lineTo (releasePoint);
+    juce::Path timeCircle;
+    timeCircle.addEllipse (timePoint.getX() - 5, timePoint.getY() - 5, 10, 10);
+    g.fillPath (timeCircle);
+
+    juce::Path adsrPath;
+    // adsrPath.startNewSubPath (0 - xOffset, height);
+    // adsrPath.lineTo (attackPoint);
+    // adsrPath.lineTo (decayPoint);
+    // adsrPath.lineTo (releasePoint);
+    drawCurve (g, attackPoint.getX(), decayPoint.getX(), releasePoint.getX());
 
     for (float i = 0; i < durationWidth * 3; i += 1.0f)
     {
@@ -114,10 +121,62 @@ void ADSRGraph::paint (juce::Graphics& g)
     g.strokePath (adsrPath, juce::PathStrokeType (4.0f));
 }
 
+void ADSRGraph::drawCurve (juce::Graphics& g, const int attackX, const int decayX, const int releaseX) const
+{
+    juce::Path path;
+
+    const auto width = getWidth();
+    const auto height = getHeight();
+    constexpr auto startX = 0.0f;
+    constexpr auto step = 2.0f;
+
+    bool firstPoint = true;
+    for (float x = startX; x <= releaseX; x += step)
+    {
+        const float y = getCurveY (x, width, height, attackX, decayX, releaseX);
+
+        if (firstPoint)
+        {
+            path.startNewSubPath (x, y);
+            firstPoint = false;
+        }
+        else
+        {
+            path.lineTo (x, y);
+        }
+    }
+
+    g.setColour (juce::Colours::white);
+    g.strokePath (path, juce::PathStrokeType (2.0f));
+}
+
+float ADSRGraph::getCurveY (const float x, const int width, const int height, const int attackX, const int decayX, const int releaseX) const
+{
+    if (x < attackX)
+        return (1 - MyADSR::toAttackCurve (x / attackTime / width * durationWidth, *parameters.getRawParameterValue ("ampAttackCurve"))) * height;
+
+    if (x < decayX)
+        return (1 - MyADSR::toDecayCurve ((x - attackX) / juce::jmax<float> (0.0001, decayTime) / width * durationWidth, 1 - sustainLevel / height, *parameters.getRawParameterValue ("ampDecayCurve"))) * height;
+
+    if (x < releasePoint.getX())
+        return (1 - MyADSR::toReleaseCurve ((x - decayX) / juce::jmax<float> (0.0001, releaseTime) / width * durationWidth, 1 - sustainLevel / height, *parameters.getRawParameterValue ("ampReleaseCurve"))) * height;
+
+    return height;
+}
+
 void ADSRGraph::showTime()
 {
     if (myADSR != nullptr && *myADSR != nullptr)
-        timePoint = (*myADSR)->getTimePoint();
+    {
+        const std::array<float, 2> xy = (*myADSR)->getTimePoint();
+        timePoint = { xy[0] / durationWidth * static_cast<float> (getWidth()) - xOffset, ((1 - xy[1]) * static_cast<float> (getHeight())) };
+        repaint();
+    }
+}
+
+void ADSRGraph::timerCallback()
+{
+    showTime();
 }
 
 void ADSRGraph::mouseDown (const juce::MouseEvent& event)

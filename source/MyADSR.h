@@ -1,8 +1,7 @@
 #pragma once
 
-#include "juce_graphics/geometry/juce_Point.h"
-
 #include <juce_dsp/juce_dsp.h>
+#include <juce_graphics/juce_graphics.h>
 
 class MyADSR
 {
@@ -25,9 +24,9 @@ public:
             float decayTimeSeconds,
             float newSustainLevel,
             float releaseTimeSeconds,
-            float attackCurve = 1.0f,
-            float decayCurve = 1.0f,
-            float releaseCurve = 1.0f
+            float attackCurve = 3.0f,
+            float decayCurve = 3.0f,
+            float releaseCurve = 3.0f
             ):
             attack (attackTimeSeconds),
             decay (decayTimeSeconds),
@@ -40,7 +39,7 @@ public:
         {
         }
         float attack = 0.1f, decay = 0.1f, sustain = 1.0f, release = 0.1f;
-        float attackExponent = 1.0f, decayExponent = 1.0f, releaseExponent = 1.0f;
+        float attackExponent = 3.0f, decayExponent = 3.0f, releaseExponent = 3.0f;
     };
 
     void setParameters (const Parameters& parameters)
@@ -143,7 +142,7 @@ public:
         return sustain + (1 - sustain) * (std::pow (1 - time, 1 / exponent) + 1 - std::pow (time, exponent)) / 2;
     }
 
-    static float toReleaseCurve (const float time, const float sustain, const float exponent)
+    static float toReleaseCurve (const float time, const float sustain, float exponent)
     {
         return sustain * (std::pow (1 - time, 1 / exponent) + 1 - std::pow (time, exponent)) / 2;
     }
@@ -163,10 +162,9 @@ public:
                 break;
 
             case State::Decay:
-                if (sustainLevel < 1)
-                    envelopeValue = toDecayCurve ((time - attackTime) / releaseTime, sustainLevel, decayExponent); // Ease-out decay
-
-                if (envelopeValue <= sustainLevel)
+                if (sustainLevel < 1 && time < decayTime + attackTime)
+                    envelopeValue = toDecayCurve ((time - attackTime) / decayTime, sustainLevel, decayExponent); // Ease-out decay
+                else
                 {
                     state = State::Sustain;
                     envelopeValue = sustainLevel;
@@ -179,9 +177,10 @@ public:
                 break;
 
             case State::Release:
-                if (envelopeValue <= 0.0f)
+                if (envelopeValue <= 0.0f || time >= attackTime + decayTime + releaseTime)
                     state = State::Idle;
-                envelopeValue = toReleaseCurve ((time - attackTime - decayTime) / releaseTime, tempSustain, releaseExponent); // Ease-out release
+                else
+                    envelopeValue = toReleaseCurve ((time - attackTime - decayTime) / releaseTime, tempSustain, releaseExponent); // Ease-out release
                 time += 1.0f / sampleRate;
                 break;
 
@@ -192,7 +191,6 @@ public:
             default:
                 break;
         }
-
         return envelopeValue;
     }
 
@@ -206,37 +204,20 @@ public:
         return state != State::Idle;
     }
 
-    [[nodiscard]] juce::Point<float> getTimePoint()
+    [[nodiscard]] std::array<float, 2> getTimePoint()
     {
-        switch (state)
-        {
-            case State::Attack:
-                DBG ("Attack: " << time);
-                break;
-            case State::Decay:
-                DBG ("Decay: " << time);
-                break;
-            case State::Sustain:
-                DBG ("Sustain: " << time);
-                break;
-            case State::Release:
-                DBG ("Release: " << time);
-                break;
-            case State::Idle:
-                DBG ("Idle: " << time);
-                break;
-            default:
-                DBG ("Unknown state: " << time);
-                break;
-        }
-        return {time, envelopeValue};
+        return { time, envelopeValue };
     }
+
+    [[nodiscard]] float getAttackExponent() const { return attackExponent; }
+    [[nodiscard]] float getDecayExponent() const { return decayExponent; }
+    [[nodiscard]] float getReleaseExponent() const { return releaseExponent; }
 
 private:
     State state = State::Idle;
     float attackTime = 0.1f, decayTime = 0.1f, sustainLevel = 0.7f, releaseTime = 0.2f;
     float tempSustain = sustainLevel;
-    float attackExponent = 2.0f, decayExponent = 2.0f, releaseExponent = 2.0f;
+    float attackExponent = 3.0f, decayExponent = 3.0f, releaseExponent = 3.0f;
     float attackRate = 0.0f, decayRate = 0.0f, releaseRate = 0.0f;
     float envelopeValue = 0.0f;
     float sampleRate = 44100.0f;

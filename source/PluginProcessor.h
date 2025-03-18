@@ -50,17 +50,6 @@ public:
 
     MySynth& getSynth() { return synth; }
 
-    void tick() const
-    {
-        for (auto& func : functions)
-            func();
-    }
-
-    void onTick (const std::function<void()>& func)
-    {
-        functions.push_back (func);
-    }
-
 private:
     juce::MidiBuffer midiBuffer;
 
