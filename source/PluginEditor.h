@@ -26,9 +26,12 @@ private:
 
     ParameterDial volumeDial = { processorRef, "volume", "Volume" };
     ParameterDial ampAttackDial = { processorRef, "ampAttack", "Amp Attack" };
+    ParameterDial ampAttackCurveDial = { processorRef, "ampAttackCurve", "Amp Attack Curve" };
     ParameterDial ampDecayDial = { processorRef, "ampDecay", "Amp Decay" };
+    ParameterDial ampDecayCurveDial = { processorRef, "ampDecayCurve", "Amp Decay Curve" };
     ParameterDial ampSustainDial = { processorRef, "ampSustain", "Amp Sustain" };
     ParameterDial ampReleaseDial = { processorRef, "ampRelease", "Amp Release" };
+    ParameterDial ampReleaseCurveDial = { processorRef, "ampReleaseCurve", "Amp Release Curve" };
     ParameterDial filterFrequencyDial = { processorRef, "filterFrequency", "Filter Frequency" };
     ParameterDial filterEnvelopeAmountDial = { processorRef, "filterEnvelopeAmount", "Filter Envelope Amount" };
     ParameterDial filterResonanceDial = { processorRef, "filterResonance", "Filter Resonance" };
@@ -37,8 +40,8 @@ private:
     ParameterDial filterSustainDial = { processorRef, "filterSustain", "Filter Sustain" };
     ParameterDial filterReleaseDial = { processorRef, "filterRelease", "Filter Release" };
 
-    ADSRGraph ampADSRGraph = { processorRef.parameters, "ampAttack", "ampDecay", "ampSustain", "ampRelease", processorRef.getSynth().getAmpADSRPtr() };
-    ADSRGraph filterADSRGraph = { processorRef.parameters, "filterAttack", "filterDecay", "filterSustain", "filterRelease", processorRef.getSynth().getFilterADSRPtr() };
+    ADSRGraph ampADSRGraph = { processorRef.parameters, "ampAttack", "ampAttackCurve", "ampDecay", "ampDecayCurve", "ampSustain", "ampRelease", "ampReleaseCurve", processorRef.getSynth().getAmpADSRPtr() };
+    ADSRGraph filterADSRGraph = { processorRef.parameters, "filterAttack", "filterAttackCurve", "filterDecay", "filterDecayCurve", "filterSustain", "filterRelease", "filterReleaseCurve", processorRef.getSynth().getFilterADSRPtr() };
 
     void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
     void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/) override;

@@ -171,6 +171,6 @@ private:
     MyADSR filterADSR;
     std::shared_ptr<MyADSR*> filterADSRPtr;
 
-    MyADSR::Parameters ampEnvParams = { 0.1f, 0.5f, 0.2f, 0.7f };
-    MyADSR::Parameters filterEnvParams = { 0.1f, 0.5f, 0.0f, 0.5f };
+    MyADSR::Parameters ampEnvParams = { 0.1f, 0.5f, 0.2f, 0.7f, 1, 1, 1 };
+    MyADSR::Parameters filterEnvParams = { 0.1f, 0.5f, 0.0f, 0.5f, 1, 1, 1 };
 };

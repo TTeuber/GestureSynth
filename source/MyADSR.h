@@ -24,9 +24,9 @@ public:
             float decayTimeSeconds,
             float newSustainLevel,
             float releaseTimeSeconds,
-            float attackCurve = 3.0f,
-            float decayCurve = 3.0f,
-            float releaseCurve = 3.0f
+            float attackCurve,
+            float decayCurve,
+            float releaseCurve
             ):
             attack (attackTimeSeconds),
             decay (decayTimeSeconds),
