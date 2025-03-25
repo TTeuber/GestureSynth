@@ -27,7 +27,6 @@ public:
     void resized() override;
     void paint (juce::Graphics& g) override;
     void drawCurve (juce::Graphics& g) const;
-    float getCurveY (float x) const;
     void showTime();
     void mouseMove (const juce::MouseEvent& event) override;
     void mouseDown (const juce::MouseEvent& event) override;
@@ -39,6 +38,8 @@ public:
     void setADSRPointer (std::shared_ptr<MyADSR*> adsr) { myADSR = std::move (adsr); }
 
 private:
+    float getCurveY (float x) const;
+
     juce::AudioProcessorValueTreeState& parameters;
 
     float width;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MyOscillator.h"
+
 #include <juce_dsp/juce_dsp.h>
 
 class CustomOscillator
@@ -35,8 +37,8 @@ private:
     juce::SmoothedValue<float> filterFrequencySmooth;
 
     juce::dsp::ProcessorChain<
-        juce::dsp::Oscillator<float>,
-        juce::dsp::Oscillator<float>,
+        MyOscillator,
+        MyOscillator,
         juce::dsp::LadderFilter<float>,
         juce::dsp::Chorus<float>,
         juce::dsp::Gain<float>>

@@ -3,13 +3,13 @@
 MySynth::MySynth (juce::AudioProcessorValueTreeState& p) : parameters (p)
 {
     clearVoices();
-    for (int i = 0; i < 16; ++i)
-        addVoice (new MySynthVoice (ampEnvPtr, filterEnvPtr));
+    for (int i = 0; i < 8; ++i)
+        addVoice (new MySynthVoice (parameters, ampEnvPtr, filterEnvPtr));
 
     clearSounds();
     addSound (new MySynthSound());
 }
-void MySynth::updateParameter (float& currentValue, float newValue, const std::function<void (float)>& setterFunction)
+void MySynth::updateParameter (float& currentValue, const float newValue, const std::function<void (float)>& setterFunction)
 {
     if (currentValue != newValue)
     {
@@ -24,6 +24,14 @@ struct ParameterUpdater
     std::function<void (float)> setter;
 };
 
+/**
+ * Updates all synth parameters by checking for changes in the AudioProcessorValueTreeState.
+ * This function handles the synchronization of various synth parameters including:
+ * - Volume and filter settings
+ * - Amplitude envelope parameters (attack, decay, sustain, release and their curves)
+ * - Filter envelope parameters (attack, decay, sustain, release and their curves)
+ * When a parameter change is detected, it applies the new value to all voices in the synth.
+ */
 void MySynth::updateParameters()
 {
     std::vector<ParameterUpdater> parameterUpdaters = {

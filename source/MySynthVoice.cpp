@@ -7,8 +7,8 @@ float MySynthVoice::frequencyToPhaseIncrement (const float frequency) const
     return 2.0f * juce::MathConstants<float>::pi * frequency / currentSampleRate;
 }
 
-MySynthVoice::MySynthVoice (std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr)
-    : ampADSRPtr (std::move (ampEnvPtr)), filterADSRPtr (std::move (filterEnvPtr))
+MySynthVoice::MySynthVoice (juce::AudioProcessorValueTreeState& p, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr)
+    : parameters (p), ampADSRPtr (std::move (ampEnvPtr)), filterADSRPtr (std::move (filterEnvPtr))
 {
     ampADSR.setSampleRate (currentSampleRate);
 
@@ -27,6 +27,10 @@ MySynthVoice::MySynthVoice (std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<
     filterEnvParams.release = 0.5f;
 
     filterADSR.setParameters (filterEnvParams);
+
+    lfo.setFrequency (4.0f);
+
+    modMatrix.addModulation (&fineTuneParam, lfo, 0.05f, true);
 }
 
 bool MySynthVoice::canPlaySound (juce::SynthesiserSound* sound)
@@ -45,10 +49,12 @@ void MySynthVoice::prepare (double sampleRate, int samplesPerBlock, int numChann
     spec.numChannels = numChannels;
 
     osc.prepare (spec);
+    modMatrix.prepare (spec);
 }
 void MySynthVoice::startNote (int midiNoteNumber, float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
-    osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)));
+    frequency = juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber);
+    osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)), true);
     this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
     ampADSR.noteOn();
     *ampADSRPtr = &ampADSR;
@@ -94,10 +100,13 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int 
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        float targetEnvVal = ampADSR.getNextSample();
+        modMatrix.processSample();
+        const float targetEnvVal = ampADSR.getNextSample();
 
-        float filterEnvVal = filterADSR.getNextSample();
+        const float filterEnvVal = filterADSR.getNextSample();
         osc.setFilterCutoff (filterCutoff * pow (2, filterEnvVal * filterEnvelopeAmount * 10));
+
+        osc.setFrequency (frequency + fineTuneParam.getCurrentValue() * (frequency * std::pow (2, 1 / 12)));
 
         if (currentEnvVal < targetEnvVal)
             currentEnvVal = juce::jmin (currentEnvVal + slewRate, targetEnvVal);

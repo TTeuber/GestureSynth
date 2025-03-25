@@ -5,8 +5,11 @@
 #include "PluginProcessor.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 
+#define HEIGHT 800;
+#define WIDTH 1000;
+
 //==============================================================================
-class PluginEditor : public juce::AudioProcessorEditor, public juce::MidiKeyboardStateListener
+class PluginEditor final : public juce::AudioProcessorEditor, public juce::MidiKeyboardStateListener
 {
 public:
     explicit PluginEditor (PluginProcessor&);
@@ -17,8 +20,8 @@ public:
     void resized() override;
 
 private:
-    int windowHeight = 800;
-    int windowWidth = 800;
+    int windowHeight = HEIGHT;
+    int windowWidth = WIDTH;
 
     PluginProcessor& processorRef;
 

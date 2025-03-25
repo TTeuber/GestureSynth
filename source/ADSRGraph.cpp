@@ -232,7 +232,7 @@ void ADSRGraph::mouseMove (const juce::MouseEvent& event)
 {
     for (auto p : points)
     {
-        if (p->getDistanceFrom (juce::Point<float> (event.position.x, event.position.y)) < 20)
+        if (p->getDistanceFrom (juce::Point (event.position.x, event.position.y)) < 20)
         {
             setMouseCursor (juce::MouseCursor::PointingHandCursor);
             return;

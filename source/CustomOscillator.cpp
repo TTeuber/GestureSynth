@@ -6,31 +6,17 @@
 
 CustomOscillator::CustomOscillator()
 {
-    auto& osc = processorChain.template get<osc1Index>();
-    osc.initialise ([] (float x) {
-        return juce::jmap<float> (x,
-            float (-juce::MathConstants<double>::pi),
-            float (juce::MathConstants<double>::pi),
-            float (-1),
-            float (1));
-    },
-        2);
+    auto& osc = processorChain.get<osc1Index>();
+    osc.setWaveform (MyOscillator::Saw);
 
-    auto& osc2 = processorChain.template get<osc2Index>();
-    osc2.initialise ([] (float x) {
-        return juce::jmap<float> (x,
-            float (-juce::MathConstants<double>::pi),
-            float (juce::MathConstants<double>::pi),
-            float (-1),
-            float (1));
-    },
-        2);
+    auto& osc2 = processorChain.get<osc2Index>();
+    osc2.setWaveform (MyOscillator::Saw);
 
-    auto& filter = processorChain.template get<filterIndex>();
+    auto& filter = processorChain.get<filterIndex>();
     filter.setCutoffFrequencyHz (2000.0f);
     filter.setResonance (0.0f);
 
-    auto& chorus = processorChain.template get<chorusIndex>();
+    auto& chorus = processorChain.get<chorusIndex>();
     chorus.setRate (0.5f);
     chorus.setDepth (0.5f);
     chorus.setFeedback (0.3f);
@@ -40,8 +26,8 @@ CustomOscillator::CustomOscillator()
 void CustomOscillator::setFrequency (float newValue, bool force)
 {
     float detuneAmount = (juce::Random::getSystemRandom().nextFloat() - 0.5f) * 0.2f; // ±0.1 semitone
-    auto& osc1 = processorChain.template get<osc1Index>();
-    auto& osc2 = processorChain.template get<osc2Index>();
+    auto& osc1 = processorChain.get<osc1Index>();
+    auto& osc2 = processorChain.get<osc2Index>();
     osc1.setFrequency (newValue * std::pow (2.0f, detuneAmount / 12.0f), force);
     osc2.setFrequency (newValue * 1.01f * std::pow (2.0f, detuneAmount / 12.0f), force);
 }
@@ -54,12 +40,12 @@ void CustomOscillator::setVolume (float newValue)
 void CustomOscillator::setFilterCutoff (float newCutoff)
 {
     filterFrequencySmooth.setTargetValue (newCutoff);
-    auto& filter = processorChain.template get<filterIndex>();
+    auto& filter = processorChain.get<filterIndex>();
     filter.setCutoffFrequencyHz (filterFrequencySmooth.getNextValue());
 }
 
 void CustomOscillator::setFilterResonance (float newResonance)
 {
-    auto& filter = processorChain.template get<filterIndex>();
+    auto& filter = processorChain.get<filterIndex>();
     filter.setResonance (newResonance);
 }

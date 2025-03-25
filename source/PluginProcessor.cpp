@@ -47,6 +47,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
     layout.add (make_unique<Parameter> ("filterRelease", "Filter Release", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
     layout.add (make_unique<Parameter> ("filterReleaseCurve", "Filter Release Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
 
+    layout.add (make_unique<Parameter> ("fineTune", "Fine Tune", -0.5f, 0.5f, 0.0f));
+
     return layout;
 }
 

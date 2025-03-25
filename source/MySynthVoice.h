@@ -2,6 +2,9 @@
 
 #include "CustomOscillator.h"
 #include "MyADSR.h"
+#include "MyLFO.h"
+#include "MyParameter.h"
+
 #include <juce_dsp/juce_dsp.h>
 
 class MySynth;
@@ -15,7 +18,7 @@ public:
 class MySynthVoice : public juce::SynthesiserVoice
 {
 public:
-    MySynthVoice (std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr);
+    MySynthVoice (juce::AudioProcessorValueTreeState& p, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr);
 
     bool canPlaySound (juce::SynthesiserSound* sound) override;
     void prepare (double sampleRate, int samplesPerBlock, int numChannels);
@@ -146,6 +149,12 @@ public:
 
 private:
     CustomOscillator osc;
+    juce::AudioProcessorValueTreeState& parameters;
+    ModMatrix modMatrix;
+
+    MyLFO lfo = MyLFO();
+
+    MyParameter fineTuneParam = MyParameter (parameters.getParameter ("fineTune"), -0.5f, 0.5f, 0.0f);
 
     float phase = 0.0f;
     float phaseIncrement = 0.0f;
