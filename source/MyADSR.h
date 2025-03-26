@@ -1,9 +1,11 @@
 #pragma once
 
+#include "Modulation.h"
+
 #include <juce_dsp/juce_dsp.h>
 #include <juce_graphics/juce_graphics.h>
 
-class MyADSR
+class MyADSR : public ModSource
 {
 public:
     enum class State {
@@ -42,13 +44,19 @@ public:
         float attackExponent = 3.0f, decayExponent = 3.0f, releaseExponent = 3.0f;
     };
 
+    MyADSR() = default;
+    explicit MyADSR (const Parameters& parameters) : attackTime (parameters.attack), decayTime (parameters.decay), sustainLevel (parameters.sustain), releaseTime (parameters.release), attackExponent (parameters.attackExponent), decayExponent (parameters.decayExponent), releaseExponent (parameters.releaseExponent)
+    {
+        recalculateRates();
+    }
+
     void setParameters (const Parameters& parameters);
     void noteOn();
     void noteOff();
     void reset();
     void goToNextState();
     void recalculateRates();
-    float getNextSample();
+    float getNextValue() noexcept override;
     void setSampleRate (const double newSampleRate) { sampleRate = static_cast<float> (newSampleRate); }
 
     static float toAttackCurve (const float time, const float exponent)
@@ -79,6 +87,6 @@ private:
     float attackExponent = 3.0f, decayExponent = 3.0f, releaseExponent = 3.0f;
     float attackRate = 0.0f, decayRate = 0.0f, releaseRate = 0.0f;
     float envelopeValue = 0.0f;
-    float sampleRate = 44100.0f;
+    // float sampleRate = 44100.0f;
     float time = 0.0f;
 };

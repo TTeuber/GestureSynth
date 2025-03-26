@@ -87,7 +87,7 @@ void MyADSR::recalculateRates()
     releaseRate = releaseTime > 0.0f ? sustainLevel / (releaseTime * sampleRate) : -1.0f;
 }
 
-float MyADSR::getNextSample()
+float MyADSR::getNextValue() noexcept
 {
     switch (state)
     {

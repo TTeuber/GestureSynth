@@ -153,6 +153,9 @@ private:
     ModMatrix modMatrix;
 
     MyLFO lfo = MyLFO();
+    MyADSR testEnv = MyADSR ({ 0.1f, 0.5f, 0.2f, 0.7f, 1, 1, 1 });
+
+    std::vector<MyADSR*> envs = { &testEnv };
 
     MyParameter fineTuneParam = MyParameter (parameters.getParameter ("fineTune"), -0.5f, 0.5f, 0.0f);
 

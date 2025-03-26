@@ -30,7 +30,11 @@ MySynthVoice::MySynthVoice (juce::AudioProcessorValueTreeState& p, std::shared_p
 
     lfo.setFrequency (4.0f);
 
-    modMatrix.addModulation (&fineTuneParam, lfo, 0.05f, true);
+    for (auto* env : envs)
+        env->setSampleRate (currentSampleRate);
+
+    // modMatrix.addModulation (&fineTuneParam, lfo, 0.05f, true);
+    modMatrix.addModulation (&fineTuneParam, testEnv, 0.05f, false);
 }
 
 bool MySynthVoice::canPlaySound (juce::SynthesiserSound* sound)
@@ -44,6 +48,8 @@ void MySynthVoice::prepare (double sampleRate, int samplesPerBlock, int numChann
     currentSampleRate = static_cast<float> (sampleRate);
     ampADSR.setSampleRate (sampleRate);
     filterADSR.setSampleRate (sampleRate);
+    for (auto* env : envs)
+        env->setSampleRate (sampleRate);
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = numChannels;
@@ -60,6 +66,8 @@ void MySynthVoice::startNote (int midiNoteNumber, float velocity, juce::Synthesi
     *ampADSRPtr = &ampADSR;
     filterADSR.noteOn();
     *filterADSRPtr = &filterADSR;
+    for (auto* env : envs)
+        env->noteOn();
 }
 
 void MySynthVoice::stopNote (float velocity, bool allowTailOff)
@@ -68,11 +76,15 @@ void MySynthVoice::stopNote (float velocity, bool allowTailOff)
     {
         ampADSR.noteOff();
         filterADSR.noteOff();
+        for (auto* env : envs)
+            env->noteOff();
     }
     else
     {
         ampADSR.reset();
         filterADSR.reset();
+        for (auto* env : envs)
+            env->reset();
         clearCurrentNote();
     }
 }
@@ -101,9 +113,9 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int 
     for (int sample = 0; sample < numSamples; ++sample)
     {
         modMatrix.processSample();
-        const float targetEnvVal = ampADSR.getNextSample();
+        const float targetEnvVal = ampADSR.getNextValue();
 
-        const float filterEnvVal = filterADSR.getNextSample();
+        const float filterEnvVal = filterADSR.getNextValue();
         osc.setFilterCutoff (filterCutoff * pow (2, filterEnvVal * filterEnvelopeAmount * 10));
 
         osc.setFrequency (frequency + fineTuneParam.getCurrentValue() * (frequency * std::pow (2, 1 / 12)));

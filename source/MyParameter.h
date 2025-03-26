@@ -8,9 +8,18 @@
 
 #include <juce_audio_utils/juce_audio_utils.h>
 
-class MyParameter : public ModDestination, public juce::AudioProcessorParameter::Listener
+class MyParameter final : public ModDestination, public juce::AudioProcessorParameter::Listener
 {
 public:
+    explicit MyParameter (juce::RangedAudioParameter* p) : parameter (p)
+    {
+        parameter->addListener (this);
+        range = parameter->getNormalisableRange();
+        baseValue = parameter->getDefaultValue();
+        currentValue = baseValue;
+        minValue = range.start;
+        maxValue = range.end;
+    }
     MyParameter (juce::RangedAudioParameter* p, const float min, const float max, const float value)
         : parameter (p),
           baseValue (value),
@@ -19,6 +28,9 @@ public:
           maxValue (max)
     {
         parameter->addListener (this);
+        range.start = min;
+        range.end = max;
+        parameter->setValueNotifyingHost (value);
         range = parameter->getNormalisableRange();
     }
 
@@ -34,7 +46,11 @@ public:
     }
 
     [[nodiscard]] float getBaseValue() const noexcept override { return baseValue; }
-    void setBaseValue (const float value) noexcept override { baseValue = value; }
+    void setBaseValue (const float value) noexcept override
+    {
+        baseValue = value;
+        parameter->setValueNotifyingHost (value);
+    }
     [[nodiscard]] float getCurrentValue() const noexcept override { return currentValue; };
     void setCurrentValue (const float value) noexcept override { currentValue = value; }
     [[nodiscard]] float getMinValue() const noexcept override { return minValue; }
