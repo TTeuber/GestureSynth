@@ -10,31 +10,14 @@ float MySynthVoice::frequencyToPhaseIncrement (const float frequency) const
 MySynthVoice::MySynthVoice (juce::AudioProcessorValueTreeState& p, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr)
     : parameters (p), ampADSRPtr (std::move (ampEnvPtr)), filterADSRPtr (std::move (filterEnvPtr))
 {
-    ampADSR.setSampleRate (currentSampleRate);
-
-    ampEnvParams.attack = 0.1f;
-    ampEnvParams.decay = 0.5f;
-    ampEnvParams.sustain = 0.2f;
-    ampEnvParams.release = 0.7f;
-
-    ampADSR.setParameters (ampEnvParams);
-
-    filterADSR.setSampleRate (currentSampleRate);
-
-    filterEnvParams.attack = 0.1f;
-    filterEnvParams.decay = 0.5f;
-    filterEnvParams.sustain = 0.0f;
-    filterEnvParams.release = 0.5f;
-
-    filterADSR.setParameters (filterEnvParams);
-
     lfo.setFrequency (4.0f);
 
     for (auto* env : envs)
         env->setSampleRate (currentSampleRate);
 
-    // modMatrix.addModulation (&fineTuneParam, lfo, 0.05f, true);
-    modMatrix.addModulation (&fineTuneParam, testEnv, 0.05f, false);
+    modMatrix.addModulation (&fineTuneParam, lfo, 0.05f, true);
+    modMatrix.addModulation (&filterCutoff, ampADSR, 1.0f, false);
+    modMatrix.addModulation (&filterCutoff, lfo, 0.5f, false);
 }
 
 bool MySynthVoice::canPlaySound (juce::SynthesiserSound* sound)
@@ -46,8 +29,6 @@ void MySynthVoice::prepare (double sampleRate, int samplesPerBlock, int numChann
 {
     juce::dsp::ProcessSpec spec {};
     currentSampleRate = static_cast<float> (sampleRate);
-    ampADSR.setSampleRate (sampleRate);
-    filterADSR.setSampleRate (sampleRate);
     for (auto* env : envs)
         env->setSampleRate (sampleRate);
     spec.sampleRate = sampleRate;
@@ -62,27 +43,21 @@ void MySynthVoice::startNote (int midiNoteNumber, float velocity, juce::Synthesi
     frequency = juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber);
     osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)), true);
     this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
-    ampADSR.noteOn();
-    *ampADSRPtr = &ampADSR;
-    filterADSR.noteOn();
-    *filterADSRPtr = &filterADSR;
     for (auto* env : envs)
         env->noteOn();
+    *ampADSRPtr = &ampADSR;
+    *filterADSRPtr = &filterADSR;
 }
 
 void MySynthVoice::stopNote (float velocity, bool allowTailOff)
 {
     if (allowTailOff)
     {
-        ampADSR.noteOff();
-        filterADSR.noteOff();
         for (auto* env : envs)
             env->noteOff();
     }
     else
     {
-        ampADSR.reset();
-        filterADSR.reset();
         for (auto* env : envs)
             env->reset();
         clearCurrentNote();
@@ -106,7 +81,7 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int 
     auto* tempDataR = tempBuffer.getWritePointer (1);
 
     juce::dsp::AudioBlock<float> block (tempBuffer);
-    const juce::dsp::ProcessContextReplacing<float> context (block);
+    const juce::dsp::ProcessContextReplacing context (block);
 
     osc.process (context);
 
@@ -115,8 +90,7 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int 
         modMatrix.processSample();
         const float targetEnvVal = ampADSR.getNextValue();
 
-        const float filterEnvVal = filterADSR.getNextValue();
-        osc.setFilterCutoff (filterCutoff * pow (2, filterEnvVal * filterEnvelopeAmount * 10));
+        osc.setFilterCutoff (filterCutoff.getCurrentValue());
 
         osc.setFrequency (frequency + fineTuneParam.getCurrentValue() * (frequency * std::pow (2, 1 / 12)));
 

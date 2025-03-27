@@ -15,7 +15,7 @@ public:
     {
         parameter->addListener (this);
         range = parameter->getNormalisableRange();
-        baseValue = parameter->getDefaultValue();
+        baseValue = range.convertFrom0to1 (parameter->getDefaultValue());
         currentValue = baseValue;
         minValue = range.start;
         maxValue = range.end;
@@ -28,10 +28,10 @@ public:
           maxValue (max)
     {
         parameter->addListener (this);
+        range = parameter->getNormalisableRange();
         range.start = min;
         range.end = max;
         parameter->setValueNotifyingHost (value);
-        range = parameter->getNormalisableRange();
     }
 
     void parameterValueChanged (int parameterIndex, const float newValue) override
@@ -46,11 +46,7 @@ public:
     }
 
     [[nodiscard]] float getBaseValue() const noexcept override { return baseValue; }
-    void setBaseValue (const float value) noexcept override
-    {
-        baseValue = value;
-        parameter->setValueNotifyingHost (value);
-    }
+    void setBaseValue (const float value) noexcept override { baseValue = value; }
     [[nodiscard]] float getCurrentValue() const noexcept override { return currentValue; };
     void setCurrentValue (const float value) noexcept override { currentValue = value; }
     [[nodiscard]] float getMinValue() const noexcept override { return minValue; }

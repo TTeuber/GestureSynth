@@ -26,9 +26,9 @@ public:
             float decayTimeSeconds,
             float newSustainLevel,
             float releaseTimeSeconds,
-            float attackCurve,
-            float decayCurve,
-            float releaseCurve
+            float attackCurve = 1.0f,
+            float decayCurve = 1.0f,
+            float releaseCurve = 1.0f
             ):
             attack (attackTimeSeconds),
             decay (decayTimeSeconds),
@@ -40,8 +40,8 @@ public:
         // clang-format on
         {
         }
-        float attack = 0.1f, decay = 0.1f, sustain = 1.0f, release = 0.1f;
-        float attackExponent = 3.0f, decayExponent = 3.0f, releaseExponent = 3.0f;
+        float attack = 0.0f, decay = 0.5f, sustain = 1.0f, release = 0.0f;
+        float attackExponent = 1.0f, decayExponent = 1.0f, releaseExponent = 1.0f;
     };
 
     MyADSR() = default;
@@ -82,7 +82,7 @@ public:
 
 private:
     State state = State::Idle;
-    float attackTime = 0.1f, decayTime = 0.1f, sustainLevel = 0.7f, releaseTime = 0.2f;
+    float attackTime = 0.0f, decayTime = 0.5f, sustainLevel = 1.0f, releaseTime = 0.0f;
     float tempSustain = sustainLevel;
     float attackExponent = 3.0f, decayExponent = 3.0f, releaseExponent = 3.0f;
     float attackRate = 0.0f, decayRate = 0.0f, releaseRate = 0.0f;

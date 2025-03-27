@@ -8,14 +8,14 @@
 #include <juce_dsp/juce_dsp.h>
 
 class MySynth;
-class MySynthSound : public juce::SynthesiserSound
+class MySynthSound final : public juce::SynthesiserSound
 {
 public:
     bool appliesToNote (int midiNoteNumber) override { return true; }
     bool appliesToChannel (int /*midiChannel*/) override { return true; }
 };
 
-class MySynthVoice : public juce::SynthesiserVoice
+class MySynthVoice final : public juce::SynthesiserVoice
 {
 public:
     MySynthVoice (juce::AudioProcessorValueTreeState& p, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr);
@@ -47,9 +47,9 @@ public:
 
     void setFilterCutoff (const float newFilterCutoff)
     {
-        filterCutoff = newFilterCutoff;
-        if (!filterEnvelopeActive)
-            osc.setFilterCutoff (newFilterCutoff);
+        filterCutoff.setBaseValue (newFilterCutoff);
+        // if (!filterEnvelopeActive)
+        osc.setFilterCutoff (newFilterCutoff);
     }
 
     void setFilterEnvelopeAmount (const float newFilterEnvelopeAmount)
@@ -153,9 +153,7 @@ private:
     ModMatrix modMatrix;
 
     MyLFO lfo = MyLFO();
-    MyADSR testEnv = MyADSR ({ 0.1f, 0.5f, 0.2f, 0.7f, 1, 1, 1 });
-
-    std::vector<MyADSR*> envs = { &testEnv };
+    MyADSR testEnv = MyADSR ({ 0.1f, 0.5f, 0.2f, 0.7f });
 
     MyParameter fineTuneParam = MyParameter (parameters.getParameter ("fineTune"), -0.5f, 0.5f, 0.0f);
 
@@ -172,17 +170,21 @@ private:
     float volume = 1.0f;
     float velocity = 0.0f;
 
-    float filterCutoff = 0.0f;
-    bool filterEnvelopeActive = true;
+    // float filterCutoff = 0.0f;
+    // MyParameter filterCutoff = MyParameter (parameters.getParameter ("filterFrequency"), 20.0f, 20000.0f, 2000.0f);
+    MyParameter filterCutoff = MyParameter (parameters.getParameter ("filterFrequency"));
+    // bool filterEnvelopeActive = true;
     float filterEnvelopeAmount = 0.0f;
     float filterResonance = 0.0f;
 
-    MyADSR ampADSR;
+    MyADSR ampADSR = MyADSR ({ 0.1f, 0.5f, 0.2f, 0.7f });
     std::shared_ptr<MyADSR*> ampADSRPtr;
 
-    MyADSR filterADSR;
+    MyADSR filterADSR = MyADSR ({ 0.1f, 0.5f, 0.0f, 0.5f });
     std::shared_ptr<MyADSR*> filterADSRPtr;
 
     MyADSR::Parameters ampEnvParams = { 0.1f, 0.5f, 0.2f, 0.7f, 1, 1, 1 };
     MyADSR::Parameters filterEnvParams = { 0.1f, 0.5f, 0.0f, 0.5f, 1, 1, 1 };
+
+    std::vector<MyADSR*> envs = { &testEnv, &ampADSR, &filterADSR };
 };
