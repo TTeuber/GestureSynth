@@ -13,8 +13,17 @@ PluginProcessor::PluginProcessor()
               .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
 #endif
               ),
-      synth (parameters)
+      synth (parameters, modTree)
 {
+    for (size_t i = 0; i < modList.size(); i++)
+    {
+        juce::ValueTree childNode (juce::String ("modulation" + i));
+        childNode.setProperty ("source", std::get<0> (modList[i]), nullptr);
+        childNode.setProperty ("depth", std::get<1> (modList[i]), nullptr);
+        childNode.setProperty ("destination", std::get<2> (modList[i]), nullptr);
+        childNode.setProperty ("isBipolar", std::get<3> (modList[i]), nullptr);
+        modTree.appendChild (childNode, nullptr);
+    }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayout()
@@ -32,7 +41,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
     layout.add (make_unique<Parameter> ("filterResonance", "Filter Resonance", 0.0f, 1.0f, 0.5f));
 
     layout.add (make_unique<Parameter> ("ampAttack", "Amp Attack", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.0f));
-    layout.add (make_unique<Parameter> ("ampAttackCurve", "Amp Attack Curve", Normalize (0.1f, 10.0f, 0.001, 0.3f), 1.0f));
+    layout.add (make_unique<Parameter> ("ampAttackCurve", "Amp Attack Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
     layout.add (make_unique<Parameter> ("ampDecay", "Amp Decay", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
     layout.add (make_unique<Parameter> ("ampDecayCurve", "Amp Decay Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
     layout.add (make_unique<Parameter> ("ampSustain", "Amp Sustain", 0.0f, 1.0f, 0.5f));
@@ -122,7 +131,7 @@ void PluginProcessor::changeProgramName (int index, const juce::String& newName)
 //==============================================================================
 void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (getMainBusNumOutputChannels()) };
+    // juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (getMainBusNumOutputChannels()) };
 
     synth.setCurrentPlaybackSampleRate (sampleRate);
     for (int i = 0; i < synth.getNumVoices(); ++i)

@@ -98,8 +98,8 @@ void ADSRGraph::resized()
 
 void ADSRGraph::paint (juce::Graphics& g)
 {
-    g.fillAll (juce::Colour::fromRGB (30, 35, 35));
-    g.setColour (juce::Colour::fromRGB (200, 200, 200));
+    g.fillAll (SECONDARY_COLOR);
+    g.setColour (TEXT_COLOR);
 
     attackX = attackTime / durationWidth * width - xOffset;
     attackPoint = { attackX, 0 };

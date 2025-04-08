@@ -4,11 +4,10 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
-
 class MySynth final : public juce::Synthesiser
 {
 public:
-    explicit MySynth (juce::AudioProcessorValueTreeState& p);
+    explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt);
     static void updateParameter (float& currentValue, float newValue, const std::function<void (float)>& setterFunction);
 
     float getVolume() const { return masterVolume; }
@@ -28,6 +27,7 @@ public:
 
 private:
     juce::AudioProcessorValueTreeState& parameters;
+    juce::ValueTree& modTree;
 
     float masterVolume = 0.0f;
     float filterCutoff = 0.0f;

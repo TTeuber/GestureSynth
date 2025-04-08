@@ -5,7 +5,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <juce_graphics/juce_graphics.h>
 
-class MyADSR : public ModSource
+class MyADSR final : public ModSource
 {
 public:
     enum class State {
@@ -44,8 +44,16 @@ public:
         float attackExponent = 1.0f, decayExponent = 1.0f, releaseExponent = 1.0f;
     };
 
-    MyADSR() = default;
-    explicit MyADSR (const Parameters& parameters) : attackTime (parameters.attack), decayTime (parameters.decay), sustainLevel (parameters.sustain), releaseTime (parameters.release), attackExponent (parameters.attackExponent), decayExponent (parameters.decayExponent), releaseExponent (parameters.releaseExponent)
+    MyADSR (juce::StringRef i, juce::StringRef n) : ModSource (i, n) {}
+    MyADSR (juce::StringRef i, juce::StringRef n, const Parameters& parameters)
+        : ModSource (i, n),
+          attackTime (parameters.attack),
+          decayTime (parameters.decay),
+          sustainLevel (parameters.sustain),
+          releaseTime (parameters.release),
+          attackExponent (parameters.attackExponent),
+          decayExponent (parameters.decayExponent),
+          releaseExponent (parameters.releaseExponent)
     {
         recalculateRates();
     }
@@ -56,6 +64,7 @@ public:
     void reset();
     void goToNextState();
     void recalculateRates();
+    float getCurrentValue() const noexcept { return envelopeValue; }
     float getNextValue() noexcept override;
     void setSampleRate (const double newSampleRate) { sampleRate = static_cast<float> (newSampleRate); }
 

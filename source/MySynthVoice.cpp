@@ -1,5 +1,7 @@
 #include "MySynthVoice.h"
 
+#include "juce_graphics/fonts/harfbuzz/hb-cplusplus.hh"
+
 #include <utility>
 
 float MySynthVoice::frequencyToPhaseIncrement (const float frequency) const
@@ -7,17 +9,55 @@ float MySynthVoice::frequencyToPhaseIncrement (const float frequency) const
     return 2.0f * juce::MathConstants<float>::pi * frequency / currentSampleRate;
 }
 
-MySynthVoice::MySynthVoice (juce::AudioProcessorValueTreeState& p, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr)
-    : parameters (p), ampADSRPtr (std::move (ampEnvPtr)), filterADSRPtr (std::move (filterEnvPtr))
+MySynthVoice::MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr)
+    : parameters (p), modTree (mt), ampADSRPtr (std::move (ampEnvPtr)), filterADSRPtr (std::move (filterEnvPtr))
 {
-    lfo.setFrequency (4.0f);
+    modTree.addListener (this);
 
     for (auto* env : envs)
         env->setSampleRate (currentSampleRate);
 
-    modMatrix.addModulation (&fineTuneParam, lfo, 0.05f, true);
-    modMatrix.addModulation (&filterCutoff, ampADSR, 1.0f, false);
-    modMatrix.addModulation (&filterCutoff, lfo, 0.5f, false);
+    lfo.setFrequency (7.0f);
+}
+
+void MySynthVoice::addNodeToMatrix (const juce::ValueTree& childNode)
+{
+    std::shared_ptr<ModSource> source = modSources[childNode.getProperty ("source").toString()];
+    ModDestination* destination = modDestinations[childNode.getProperty ("destination").toString()];
+    float depth = childNode.getProperty ("depth");
+    bool isBipolar = childNode.getProperty ("isBipolar");
+    modMatrix.addModulation (destination, source, depth, isBipolar);
+}
+
+void MySynthVoice::valueTreeChildAdded (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
+{
+    addNodeToMatrix (childWhichHasBeenAdded);
+}
+
+void MySynthVoice::valueTreeChildRemoved (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved)
+{
+    std::shared_ptr<ModSource> source = modSources[childWhichHasBeenRemoved.getProperty ("source").toString()];
+    ModDestination* destination = modDestinations[childWhichHasBeenRemoved.getProperty ("destination").toString()];
+    modMatrix.removeModulation (source, destination);
+}
+
+void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
+{
+    const juce::StringRef sourceId = treeWhosePropertyHasChanged.getProperty ("source").toString();
+    const juce::StringRef destinationId = treeWhosePropertyHasChanged.getProperty ("destination").toString();
+    const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
+
+    auto source = modSources[sourceId];
+    auto destination = modDestinations[destinationId];
+    if (property.toString() == "depth")
+    {
+        modMatrix.updateModulation (source, destination, depth);
+    }
+    else if (property.toString() == "source" || property.toString() == "destination")
+    {
+        modMatrix.removeModulation (source, destination);
+        modMatrix.addModulation (destination, source, depth, false);
+    }
 }
 
 bool MySynthVoice::canPlaySound (juce::SynthesiserSound* sound)
@@ -40,7 +80,7 @@ void MySynthVoice::prepare (double sampleRate, int samplesPerBlock, int numChann
 }
 void MySynthVoice::startNote (int midiNoteNumber, float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
-    frequency = juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber);
+    frequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
     osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)), true);
     this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
     for (auto* env : envs)
@@ -85,14 +125,15 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int 
 
     osc.process (context);
 
+    osc.setFilterCutoff (filterCutoff.getCurrentValue());
+
+    osc.setFrequency (frequency + fineTuneParam.getCurrentValue() * (frequency * std::pow (2, 1 / 12)));
+
     for (int sample = 0; sample < numSamples; ++sample)
     {
         modMatrix.processSample();
+
         const float targetEnvVal = ampADSR.getNextValue();
-
-        osc.setFilterCutoff (filterCutoff.getCurrentValue());
-
-        osc.setFrequency (frequency + fineTuneParam.getCurrentValue() * (frequency * std::pow (2, 1 / 12)));
 
         if (currentEnvVal < targetEnvVal)
             currentEnvVal = juce::jmin (currentEnvVal + slewRate, targetEnvVal);

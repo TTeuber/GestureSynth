@@ -1,11 +1,16 @@
 #include "PluginEditor.h"
 
 PluginEditor::PluginEditor (PluginProcessor& p)
-    : AudioProcessorEditor (&p), processorRef (p), keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
+    : AudioProcessorEditor (&p),
+      processorRef (p),
+      keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard),
+      matrixComponent (p.modTree)
 {
     processorRef.keyboardState.addListener (this);
 
     addAndMakeVisible (keyboardComponent);
+
+    addAndMakeVisible (matrixComponent);
 
     addAndMakeVisible (volumeDial);
     addAndMakeVisible (filterFrequencyDial);
@@ -38,24 +43,27 @@ PluginEditor::~PluginEditor()
 
 void PluginEditor::paint (juce::Graphics& g)
 {
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+    g.fillAll (PRIMARY_COLOR);
 
-    g.setColour (juce::Colours::white);
+    g.setColour (TEXT_COLOR);
     g.setFont (16.0f);
 }
 
 void PluginEditor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-    area.removeFromBottom (50);
-    keyboardComponent.setBounds (10, getHeight() - 80, getWidth() - 20, 70);
+    juce::Rectangle<int> keyboardContainer = area.removeFromBottom (100);
+    keyboardComponent.setBounds (keyboardContainer.reduced (10));
+
+    juce::Rectangle<int> matrixContainer = area.removeFromRight (300);
+    matrixComponent.setBounds (matrixContainer.reduced (10));
 
     const int containerHeight = area.getHeight() / 8;
 
     juce::Rectangle<int> basicContainer = area.removeFromTop (containerHeight);
     const int sectionAWidth = basicContainer.getWidth() / 4;
 
-    juce::Rectangle<int> ampADSRContainer = area.removeFromTop (containerHeight * 1.5);
+    const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (containerHeight * 1.5);
     ampADSRGraph.setBounds (ampADSRContainer.reduced (10));
 
     juce::Rectangle<int> ampDialContainer = area.removeFromTop (containerHeight);

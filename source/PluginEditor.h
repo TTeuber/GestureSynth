@@ -1,12 +1,14 @@
 #pragma once
 
 #include "ADSRGraph.h"
+#include "MatrixComponent.h"
 #include "ParameterDial.h"
 #include "PluginProcessor.h"
+#include "Theme.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 
-#define HEIGHT 800;
-#define WIDTH 1000;
+#define HEIGHT 800
+#define WIDTH 1000
 
 //==============================================================================
 class PluginEditor final : public juce::AudioProcessorEditor, public juce::MidiKeyboardStateListener
@@ -26,6 +28,8 @@ private:
     PluginProcessor& processorRef;
 
     juce::MidiKeyboardComponent keyboardComponent;
+
+    MatrixComponent matrixComponent;
 
     ParameterDial volumeDial = { processorRef, "volume", "Volume" };
     ParameterDial ampAttackDial = { processorRef, "ampAttack", "Amp Attack" };

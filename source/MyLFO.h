@@ -6,13 +6,19 @@
 #include "MyOscillator.h"
 #include <juce_dsp/juce_dsp.h>
 
-class MyLFO : public MyOscillator, public ModSource
+class MyLFO final : public MyOscillator, public ModSource
 {
 public:
-    explicit MyLFO (const Waveform wave = Sine) : MyOscillator (wave) {}
+    MyLFO (const juce::StringRef i, const juce::StringRef n, const float f, const Waveform wave = Sine) : MyOscillator (wave), ModSource (i, n), wave (wave)
+    {
+        setFrequency (f);
+    }
+    MyLFO (const MyLFO& other) : MyOscillator (other.wave), ModSource (other), wave (other.wave) {}
+    ~MyLFO() override = default;
 
     float getNextValue() noexcept override
     {
-        return this->processSample (0.0f);
+        return processSample (0.0f);
     }
+    Waveform wave;
 };

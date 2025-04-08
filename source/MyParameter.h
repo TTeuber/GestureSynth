@@ -11,7 +11,9 @@
 class MyParameter final : public ModDestination, public juce::AudioProcessorParameter::Listener
 {
 public:
-    explicit MyParameter (juce::RangedAudioParameter* p) : parameter (p)
+    explicit MyParameter (juce::RangedAudioParameter* p)
+        : ModDestination (p->getParameterID(), p->getName (20)),
+          parameter (p)
     {
         parameter->addListener (this);
         range = parameter->getNormalisableRange();
@@ -19,9 +21,12 @@ public:
         currentValue = baseValue;
         minValue = range.start;
         maxValue = range.end;
+        id = parameter->getParameterID();
+        name = parameter->getName (20);
     }
     MyParameter (juce::RangedAudioParameter* p, const float min, const float max, const float value)
-        : parameter (p),
+        : ModDestination (p->getParameterID(), p->getName (20)),
+          parameter (p),
           baseValue (value),
           currentValue (value),
           minValue (min),
@@ -32,14 +37,21 @@ public:
         range.start = min;
         range.end = max;
         parameter->setValueNotifyingHost (value);
+        id = parameter->getParameterID();
+        name = parameter->getName (20);
     }
 
-    void parameterValueChanged (int parameterIndex, const float newValue) override
+    ~MyParameter() override
+    {
+        parameter->removeListener (this);
+    }
+
+    void parameterValueChanged (int /*parameterIndex*/, const float newValue) override
     {
         baseValue = newValue;
     }
 
-    void parameterGestureChanged (int parameterIndex, bool gestureIsStarting) override
+    void parameterGestureChanged (int /*parameterIndex*/, bool gestureIsStarting) override
     {
         if (gestureIsStarting)
             baseValue = currentValue;
@@ -47,7 +59,7 @@ public:
 
     [[nodiscard]] float getBaseValue() const noexcept override { return baseValue; }
     void setBaseValue (const float value) noexcept override { baseValue = value; }
-    [[nodiscard]] float getCurrentValue() const noexcept override { return currentValue; };
+    [[nodiscard]] float getCurrentValue() const noexcept override { return currentValue; }
     void setCurrentValue (const float value) noexcept override { currentValue = value; }
     [[nodiscard]] float getMinValue() const noexcept override { return minValue; }
     [[nodiscard]] float getMaxValue() const noexcept override { return maxValue; }
@@ -56,6 +68,8 @@ public:
 private:
     juce::RangedAudioParameter* parameter;
 
+    juce::String id;
+    juce::String name;
     float baseValue;
     float currentValue;
     float minValue;

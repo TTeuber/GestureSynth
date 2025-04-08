@@ -25,7 +25,7 @@ CustomOscillator::CustomOscillator()
 }
 void CustomOscillator::setFrequency (float newValue, bool force)
 {
-    float detuneAmount = (juce::Random::getSystemRandom().nextFloat() - 0.5f) * 0.2f; // ±0.1 semitone
+    const float detuneAmount = (juce::Random::getSystemRandom().nextFloat() - 0.5f) * 0.2f; // ±0.1 semitone
     auto& osc1 = processorChain.get<osc1Index>();
     auto& osc2 = processorChain.get<osc2Index>();
     osc1.setFrequency (newValue * std::pow (2.0f, detuneAmount / 12.0f), force);

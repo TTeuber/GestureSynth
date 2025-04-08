@@ -1,10 +1,10 @@
 #include "MySynth.h"
 
-MySynth::MySynth (juce::AudioProcessorValueTreeState& p) : parameters (p)
+MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt) : parameters (p), modTree (mt)
 {
     clearVoices();
     for (int i = 0; i < 8; ++i)
-        addVoice (new MySynthVoice (parameters, ampEnvPtr, filterEnvPtr));
+        addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, filterEnvPtr));
 
     clearSounds();
     addSound (new MySynthSound());

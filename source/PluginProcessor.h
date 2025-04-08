@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Modulation.h"
 #include "MySynth.h"
 #include "juce_dsp/juce_dsp.h"
 #include <functional>
@@ -9,7 +10,7 @@
     #include "ipps.h"
 #endif
 
-class PluginProcessor : public juce::AudioProcessor
+class PluginProcessor final : public juce::AudioProcessor
 {
 public:
     PluginProcessor();
@@ -48,14 +49,22 @@ public:
     juce::MidiKeyboardState keyboardState;
     juce::AudioProcessorValueTreeState parameters { *this, nullptr, "parameters", createLayout() };
 
+    juce::ValueTree modTree { "modTree" };
+
+    using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;
+    ModList modList = {
+        { "filterADSR", 0.5f, "filterFrequency", false },
+        { "lfo1", 0.5f, "fineTune", true },
+        // { "ampADSR", 0.2f, "filterFrequency", false },
+        // { "lfo1", 0.1, "fineTune", false }
+    };
+
     MySynth& getSynth() { return synth; }
 
 private:
     juce::MidiBuffer midiBuffer;
 
     MySynth synth;
-
-    std::vector<std::function<void()>> functions = {};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };
