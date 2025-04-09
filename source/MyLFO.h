@@ -18,7 +18,9 @@ public:
 
     float getNextValue() noexcept override
     {
-        return processSample (0.0f);
+        auto val = processSample (0.0f);
+        DBG (val);
+        return val;
     }
     Waveform wave;
 };

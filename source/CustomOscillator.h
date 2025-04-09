@@ -14,8 +14,8 @@ public:
     void setFilterCutoff (float newCutoff);
     void setFilterResonance (float newResonance);
 
-    void setChorusRate (float newRate) { processorChain.get<chorusIndex>().setRate (newRate); }
-    void setChorusDepth (float newDepth) { processorChain.get<chorusIndex>().setDepth (newDepth); }
+    void setChorusRate (const float newRate) { processorChain.get<chorusIndex>().setRate (newRate); }
+    void setChorusDepth (const float newDepth) { processorChain.get<chorusIndex>().setDepth (newDepth); }
 
     void prepare (const juce::dsp::ProcessSpec& spec) { processorChain.prepare (spec); }
     void reset() noexcept { processorChain.reset(); }

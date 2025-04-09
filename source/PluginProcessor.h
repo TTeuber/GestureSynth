@@ -44,7 +44,7 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    static juce::AudioProcessorValueTreeState::ParameterLayout createLayout();
+    juce::AudioProcessorValueTreeState::ParameterLayout createLayout() const;
 
     juce::MidiKeyboardState keyboardState;
     juce::AudioProcessorValueTreeState parameters { *this, nullptr, "parameters", createLayout() };
@@ -53,10 +53,17 @@ public:
 
     using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;
     ModList modList = {
-        { "filterADSR", 0.5f, "filterFrequency", false },
-        { "lfo1", 0.5f, "fineTune", true },
+        // { "filterADSR", 0.5f, "filterFrequency", false },
+        // { "lfo1", 0.5f, "fineTune", true },
         // { "ampADSR", 0.2f, "filterFrequency", false },
         // { "lfo1", 0.1, "fineTune", false }
+    };
+
+    std::vector<std::tuple<juce::String, juce::String>> envs = {
+        { "adsr1", "Envelope 1" },
+        // { "adsr2", "Envelope 2" },
+        // { "adsr3", "Envelope 3" },
+        // { "adsr4", "Envelope 4" }
     };
 
     MySynth& getSynth() { return synth; }

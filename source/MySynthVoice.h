@@ -16,11 +16,13 @@ public:
     bool appliesToChannel (int /*midiChannel*/) override { return true; }
 };
 
-class MySynthVoice final : public juce::SynthesiserVoice, public juce::ValueTree::Listener
+class MySynthVoice final : public juce::SynthesiserVoice, public juce::ValueTree::Listener, juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<MyADSR*> filterEnvPtr);
+    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr);
     void addNodeToMatrix (const juce::ValueTree& childNode);
+
+    void parameterChanged (const juce::String& parameterID, float newValue) override;
 
     void valueTreeChildAdded (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded) override;
     void valueTreeChildRemoved (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved) override;
@@ -30,7 +32,6 @@ public:
     void prepare (double sampleRate, int samplesPerBlock, int numChannels);
 
     void startNote (int midiNoteNumber, float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition) override;
-
     void stopNote (float velocity, bool allowTailOff) override;
 
     void pitchWheelMoved (int) override {}
@@ -40,116 +41,23 @@ public:
 
     [[nodiscard]] float frequencyToPhaseIncrement (float frequency) const;
 
-    std::shared_ptr<MyADSR*> getAmpPtr() { return ampADSRPtr; }
-    std::shared_ptr<MyADSR*> getFilterPtr() { return filterADSRPtr; }
+    std::shared_ptr<MyADSR*> getEnvPtr() { return env1ptr; }
 
     [[nodiscard]] float getVolume() const { return volume; }
-
     void setVolume (const float newVolume)
     {
         volume = newVolume;
         osc.setVolume (newVolume);
     }
-
     void setFilterCutoff (const float newFilterCutoff)
     {
         filterCutoff.setBaseValue (newFilterCutoff);
         osc.setFilterCutoff (newFilterCutoff);
     }
-
-    void setFilterEnvelopeAmount (const float newFilterEnvelopeAmount)
-    {
-        // filterEnvelopeAmount = newFilterEnvelopeAmount;
-    }
-
     void setFilterResonance (const float newFilterResonance)
     {
         filterResonance.setBaseValue (newFilterResonance);
         osc.setFilterResonance (newFilterResonance);
-    }
-
-    void setAmpAttack (const float newAttack)
-    {
-        ampEnvParams.attack = newAttack;
-        ampADSR.setParameters (ampEnvParams);
-    }
-
-    void setAmpAttackCurve (const float newCurve)
-    {
-        ampEnvParams.attackExponent = newCurve;
-        ampADSR.setParameters (ampEnvParams);
-    }
-
-    void setAmpDecay (const float newDecay)
-    {
-        ampEnvParams.decay = newDecay;
-        ampADSR.setParameters (ampEnvParams);
-    }
-
-    void setAmpDecayCurve (const float newCurve)
-    {
-        ampEnvParams.decayExponent = newCurve;
-        ampADSR.setParameters (ampEnvParams);
-    }
-
-    void setAmpSustain (const float newSustain)
-    {
-        ampEnvParams.sustain = newSustain;
-        ampADSR.setParameters (ampEnvParams);
-    }
-
-    void setAmpRelease (const float newRelease)
-    {
-        ampEnvParams.release = newRelease;
-        ampADSR.setParameters (ampEnvParams);
-    }
-
-    void setAmpReleaseCurve (const float newCurve)
-    {
-        ampEnvParams.releaseExponent = newCurve;
-        ampADSR.setParameters (ampEnvParams);
-    }
-
-    void setFilterAttack (const float newAttack)
-    {
-        filterEnvParams.attack = newAttack;
-        filterADSR.setParameters (filterEnvParams);
-    }
-
-    void setFilterAttackCurve (const float newCurve)
-    {
-        filterEnvParams.attackExponent = newCurve;
-        filterADSR.setParameters (filterEnvParams);
-    }
-
-    void setFilterDecay (const float newDecay)
-    {
-        filterEnvParams.decay = newDecay;
-        filterADSR.setParameters (filterEnvParams);
-    }
-
-    void setFilterDecayCurve (const float newCurve)
-    {
-        filterEnvParams.decayExponent = newCurve;
-        filterADSR.setParameters (filterEnvParams);
-    }
-
-    void setFilterSustain (const float newSustain)
-    {
-        filterEnvParams.sustain = newSustain;
-        filterADSR.setParameters (filterEnvParams);
-    }
-
-    void setFilterRelease (const float newRelease)
-    {
-        filterEnvParams.release = newRelease;
-        filterADSR.setParameters (filterEnvParams);
-    }
-
-    void setFilterReleaseCurve (const float newCurve)
-    {
-        filterEnvParams.releaseExponent = newCurve;
-        filterADSR.setParameters (filterEnvParams);
     }
 
 private:
@@ -158,9 +66,9 @@ private:
     juce::ValueTree& modTree;
     ModMatrix modMatrix;
 
-    MyLFO lfo = MyLFO ("lfo1", "LFO 1", 1.0f);
+    MyLFO lfo1 = MyLFO ("lfo1", "LFO 1", 1.0f);
 
-    MyParameter fineTuneParam = MyParameter (parameters.getParameter ("fineTune"), -0.5f, 0.5f, 0.0f);
+    DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
 
     float frequency = 0.0f;
     float currentSampleRate = 48000.0f;
@@ -171,25 +79,19 @@ private:
     float volume = 1.0f;
     float velocity = 0.0f;
 
-    MyParameter filterCutoff = MyParameter (parameters.getParameter ("filterFrequency"));
-    // float filterEnvelopeAmount = 0.0f;
-    MyParameter filterResonance = MyParameter (parameters.getParameter ("filterResonance"));
+    DynamicParameter filterCutoff = DynamicParameter (parameters.getParameter ("filterFrequency"));
+    DynamicParameter filterResonance = DynamicParameter (parameters.getParameter ("filterResonance"));
 
-    MyADSR ampADSR = MyADSR ("ampADSR", "Amp Envelope", { 0.0f, 0.5f, 0.2f, 0.7f });
-    std::shared_ptr<MyADSR*> ampADSRPtr;
+    MyADSR adsr1 = MyADSR (parameters, 1);
+    std::shared_ptr<MyADSR*> env1ptr;
 
-    MyADSR filterADSR = MyADSR ("filterADSR", "Filter Envelope", { 0.1f, 0.5f, 0.0f, 0.5f });
-    std::shared_ptr<MyADSR*> filterADSRPtr;
+    // MyADSR::Parameters env1Params = { 0.0f, 0.5f, 1.0f, 0.7f, 1, 1, 1 };
 
-    MyADSR::Parameters ampEnvParams = { 0.0f, 0.5f, 1.0f, 0.7f, 1, 1, 1 };
-    MyADSR::Parameters filterEnvParams = { 0.1f, 0.5f, 0.0f, 0.5f, 1, 1, 1 };
-
-    std::vector<MyADSR*> envs = { &ampADSR, &filterADSR };
+    std::vector<MyADSR*> envs = { &adsr1 };
 
     std::map<juce::String, std::shared_ptr<ModSource>> modSources = {
-        { lfo.getID(), std::shared_ptr<MyLFO> (&lfo) },
-        { ampADSR.getID(), std::shared_ptr<MyADSR> (&ampADSR) },
-        { filterADSR.getID(), std::shared_ptr<MyADSR> (&filterADSR) }
+        { lfo1.getID(), std::shared_ptr<MyLFO> (&lfo1) },
+        { adsr1.getID(), std::shared_ptr<MyADSR> (&adsr1) },
     };
 
     std::map<juce::String, ModDestination*> modDestinations = {

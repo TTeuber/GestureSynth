@@ -13,25 +13,16 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (matrixComponent);
 
     addAndMakeVisible (volumeDial);
-    addAndMakeVisible (filterFrequencyDial);
-    addAndMakeVisible (filterEnvelopeAmountDial);
-    addAndMakeVisible (filterResonanceDial);
 
-    addAndMakeVisible (ampAttackDial);
-    addAndMakeVisible (ampAttackCurveDial);
-    addAndMakeVisible (ampDecayDial);
-    addAndMakeVisible (ampDecayCurveDial);
-    addAndMakeVisible (ampSustainDial);
-    addAndMakeVisible (ampReleaseDial);
-    addAndMakeVisible (ampReleaseCurveDial);
-
-    addAndMakeVisible (filterAttackDial);
-    addAndMakeVisible (filterDecayDial);
-    addAndMakeVisible (filterSustainDial);
-    addAndMakeVisible (filterReleaseDial);
+    addAndMakeVisible (env1AttackDial);
+    addAndMakeVisible (env1AttackCurveDial);
+    addAndMakeVisible (env1DecayDial);
+    addAndMakeVisible (env1DecayCurveDial);
+    addAndMakeVisible (env1SustainDial);
+    addAndMakeVisible (env1ReleaseDial);
+    addAndMakeVisible (env1ReleaseCurveDial);
 
     addAndMakeVisible (ampADSRGraph);
-    addAndMakeVisible (filterADSRGraph);
 
     setSize (windowWidth, windowHeight);
 }
@@ -52,10 +43,10 @@ void PluginEditor::paint (juce::Graphics& g)
 void PluginEditor::resized()
 {
     juce::Rectangle<int> area = getLocalBounds();
-    juce::Rectangle<int> keyboardContainer = area.removeFromBottom (100);
+    const juce::Rectangle<int> keyboardContainer = area.removeFromBottom (100);
     keyboardComponent.setBounds (keyboardContainer.reduced (10));
 
-    juce::Rectangle<int> matrixContainer = area.removeFromRight (300);
+    const juce::Rectangle<int> matrixContainer = area.removeFromRight (300);
     matrixComponent.setBounds (matrixContainer.reduced (10));
 
     const int containerHeight = area.getHeight() / 8;
@@ -63,7 +54,7 @@ void PluginEditor::resized()
     juce::Rectangle<int> basicContainer = area.removeFromTop (containerHeight);
     const int sectionAWidth = basicContainer.getWidth() / 4;
 
-    const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (containerHeight * 1.5);
+    const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (static_cast<int> (containerHeight * 1.5));
     ampADSRGraph.setBounds (ampADSRContainer.reduced (10));
 
     juce::Rectangle<int> ampDialContainer = area.removeFromTop (containerHeight);
@@ -72,40 +63,26 @@ void PluginEditor::resized()
     juce::Rectangle<int> ampCurveDialContainer = area.removeFromTop (containerHeight);
     const int sectionDWidth = ampCurveDialContainer.getWidth() / 3;
 
-    juce::Rectangle<int> filterADSRContainer = area.removeFromTop (containerHeight * 1.5);
-    filterADSRGraph.setBounds (filterADSRContainer.reduced (10));
-
-    juce::Rectangle<int> filterDialContainer = area.removeFromTop (containerHeight);
-    const int sectionCWidth = filterDialContainer.getWidth() / 4;
-
     volumeDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
-    filterFrequencyDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
-    filterEnvelopeAmountDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
-    filterResonanceDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
 
-    ampAttackDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
-    ampDecayDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
-    ampSustainDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
-    ampReleaseDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
+    env1AttackDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
+    env1DecayDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
+    env1SustainDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
+    env1ReleaseDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
 
-    ampAttackCurveDial.setBounds (ampCurveDialContainer.removeFromLeft (sectionDWidth));
-    ampDecayCurveDial.setBounds (ampCurveDialContainer.removeFromLeft (sectionDWidth));
-    ampReleaseCurveDial.setBounds (ampCurveDialContainer.removeFromLeft (sectionDWidth));
-
-    filterAttackDial.setBounds (filterDialContainer.removeFromLeft (sectionCWidth));
-    filterDecayDial.setBounds (filterDialContainer.removeFromLeft (sectionCWidth));
-    filterSustainDial.setBounds (filterDialContainer.removeFromLeft (sectionCWidth));
-    filterReleaseDial.setBounds (filterDialContainer.removeFromLeft (sectionCWidth));
+    env1AttackCurveDial.setBounds (ampCurveDialContainer.removeFromLeft (sectionDWidth));
+    env1DecayCurveDial.setBounds (ampCurveDialContainer.removeFromLeft (sectionDWidth));
+    env1ReleaseCurveDial.setBounds (ampCurveDialContainer.removeFromLeft (sectionDWidth));
 }
 
 void PluginEditor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)
 {
-    juce::MidiMessage message = juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity);
+    const juce::MidiMessage message = juce::MidiMessage::noteOn (midiChannel, midiNoteNumber, velocity);
     processorRef.getMidiMessages().addEvent (message, 0);
 }
 
 void PluginEditor::handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float)
 {
-    juce::MidiMessage message = juce::MidiMessage::noteOff (midiChannel, midiNoteNumber);
+    const juce::MidiMessage message = juce::MidiMessage::noteOff (midiChannel, midiNoteNumber);
     processorRef.getMidiMessages().addEvent (message, 0);
 }

@@ -32,23 +32,15 @@ private:
     MatrixComponent matrixComponent;
 
     ParameterDial volumeDial = { processorRef, "volume", "Volume" };
-    ParameterDial ampAttackDial = { processorRef, "ampAttack", "Amp Attack" };
-    ParameterDial ampAttackCurveDial = { processorRef, "ampAttackCurve", "Amp Attack Curve" };
-    ParameterDial ampDecayDial = { processorRef, "ampDecay", "Amp Decay" };
-    ParameterDial ampDecayCurveDial = { processorRef, "ampDecayCurve", "Amp Decay Curve" };
-    ParameterDial ampSustainDial = { processorRef, "ampSustain", "Amp Sustain" };
-    ParameterDial ampReleaseDial = { processorRef, "ampRelease", "Amp Release" };
-    ParameterDial ampReleaseCurveDial = { processorRef, "ampReleaseCurve", "Amp Release Curve" };
-    ParameterDial filterFrequencyDial = { processorRef, "filterFrequency", "Filter Frequency" };
-    ParameterDial filterEnvelopeAmountDial = { processorRef, "filterEnvelopeAmount", "Filter Envelope Amount" };
-    ParameterDial filterResonanceDial = { processorRef, "filterResonance", "Filter Resonance" };
-    ParameterDial filterAttackDial = { processorRef, "filterAttack", "Filter Attack" };
-    ParameterDial filterDecayDial = { processorRef, "filterDecay", "Filter Decay" };
-    ParameterDial filterSustainDial = { processorRef, "filterSustain", "Filter Sustain" };
-    ParameterDial filterReleaseDial = { processorRef, "filterRelease", "Filter Release" };
+    ParameterDial env1AttackDial = { processorRef, "env1Attack", "Envelope 1 Attack" };
+    ParameterDial env1AttackCurveDial = { processorRef, "env1AttackCurve", "Envelope 1 Attack Curve" };
+    ParameterDial env1DecayDial = { processorRef, "env1Decay", "Envelope 1 Decay" };
+    ParameterDial env1DecayCurveDial = { processorRef, "env1DecayCurve", "Envelope 1 Decay Curve" };
+    ParameterDial env1SustainDial = { processorRef, "env1Sustain", "Envelope 1 Sustain" };
+    ParameterDial env1ReleaseDial = { processorRef, "env1Release", "Envelope 1 Release" };
+    ParameterDial env1ReleaseCurveDial = { processorRef, "env1ReleaseCurve", "Envelope 1 Release Curve" };
 
-    ADSRGraph ampADSRGraph = { processorRef.parameters, "ampAttack", "ampAttackCurve", "ampDecay", "ampDecayCurve", "ampSustain", "ampRelease", "ampReleaseCurve", processorRef.getSynth().getAmpADSRPtr() };
-    ADSRGraph filterADSRGraph = { processorRef.parameters, "filterAttack", "filterAttackCurve", "filterDecay", "filterDecayCurve", "filterSustain", "filterRelease", "filterReleaseCurve", processorRef.getSynth().getFilterADSRPtr() };
+    ADSRGraph ampADSRGraph = { processorRef.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", processorRef.getSynth().getAmpADSRPtr() };
 
     void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
     void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/) override;

@@ -5,13 +5,13 @@
 #include "MyADSR.h"
 void MyADSR::setParameters (const Parameters& parameters)
 {
-    attackTime = parameters.attack;
-    decayTime = parameters.decay;
-    sustainLevel = parameters.sustain;
-    releaseTime = parameters.release;
-    attackExponent = parameters.attackExponent;
-    decayExponent = parameters.decayExponent;
-    releaseExponent = parameters.releaseExponent;
+    attackTime.setValue (parameters.attack);
+    decayTime.setValue (parameters.decay);
+    sustainLevel.setValue (parameters.sustain);
+    releaseTime.setValue (parameters.release);
+    attackExponent.setValue (parameters.attackExponent);
+    decayExponent.setValue (parameters.decayExponent);
+    releaseExponent.setValue (parameters.releaseExponent);
 
     recalculateRates();
 }
@@ -30,21 +30,20 @@ void MyADSR::noteOn()
     }
     else
     {
-        envelopeValue = sustainLevel;
+        envelopeValue = sustainLevel.getValue();
         state = State::Sustain;
     }
     time = 0.0f;
 }
-
 void MyADSR::noteOff()
 {
     if (state != State::Idle)
     {
         tempSustain = envelopeValue;
-        time = (attackTime + decayTime);
-        if (releaseTime > 0.0f)
+        time = attackTime.getValue() + decayTime.getValue();
+        if (releaseTime.getValue() > 0.0f)
         {
-            releaseRate = envelopeValue / (releaseTime * sampleRate);
+            releaseRate = envelopeValue / (releaseTime.getValue() * sampleRate);
             state = State::Release;
         }
         else
@@ -82,9 +81,9 @@ void MyADSR::goToNextState()
 
 void MyADSR::recalculateRates()
 {
-    attackRate = attackTime > 0.0f ? 1.0f / (attackTime * sampleRate) : -1.0f;
-    decayRate = decayTime > 0.0f ? (1.0f - sustainLevel) / (decayTime * sampleRate) : -1.0f;
-    releaseRate = releaseTime > 0.0f ? sustainLevel / (releaseTime * sampleRate) : -1.0f;
+    attackRate = attackTime.getValue() > 0.0f ? 1.0f / (attackTime.getValue() * sampleRate) : -1.0f;
+    decayRate = decayTime.getValue() > 0.0f ? (1.0f - sustainLevel.getValue()) / (decayTime.getValue() * sampleRate) : -1.0f;
+    releaseRate = releaseTime.getValue() > 0.0f ? sustainLevel.getValue() / (releaseTime.getValue() * sampleRate) : -1.0f;
 }
 
 float MyADSR::getNextValue() noexcept
@@ -92,8 +91,8 @@ float MyADSR::getNextValue() noexcept
     switch (state)
     {
         case State::Attack:
-            envelopeValue = toAttackCurve (time / attackTime, attackExponent); // Ease-in attack
-            if (envelopeValue >= 1.0f || time >= attackTime)
+            envelopeValue = toAttackCurve (time / attackTime.getValue(), attackExponent.getValue()); // Ease-in attack
+            if (envelopeValue >= 1.0f || time >= attackTime.getValue())
             {
                 state = State::Decay;
                 envelopeValue = 1.0f;
@@ -102,25 +101,25 @@ float MyADSR::getNextValue() noexcept
             break;
 
         case State::Decay:
-            if (sustainLevel < 1 && time < decayTime + attackTime)
-                envelopeValue = toDecayCurve ((time - attackTime) / decayTime, sustainLevel, decayExponent); // Ease-out decay
+            if (sustainLevel.getValue() < 1 && time < decayTime.getValue() + attackTime.getValue())
+                envelopeValue = toDecayCurve ((time - attackTime.getValue()) / decayTime.getValue(), sustainLevel.getValue(), decayExponent.getValue()); // Ease-out decay
             else
             {
                 state = State::Sustain;
-                envelopeValue = sustainLevel;
+                envelopeValue = sustainLevel.getValue();
             }
             time += 1.0f / sampleRate;
             break;
 
         case State::Sustain:
-            envelopeValue = sustainLevel;
+            envelopeValue = sustainLevel.getValue();
             break;
 
         case State::Release:
-            if (envelopeValue <= 0.0f || time >= attackTime + decayTime + releaseTime)
+            if (envelopeValue <= 0.0f || time >= attackTime.getValue() + decayTime.getValue() + releaseTime.getValue())
                 state = State::Idle;
             else
-                envelopeValue = toReleaseCurve ((time - attackTime - decayTime) / releaseTime, tempSustain, releaseExponent); // Ease-out release
+                envelopeValue = toReleaseCurve ((time - attackTime.getValue() - decayTime.getValue()) / releaseTime.getValue(), tempSustain, releaseExponent.getValue()); // Ease-out release
             time += 1.0f / sampleRate;
             break;
 

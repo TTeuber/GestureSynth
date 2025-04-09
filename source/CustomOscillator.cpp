@@ -23,7 +23,7 @@ CustomOscillator::CustomOscillator()
     chorus.setCentreDelay (7.0f);
     chorus.setMix (0.5f);
 }
-void CustomOscillator::setFrequency (float newValue, bool force)
+void CustomOscillator::setFrequency (const float newValue, const bool force)
 {
     const float detuneAmount = (juce::Random::getSystemRandom().nextFloat() - 0.5f) * 0.2f; // ±0.1 semitone
     auto& osc1 = processorChain.get<osc1Index>();
@@ -31,20 +31,20 @@ void CustomOscillator::setFrequency (float newValue, bool force)
     osc1.setFrequency (newValue * std::pow (2.0f, detuneAmount / 12.0f), force);
     osc2.setFrequency (newValue * 1.01f * std::pow (2.0f, detuneAmount / 12.0f), force);
 }
-void CustomOscillator::setVolume (float newValue)
+void CustomOscillator::setVolume (const float newValue)
 {
     auto& gain = processorChain.get<gainIndex>();
     gain.setGainLinear (newValue);
 }
 
-void CustomOscillator::setFilterCutoff (float newCutoff)
+void CustomOscillator::setFilterCutoff (const float newCutoff)
 {
     filterFrequencySmooth.setTargetValue (newCutoff);
     auto& filter = processorChain.get<filterIndex>();
     filter.setCutoffFrequencyHz (filterFrequencySmooth.getNextValue());
 }
 
-void CustomOscillator::setFilterResonance (float newResonance)
+void CustomOscillator::setFilterResonance (const float newResonance)
 {
     auto& filter = processorChain.get<filterIndex>();
     filter.setResonance (newResonance);
