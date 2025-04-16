@@ -13,7 +13,9 @@ PluginProcessor::PluginProcessor()
               .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
 #endif
               ),
-      synth (parameters, modTree)
+      synth (parameters, modTree, pitchTracker, voicePtr),
+      waveFifo (1024),
+      waveData (1024)
 {
     for (size_t i = 0; i < modList.size(); i++)
     {
@@ -36,9 +38,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
 
     layout.add (make_unique<Parameter> ("volume", "Volume", 0.0f, 1.0f, 0.5f));
 
-    layout.add (make_unique<Parameter> ("filterFrequency", "Filter Frequency", Normalize (20.f, 20000.f, 0.01f, 0.25f), 1000.0f));
-    layout.add (make_unique<Parameter> ("filterEnvelopeAmount", "Filter Envelope Amount", 0.0f, 1.0f, 0.5f));
-    layout.add (make_unique<Parameter> ("filterResonance", "Filter Resonance", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> ("filterFrequency", "Filter Frequency", Normalize (20.f, 20000.f, 0.01f, 0.25f), 20000.0f));
+    // layout.add (make_unique<Parameter> ("filterEnvelopeAmount", "Filter Envelope Amount", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> ("filterResonance", "Filter Resonance", 0.0f, 1.0f, 0.0f));
 
     for (int i = 1; i < 2; i++)
     {
@@ -120,11 +122,11 @@ const juce::String PluginProcessor::getProgramName (int index)
 
 void PluginProcessor::changeProgramName (int index, const juce::String& newName)
 {
-    juce::ignoreUnused (index, newName);
+    ignoreUnused (index, newName);
 }
 
 //==============================================================================
-void PluginProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void PluginProcessor::prepareToPlay (const double sampleRate, const int samplesPerBlock)
 {
     // juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (getMainBusNumOutputChannels()) };
 
@@ -170,19 +172,50 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     juce::MidiBuffer& midiMessages)
 {
     keyboardState.processNextMidiBuffer (midiMessages, 0, buffer.getNumSamples(), true);
-    juce::ignoreUnused (midiMessages);
+    ignoreUnused (midiMessages);
 
     juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
+    const auto totalNumInputChannels = getTotalNumInputChannels();
+    const auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
     synth.updateParameters();
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+
+    if (*voicePtr != nullptr)
+    {
+        const auto& voiceBuffer = (*voicePtr)->getWaveformBuffer();
+        const int numSamples = voiceBuffer.getNumSamples();
+        // const int numSamples = juce::jmin<int> (1024, 2 * static_cast<int> (getSampleRate() / pitchTracker->frequency));
+        // const juce::AbstractFifo::ScopedWrite writeHandler = waveFifo.write (numSamples);
+        // for (int i = 0; i < writeHandler.blockSize1; ++i)
+        for (int i = 0; i < numSamples; ++i)
+        {
+            // waveData[writeHandler.startIndex1 + i] = voiceBuffer.getSample (0, i);
+            waveData[i] = voiceBuffer.getSample (0, i);
+        }
+        // {
+        //     waveData[writeHandler.startIndex1 + i] = voiceBuffer.getSample (0, i);
+        // }
+    }
 }
 
+bool PluginProcessor::getWaveformData (float* dest, const int maxSamples)
+{
+    // const int numReady = waveFifo.getNumReady();
+    // if (numReady == 0)
+    //     return false;
+    // const int numToRead = juce::jmin (numReady, maxSamples);
+    // const auto readHandler = waveFifo.read (numToRead);
+    for (int i = 0; i < 1024; ++i)
+    {
+        // dest[i] = waveData[readHandler.startIndex1 + i];
+        dest[i] = waveData[i];
+    }
+    return true;
+}
 //==============================================================================
 bool PluginProcessor::hasEditor() const
 {
@@ -200,7 +233,7 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
-    juce::ignoreUnused (destData);
+    ignoreUnused (destData);
 }
 
 void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)

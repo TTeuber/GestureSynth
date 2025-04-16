@@ -46,19 +46,6 @@ public:
         float attackExponent = 1.0f, decayExponent = 1.0f, releaseExponent = 1.0f;
     };
 
-    // MyADSR (juce::StringRef i, juce::StringRef n) : ModSource (i, n) {}
-    // MyADSR (juce::StringRef i, juce::StringRef n, const Parameters& parameters)
-    //     : ModSource (i, n),
-    //       attackTime (parameters.attack),
-    //       decayTime (parameters.decay),
-    //       sustainLevel (parameters.sustain),
-    //       releaseTime (parameters.release),
-    //       attackExponent (parameters.attackExponent),
-    //       decayExponent (parameters.decayExponent),
-    //       releaseExponent (parameters.releaseExponent)
-    // {
-    //     recalculateRates();
-    // }
     MyADSR (const juce::AudioProcessorValueTreeState& p, const int i)
         : ModSource (juce::StringRef ("env" + std::to_string (i)), juce::StringRef ("Envelope " + std::to_string (i))),
           attackTime (p.getParameter ("env" + std::to_string (i) + "Attack")),
@@ -70,6 +57,7 @@ public:
           releaseExponent (p.getParameter ("env" + std::to_string (i) + "ReleaseCurve"))
     {
         recalculateRates();
+        attackTime.onUpdate ([this] { recalculateRates(); });
     }
 
     void setParameters (const Parameters& parameters);

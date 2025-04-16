@@ -7,6 +7,7 @@
 #include "Modulation.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
+
 class MyParameter : public juce::AudioProcessorParameter::Listener
 {
 public:
@@ -21,20 +22,6 @@ public:
         id = parameter->getParameterID();
         name = parameter->getName (20);
     }
-    // MyParameter (juce::RangedAudioParameter* p, const float min, const float max, const float value)
-    //     : parameter (p),
-    //       baseValue (value),
-    //       minValue (min),
-    //       maxValue (max)
-    // {
-    //     parameter->addListener (this);
-    //     range = parameter->getNormalisableRange();
-    //     range.start = min;
-    //     range.end = max;
-    //     parameter->setValueNotifyingHost (value);
-    //     id = parameter->getParameterID();
-    //     name = parameter->getName (20);
-    // }
 
     ~MyParameter() override
     {
@@ -44,6 +31,12 @@ public:
     void parameterValueChanged (int /*parameterIndex*/, const float newValue) override
     {
         baseValue = newValue;
+        if (updateFunction != nullptr)
+            updateFunction();
+    }
+    void onUpdate (const std::function<void()>& updateFunc)
+    {
+        updateFunction = updateFunc;
     }
 
     void parameterGestureChanged (int /*parameterIndex*/, bool gestureIsStarting) override
@@ -59,6 +52,7 @@ public:
 protected:
     juce::RangedAudioParameter* parameter;
 
+    std::function<void()> updateFunction = nullptr;
     juce::String id;
     juce::String name;
     float baseValue;
@@ -74,17 +68,14 @@ public:
         : MyParameter (p)
     {
     }
-    // StaticParameter (juce::RangedAudioParameter* p, const float min, const float max, const float value)
-    //     : MyParameter (p, min, max, value)
-    // {
-    // }
     void setValue (const float newValue)
     {
         baseValue = newValue;
     }
     [[nodiscard]] float getValue() const
     {
-        return baseValue;
+        return range.convertFrom0to1 (baseValue);
+        // return baseValue;
     }
 };
 
@@ -96,11 +87,6 @@ public:
     {
         currentValue = baseValue;
     }
-    // DynamicParameter (juce::RangedAudioParameter* p, const float min, const float max, const float value)
-    //     : MyParameter (p, min, max, value), ModDestination (p->getParameterID(), p->getName (20))
-    // {
-    //     currentValue = baseValue;
-    // }
 
     [[nodiscard]] float getBaseValue() const noexcept override { return baseValue; }
     void setBaseValue (const float value) noexcept override { baseValue = value; }

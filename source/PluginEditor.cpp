@@ -13,6 +13,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (matrixComponent);
 
     addAndMakeVisible (volumeDial);
+    addAndMakeVisible (filterCutoffDial);
+    addAndMakeVisible (filterResonanceDial);
 
     addAndMakeVisible (env1AttackDial);
     addAndMakeVisible (env1AttackCurveDial);
@@ -23,6 +25,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (env1ReleaseCurveDial);
 
     addAndMakeVisible (ampADSRGraph);
+    addAndMakeVisible (oscilloscope);
 
     setSize (windowWidth, windowHeight);
 }
@@ -54,7 +57,7 @@ void PluginEditor::resized()
     juce::Rectangle<int> basicContainer = area.removeFromTop (containerHeight);
     const int sectionAWidth = basicContainer.getWidth() / 4;
 
-    const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (static_cast<int> (containerHeight * 1.5));
+    const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (static_cast<int> (containerHeight * 2));
     ampADSRGraph.setBounds (ampADSRContainer.reduced (10));
 
     juce::Rectangle<int> ampDialContainer = area.removeFromTop (containerHeight);
@@ -63,7 +66,12 @@ void PluginEditor::resized()
     juce::Rectangle<int> ampCurveDialContainer = area.removeFromTop (containerHeight);
     const int sectionDWidth = ampCurveDialContainer.getWidth() / 3;
 
+    const juce::Rectangle<int> oscilloscopeContainer = area.removeFromTop (containerHeight * 3.5);
+    oscilloscope.setBounds (oscilloscopeContainer.reduced (10));
+
     volumeDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
+    filterCutoffDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
+    filterResonanceDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
 
     env1AttackDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
     env1DecayDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));

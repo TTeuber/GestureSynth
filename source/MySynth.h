@@ -1,13 +1,14 @@
 #pragma once
 
 #include "MySynthVoice.h"
+#include "PitchTracker.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 class MySynth final : public juce::Synthesiser
 {
 public:
-    explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt);
+    explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::shared_ptr<MySynthVoice*> vp);
     static void updateParameter (float& currentValue, float newValue, const std::function<void (float)>& setterFunction);
 
     float getVolume() const { return masterVolume; }

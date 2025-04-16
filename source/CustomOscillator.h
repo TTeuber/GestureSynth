@@ -14,8 +14,8 @@ public:
     void setFilterCutoff (float newCutoff);
     void setFilterResonance (float newResonance);
 
-    void setChorusRate (const float newRate) { processorChain.get<chorusIndex>().setRate (newRate); }
-    void setChorusDepth (const float newDepth) { processorChain.get<chorusIndex>().setDepth (newDepth); }
+    // void setChorusRate (const float newRate) { processorChain.get<chorusIndex>().setRate (newRate); }
+    // void setChorusDepth (const float newDepth) { processorChain.get<chorusIndex>().setDepth (newDepth); }
 
     void prepare (const juce::dsp::ProcessSpec& spec) { processorChain.prepare (spec); }
     void reset() noexcept { processorChain.reset(); }
@@ -28,9 +28,9 @@ public:
 private:
     enum {
         osc1Index,
-        osc2Index,
+        // osc2Index,
         filterIndex,
-        chorusIndex,
+        // chorusIndex,
         gainIndex
     };
 
@@ -38,9 +38,9 @@ private:
 
     juce::dsp::ProcessorChain<
         MyOscillator,
-        MyOscillator,
+        // MyOscillator,
         juce::dsp::LadderFilter<float>,
-        juce::dsp::Chorus<float>,
+        // juce::dsp::Chorus<float>,
         juce::dsp::Gain<float>>
         processorChain;
 };

@@ -1,11 +1,16 @@
 #include "MySynthVoice.h"
 
-#include "juce_graphics/fonts/harfbuzz/hb-cplusplus.hh"
-
-#include <utility>
-
-MySynthVoice::MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr)
-    : parameters (p), modTree (mt), env1ptr (std::move (ampEnvPtr))
+MySynthVoice::MySynthVoice (
+    juce::AudioProcessorValueTreeState& p,
+    juce::ValueTree& mt,
+    std::shared_ptr<MyADSR*> ampEnvPtr,
+    std::shared_ptr<PitchTracker> pt,
+    std::shared_ptr<MySynthVoice*> vp)
+    : parameters (p),
+      modTree (mt),
+      voicePtr (std::move (vp)),
+      env1ptr (std::move (ampEnvPtr)),
+      pitchTracker (std::move (pt))
 {
     modTree.addListener (this);
 
@@ -14,7 +19,8 @@ MySynthVoice::MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTr
 
     lfo1.setFrequency (7.0f);
 }
-void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples)
+
+void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, const int startSample, const int numSamples)
 {
     if (!adsr1.isActive())
     {
@@ -35,7 +41,7 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int 
 
     osc.process (context);
 
-    // osc.setFilterCutoff (filterCutoff.getCurrentValue());
+    osc.setFilterCutoff (filterCutoff.getCurrentValue());
 
     osc.setFrequency (static_cast<float> (frequency + fineTuneParam.getCurrentValue() * (frequency * std::pow (2, 1 / 12))));
 
@@ -55,11 +61,18 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int 
 
     outputBuffer.addFrom (0, startSample, tempBuffer, 0, 0, numSamples);
     outputBuffer.addFrom (1, startSample, tempBuffer, 1, 0, numSamples);
+
+    waveformBuffer.writeBuffer (outputBuffer, outputBuffer.getNumSamples());
+}
+
+const juce::AudioBuffer<float>& MySynthVoice::getWaveformBuffer()
+{
+    return waveformBuffer.getBuffer();
 }
 
 void MySynthVoice::addNodeToMatrix (const juce::ValueTree& childNode)
 {
-    std::shared_ptr<ModSource> source = modSources[childNode.getProperty ("source").toString()];
+    const std::shared_ptr<ModSource> source = modSources[childNode.getProperty ("source").toString()];
     ModDestination* destination = modDestinations[childNode.getProperty ("destination").toString()];
     const float depth = childNode.getProperty ("depth");
     const bool isBipolar = childNode.getProperty ("isBipolar");
@@ -88,7 +101,7 @@ void MySynthVoice::valueTreeChildAdded (juce::ValueTree& parentTree, juce::Value
 }
 void MySynthVoice::valueTreeChildRemoved (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved)
 {
-    std::shared_ptr<ModSource> source = modSources[childWhichHasBeenRemoved.getProperty ("source").toString()];
+    const std::shared_ptr<ModSource> source = modSources[childWhichHasBeenRemoved.getProperty ("source").toString()];
     ModDestination* destination = modDestinations[childWhichHasBeenRemoved.getProperty ("destination").toString()];
     modMatrix.removeModulation (source, destination);
 }
@@ -98,8 +111,8 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
     const juce::StringRef destinationId = treeWhosePropertyHasChanged.getProperty ("destination").toString();
     const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
 
-    auto source = modSources[sourceId];
-    auto destination = modDestinations[destinationId];
+    const auto source = modSources[sourceId];
+    const auto destination = modDestinations[destinationId];
     if (property.toString() == "depth")
     {
         modMatrix.updateModulation (source, destination, depth);
@@ -129,7 +142,7 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     modMatrix.prepare (spec);
 }
 
-void MySynthVoice::startNote (int midiNoteNumber, float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
+void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
     frequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
     osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)), true);
@@ -137,8 +150,13 @@ void MySynthVoice::startNote (int midiNoteNumber, float velocity, juce::Synthesi
     for (auto* env : envs)
         env->noteOn();
     *env1ptr = &adsr1;
+    *voicePtr = this;
+    pitchTracker->updateFrequency (frequency);
+    waveLength = static_cast<int> (std::ceil (2 * currentSampleRate / frequency));
+    while (waveLength > waveformBuffer.getBuffer().getNumSamples())
+        waveLength /= 2;
 }
-void MySynthVoice::stopNote (float velocity, bool allowTailOff)
+void MySynthVoice::stopNote (float velocity, const bool allowTailOff)
 {
     if (allowTailOff)
     {

@@ -2,6 +2,7 @@
 
 #include "Modulation.h"
 #include "MySynth.h"
+#include "PitchTracker.h"
 #include "juce_dsp/juce_dsp.h"
 #include <functional>
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -22,6 +23,7 @@ public:
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
+    bool getWaveformData (float* dest, int maxSamples);
 
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
@@ -51,22 +53,19 @@ public:
 
     juce::ValueTree modTree { "modTree" };
 
+    juce::AbstractFifo waveFifo;
+    std::vector<float> waveData;
+    std::shared_ptr<MySynthVoice*> voicePtr = std::make_shared<MySynthVoice*> (nullptr);
+
     using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;
     ModList modList = {
-        // { "filterADSR", 0.5f, "filterFrequency", false },
-        // { "lfo1", 0.5f, "fineTune", true },
-        // { "ampADSR", 0.2f, "filterFrequency", false },
-        // { "lfo1", 0.1, "fineTune", false }
-    };
-
-    std::vector<std::tuple<juce::String, juce::String>> envs = {
-        { "adsr1", "Envelope 1" },
-        // { "adsr2", "Envelope 2" },
-        // { "adsr3", "Envelope 3" },
-        // { "adsr4", "Envelope 4" }
+        { "env1", 0.0f, "filterFrequency", false },
+        { "lfo1", 0.0f, "filterFrequency", true }
     };
 
     MySynth& getSynth() { return synth; }
+
+    std::shared_ptr<PitchTracker> pitchTracker = std::make_shared<PitchTracker>();
 
 private:
     juce::MidiBuffer midiBuffer;
