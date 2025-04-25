@@ -39,11 +39,14 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     juce::dsp::AudioBlock<float> block (tempBuffer);
     const juce::dsp::ProcessContextReplacing context (block);
 
-    osc.process (context);
+    // osc.process (context);
+    antiAliasOscillator.processBlock (tempBuffer);
 
     osc.setFilterCutoff (filterCutoff.getCurrentValue());
 
-    osc.setFrequency (static_cast<float> (frequency + fineTuneParam.getCurrentValue() * (frequency * std::pow (2, 1 / 12))));
+    // osc.setFrequency (static_cast<float> (frequency + fineTuneParam.getCurrentValue() * (frequency * std::pow (2, 1 / 12))));
+
+    volume = parameters.getParameter ("volume")->getValue();
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
@@ -138,6 +141,7 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = numChannels;
 
+    antiAliasOscillator.prepare (spec);
     osc.prepare (spec);
     modMatrix.prepare (spec);
 }
@@ -146,6 +150,7 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
 {
     frequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
     osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)), true);
+    antiAliasOscillator.setFrequency (frequency);
     this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
     for (auto* env : envs)
         env->noteOn();

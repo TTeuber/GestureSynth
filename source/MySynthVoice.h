@@ -1,11 +1,13 @@
 #pragma once
 
+// #include "AntiAliasOscillator.h"
 #include "CustomOscillator.h"
 #include "Modulation.h"
 #include "MyADSR.h"
 #include "MyLFO.h"
 #include "MyParameter.h"
 #include "PitchTracker.h"
+#include "WaveTableOscillator.h"
 
 #include <juce_dsp/juce_dsp.h>
 
@@ -71,6 +73,8 @@ private:
     juce::AudioProcessorValueTreeState& parameters;
     juce::ValueTree& modTree;
     ModMatrix modMatrix;
+
+    WavetableOscillator antiAliasOscillator = WavetableOscillator();
 
     MyLFO lfo1 = MyLFO ("lfo1", "LFO 1", 1.0f);
 

@@ -9,6 +9,9 @@ CustomOscillator::CustomOscillator()
     auto& osc = processorChain.get<osc1Index>();
     osc.setWaveform (MyOscillator::Saw);
 
+    auto& gain = processorChain.get<gainIndex>();
+    gain.setGainLinear (0.1f);
+
     // auto& osc2 = processorChain.get<osc2Index>();
     // osc2.setWaveform (MyOscillator::Saw);
 
