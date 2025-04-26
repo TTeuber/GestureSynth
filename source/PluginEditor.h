@@ -35,6 +35,7 @@ private:
     ParameterDial volumeDial = { processorRef, "volume", "Volume" };
     ParameterDial filterCutoffDial = { processorRef, "filterFrequency", "Filter Cutoff" };
     ParameterDial filterResonanceDial = { processorRef, "filterResonance", "Filter Resonance" };
+    ParameterDial pulseWidthDial = { processorRef, "pulseWidth", "Pulse Width" };
     ParameterDial env1AttackDial = { processorRef, "env1Attack", "Envelope 1 Attack" };
     ParameterDial env1AttackCurveDial = { processorRef, "env1AttackCurve", "Envelope 1 Attack Curve" };
     ParameterDial env1DecayDial = { processorRef, "env1Decay", "Envelope 1 Decay" };

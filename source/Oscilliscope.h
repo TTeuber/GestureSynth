@@ -48,7 +48,7 @@ public:
             //     zeroCrossing = true;
             // const float x = static_cast<float> (i) / static_cast<float> (waveform.size()) * width; // Scale to width
             const float x = static_cast<float> (i) / static_cast<float> (numSamples) * width - xOffset; // Scale to width
-            const float y = halfHeight - waveform[i] * halfHeight * 5.0f; // Scale amplitude
+            const float y = halfHeight - waveform[i] * halfHeight * 1.0f; // Scale amplitude
             wavePath.lineTo (x, y);
         }
         g.strokePath (wavePath, juce::PathStrokeType (1.0f));

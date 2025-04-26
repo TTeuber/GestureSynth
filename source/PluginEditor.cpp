@@ -15,6 +15,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (volumeDial);
     addAndMakeVisible (filterCutoffDial);
     addAndMakeVisible (filterResonanceDial);
+    addAndMakeVisible (pulseWidthDial);
 
     addAndMakeVisible (env1AttackDial);
     addAndMakeVisible (env1AttackCurveDial);
@@ -72,6 +73,7 @@ void PluginEditor::resized()
     volumeDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
     filterCutoffDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
     filterResonanceDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
+    pulseWidthDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
 
     env1AttackDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
     env1DecayDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));

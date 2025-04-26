@@ -42,6 +42,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
     // layout.add (make_unique<Parameter> ("filterEnvelopeAmount", "Filter Envelope Amount", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> ("filterResonance", "Filter Resonance", 0.0f, 1.0f, 0.0f));
 
+    layout.add (make_unique<Parameter> ("pulseWidth", "Pulse Width", 0.1f, 0.9f, 0.5f));
+
     for (int i = 1; i < 2; i++)
     {
         layout.add (make_unique<Parameter> ("env" + std::to_string (i) + "Attack", "Envelope " + std::to_string (i) + " Attack", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.0f));

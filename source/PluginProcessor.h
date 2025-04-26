@@ -60,7 +60,8 @@ public:
     using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;
     ModList modList = {
         { "env1", 0.0f, "filterFrequency", false },
-        { "lfo1", 0.0f, "filterFrequency", true }
+        { "lfo1", 0.0f, "filterFrequency", true },
+        { "lfo1", 0.1f, "pulseWidth", false },
     };
 
     MySynth& getSynth() { return synth; }

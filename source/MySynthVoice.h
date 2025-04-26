@@ -7,7 +7,8 @@
 #include "MyLFO.h"
 #include "MyParameter.h"
 #include "PitchTracker.h"
-#include "WaveTableOscillator.h"
+// #include "WaveTableOscillator.h"
+#include "JuneOscillator.h"
 
 #include <juce_dsp/juce_dsp.h>
 
@@ -74,9 +75,10 @@ private:
     juce::ValueTree& modTree;
     ModMatrix modMatrix;
 
-    WavetableOscillator antiAliasOscillator = WavetableOscillator();
+    DynamicParameter pulseWidth = DynamicParameter (parameters.getParameter ("pulseWidth"));
+    JuneDCO juneOscillator = JuneDCO (pulseWidth);
 
-    MyLFO lfo1 = MyLFO ("lfo1", "LFO 1", 1.0f);
+    MyLFO lfo1 = MyLFO ("lfo1", "LFO 1", 0.3f);
 
     DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
 
@@ -135,6 +137,7 @@ private:
     std::map<juce::String, ModDestination*> modDestinations = {
         { filterCutoff.getID(), &filterCutoff },
         { filterResonance.getID(), &filterResonance },
-        { fineTuneParam.getID(), &fineTuneParam }
+        { fineTuneParam.getID(), &fineTuneParam },
+        { pulseWidth.getID(), &pulseWidth }
     };
 };
