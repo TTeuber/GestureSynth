@@ -9,7 +9,7 @@
 class MyLFO final : public MyOscillator, public ModSource
 {
 public:
-    MyLFO (const juce::StringRef i, const juce::StringRef n, const float f, const Waveform wave = Sine) : MyOscillator (wave), ModSource (i, n), wave (wave)
+    MyLFO (const juce::StringRef i, const juce::StringRef n, const float f, const Waveform wave = Triangle) : MyOscillator (wave), ModSource (i, n), wave (wave)
     {
         setFrequency (f);
     }

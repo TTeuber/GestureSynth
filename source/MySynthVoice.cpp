@@ -17,7 +17,7 @@ MySynthVoice::MySynthVoice (
     for (auto* env : envs)
         env->setSampleRate (currentSampleRate);
 
-    lfo1.setFrequency (7.0f);
+    lfo1.setFrequency (1.0f);
 }
 
 void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, const int startSample, const int numSamples)
@@ -39,13 +39,11 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     juce::dsp::AudioBlock<float> block (tempBuffer);
     const juce::dsp::ProcessContextReplacing context (block);
 
-    // osc.process (context);
-    // juneOscillator.setPulseWidth (pulseWidth.getCurrentValue());
     juneOscillator.processBlock (block);
-
-    // osc.setFilterCutoff (filterCutoff.getCurrentValue());
-
-    // osc.setFrequency (static_cast<float> (frequency + fineTuneParam.getCurrentValue() * (frequency * std::pow (2, 1 / 12))));
+    chorus.process (tempBuffer);
+    filter.setCutoffFrequency (filterCutoff.getCurrentValue());
+    filter.setResonance (filterResonance.getBaseValue());
+    filter.process (context);
 
     volume = parameters.getParameter ("volume")->getValue();
 
@@ -143,6 +141,8 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     spec.numChannels = numChannels;
 
     juneOscillator.prepare (spec);
+    chorus.prepare (spec);
+    filter.prepare (spec);
     osc.prepare (spec);
     modMatrix.prepare (spec);
 }

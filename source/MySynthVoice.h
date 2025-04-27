@@ -8,6 +8,7 @@
 #include "MyParameter.h"
 #include "PitchTracker.h"
 // #include "WaveTableOscillator.h"
+#include "Chorus.h"
 #include "JuneOscillator.h"
 
 #include <juce_dsp/juce_dsp.h>
@@ -81,6 +82,10 @@ private:
     MyLFO lfo1 = MyLFO ("lfo1", "LFO 1", 0.3f);
 
     DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
+
+    JuneChorus chorus = JuneChorus();
+
+    juce::dsp::StateVariableTPTFilter<float> filter = juce::dsp::StateVariableTPTFilter<float>();
 
     float frequency = 0.0f;
     float currentSampleRate = 48000.0f;
