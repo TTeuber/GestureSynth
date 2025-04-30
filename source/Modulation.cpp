@@ -49,13 +49,17 @@ void ModMatrix::processSample() const noexcept
 {
     for (const auto& [destination, mods] : matrix)
     {
-        float value = 0.0f;
+        // destination->setCurrentValue (destination->getBaseValue());
+        // float value = destination->getRange().convertTo0to1 (destination->getBaseValue());
+        float value = destination->getRawParameterValue();
         for (const auto& [source, depth, isBipolar] : mods)
         {
             if (isBipolar)
-                value += (source->getNextValue() * 2.0f - 1.0f) * depth + destination->getRange().convertTo0to1 (destination->getBaseValue());
+                // value += (source->getNextValue() * 2.0f - 1.0f) * depth + destination->getRange().convertTo0to1 (destination->getBaseValue());
+                value += (source->getNextValue() * 2.0f - 1.0f) * depth;
             else
-                value += source->getNextValue() * depth + destination->getRange().convertTo0to1 (destination->getBaseValue());
+                value += source->getNextValue() * depth;
+            // value += source->getNextValue() * depth + destination->getRange().convertTo0to1 (destination->getBaseValue());
         }
 
         value = juce::jlimit (0.0f, 1.0f, value);

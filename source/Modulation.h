@@ -33,6 +33,7 @@ class ModDestination
 public:
     ModDestination (const juce::StringRef i, const juce::StringRef n) : id (i), name (n) {}
     virtual ~ModDestination() = default;
+    [[nodiscard]] virtual float getRawParameterValue() const noexcept = 0;
     virtual void setBaseValue (float value) noexcept = 0;
     virtual void setCurrentValue (float value) noexcept = 0;
     [[nodiscard]] virtual float getBaseValue() const noexcept = 0;
@@ -59,6 +60,12 @@ class ModMatrix
 {
 public:
     ModMatrix() = default;
+
+    void initDestination (ModDestination* destination)
+    {
+        if (!matrix.contains (destination))
+            matrix.emplace (destination, std::vector<Modulation> {});
+    }
 
     void addModulation (ModDestination* destination, std::shared_ptr<ModSource> source, float depth, bool isBipolar = false);
 

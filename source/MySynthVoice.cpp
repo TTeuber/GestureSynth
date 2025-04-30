@@ -14,6 +14,11 @@ MySynthVoice::MySynthVoice (
 {
     modTree.addListener (this);
 
+    // Initialize the mod destinations
+    // Currently this is how the current value is updated when there are no mod sources
+    for (const auto& [_, d] : modDestinations)
+        modMatrix.initDestination (d);
+
     for (auto* env : envs)
         env->setSampleRate (currentSampleRate);
 
@@ -40,10 +45,14 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     const juce::dsp::ProcessContextReplacing context (block);
 
     juneOscillator.processBlock (block);
-    chorus.process (tempBuffer);
     filter.setCutoffFrequency (filterCutoff.getCurrentValue());
-    filter.setResonance (filterResonance.getBaseValue());
+    if (filterResonance.getNormalCurrentValue() < 0 || filterResonance.getNormalCurrentValue() > 1)
+    {
+        DBG ("Resonance" << filterResonance.getNormalCurrentValue());
+    }
+    filter.setResonance (juce::jmax<float> (0.01, filterResonance.getNormalCurrentValue()));
     filter.process (context);
+    chorus.process (tempBuffer);
 
     volume = parameters.getParameter ("volume")->getValue();
 
@@ -143,14 +152,14 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     juneOscillator.prepare (spec);
     chorus.prepare (spec);
     filter.prepare (spec);
-    osc.prepare (spec);
+    // osc.prepare (spec);
     modMatrix.prepare (spec);
 }
 
 void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
     frequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
-    osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)), true);
+    // osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)), true);
     juneOscillator.setFrequency (frequency);
     this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
     for (auto* env : envs)

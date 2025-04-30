@@ -85,10 +85,24 @@ public:
     explicit DynamicParameter (juce::RangedAudioParameter* p)
         : MyParameter (p), ModDestination (p->getParameterID(), p->getName (20))
     {
-        currentValue = baseValue;
+        parameter = p;
+        currentValue = range.convertFrom0to1 (p->getValue());
+    }
+
+    [[nodiscard]] float getRawParameterValue() const noexcept override
+    {
+        return parameter->getValue();
     }
 
     [[nodiscard]] float getBaseValue() const noexcept override { return baseValue; }
+    [[nodiscard]] float getNormalBaseValue() const noexcept
+    {
+        return range.convertTo0to1 (baseValue);
+    }
+    [[nodiscard]] float getNormalCurrentValue() const noexcept
+    {
+        return range.convertTo0to1 (currentValue);
+    }
     void setBaseValue (const float value) noexcept override { baseValue = value; }
     [[nodiscard]] float getCurrentValue() const noexcept override { return currentValue; }
     void setCurrentValue (const float value) noexcept override { currentValue = value; }
@@ -97,5 +111,6 @@ public:
     [[nodiscard]] juce::NormalisableRange<float> getRange() const noexcept override { return range; }
 
 private:
+    juce::RangedAudioParameter* parameter;
     float currentValue;
 };

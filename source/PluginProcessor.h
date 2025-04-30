@@ -61,7 +61,7 @@ public:
     ModList modList = {
         { "env1", 0.0f, "filterFrequency", false },
         { "lfo1", 0.0f, "filterFrequency", true },
-        { "lfo1", 0.1f, "pulseWidth", true },
+        { "lfo1", 0.0f, "pulseWidth", true },
     };
 
     MySynth& getSynth() { return synth; }

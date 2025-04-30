@@ -53,17 +53,17 @@ public:
     void setVolume (const float newVolume)
     {
         volume = newVolume;
-        osc.setVolume (newVolume);
+        // osc.setVolume (newVolume);
     }
     void setFilterCutoff (const float newFilterCutoff)
     {
         filterCutoff.setBaseValue (newFilterCutoff);
-        osc.setFilterCutoff (newFilterCutoff);
+        // osc.setFilterCutoff (newFilterCutoff);
     }
     void setFilterResonance (const float newFilterResonance)
     {
         filterResonance.setBaseValue (newFilterResonance);
-        osc.setFilterResonance (newFilterResonance);
+        // osc.setFilterResonance (newFilterResonance);
     }
     [[nodiscard]] int getWavelength() const
     {
@@ -71,7 +71,7 @@ public:
     }
 
 private:
-    CustomOscillator osc;
+    // CustomOscillator osc;
     juce::AudioProcessorValueTreeState& parameters;
     juce::ValueTree& modTree;
     ModMatrix modMatrix;
