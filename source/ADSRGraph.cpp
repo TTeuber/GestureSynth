@@ -64,17 +64,17 @@ ADSRGraph::~ADSRGraph()
 void ADSRGraph::parameterChanged (const juce::String& parameterID, float newValue)
 {
     if (parameterID == attackId)
-        attackTime = newValue;
+        attackTime = juce::jmax<float> (0.01, newValue);
     else if (parameterID == attackCurveId)
         attackCurve = newValue;
     else if (parameterID == decayId)
-        decayTime = newValue;
+        decayTime = juce::jmax<float> (0.01, newValue);
     else if (parameterID == decayCurveId)
         decayCurve = newValue;
     else if (parameterID == sustainId)
         sustainLevel = (1 - newValue) * static_cast<float> (getHeight());
     else if (parameterID == releaseId)
-        releaseTime = newValue;
+        releaseTime = juce::jmax<float> (0.01, newValue);
     else if (parameterID == releaseCurveId)
         releaseCurve = newValue;
 
@@ -83,7 +83,7 @@ void ADSRGraph::parameterChanged (const juce::String& parameterID, float newValu
 
 void ADSRGraph::setParameters (const float attack, const float decay, const float sustain, const float release)
 {
-    attackTime = attack;
+    attackTime = juce::jmax<float> (0.01, attack);
     decayTime = decay;
     sustainLevel = (1 - sustain) * static_cast<float> (getHeight());
     releaseTime = release;
@@ -208,7 +208,7 @@ float ADSRGraph::getCurveY (const float x) const
         return (1 - MyADSR::toDecayCurve ((x - attackX) / juce::jmax<float> (0.0001, decayTime) / width * durationWidth, 1 - sustainLevel / height, decayCurve)) * height;
 
     if (x < releaseX)
-        return (1 - MyADSR::toReleaseCurve ((x - decayX) / juce::jmax<float> (0.0001, releaseTime) / width * durationWidth, 1 - sustainLevel / height, releaseCurve)) * height;
+        return (1 - MyADSR::toReleaseCurve (juce::jmin<float> (1, (x - decayX) / juce::jmax<float> (0.0001, releaseTime) / width * durationWidth), 1 - sustainLevel / height, releaseCurve)) * height;
 
     return height;
 }
@@ -275,7 +275,7 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
     if (selectedPoint == Attack)
     {
         const auto attackPosition = juce::jlimit (0.0f, width, event.position.x);
-        attackTime = attackPosition / width * durationWidth;
+        attackTime = juce::jmax<float> (0.01, attackPosition / width * durationWidth);
         parameters.getParameter (attackId)->setValueNotifyingHost (parameters.getParameterRange (attackId).convertTo0to1 (attackTime));
     }
 
@@ -288,7 +288,7 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
     else if (selectedPoint == Decay)
     {
         const auto decayPosition = juce::jlimit (attackX, width, event.position.x);
-        decayTime = (decayPosition - attackX) / width * durationWidth;
+        decayTime = juce::jmax<float> (0.01, (decayPosition - attackX) / width * durationWidth);
         parameters.getParameter (decayId)->setValueNotifyingHost (parameters.getParameterRange (decayId).convertTo0to1 (decayTime));
 
         sustainLevel = juce::jlimit (0.0f, height, event.position.y);
@@ -304,7 +304,7 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
     else if (selectedPoint == Release)
     {
         const auto releasePosition = juce::jlimit (decayX, width, event.position.x);
-        releaseTime = (releasePosition - decayX) / width * durationWidth;
+        releaseTime = juce::jmax<float> (0.01, (releasePosition - decayX) / width * durationWidth);
         const auto x = parameters.getParameterRange (releaseId).convertTo0to1 (releaseTime);
         parameters.getParameter (releaseId)->setValueNotifyingHost (x);
     }

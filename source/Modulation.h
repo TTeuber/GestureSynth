@@ -51,7 +51,7 @@ private:
 
 struct Modulation
 {
-    std::shared_ptr<ModSource> source;
+    ModSource* source;
     float depth;
     bool isBipolar;
 };
@@ -67,11 +67,11 @@ public:
             matrix.emplace (destination, std::vector<Modulation> {});
     }
 
-    void addModulation (ModDestination* destination, std::shared_ptr<ModSource> source, float depth, bool isBipolar = false);
+    void addModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar = false);
 
-    void removeModulation (std::shared_ptr<ModSource> source, ModDestination* destination);
+    void removeModulation (ModSource* source, ModDestination* destination);
 
-    void updateModulation (const std::shared_ptr<ModSource>& source, ModDestination* destination, float depth);
+    void updateModulation (const ModSource* source, ModDestination* destination, float depth);
 
     void prepare (const juce::dsp::ProcessSpec& spec) const;
 

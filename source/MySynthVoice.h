@@ -134,9 +134,9 @@ private:
 
     std::vector<MyADSR*> envs = { &adsr1 };
 
-    std::map<juce::String, std::shared_ptr<ModSource>> modSources = {
-        { lfo1.getID(), std::shared_ptr<MyLFO> (&lfo1) },
-        { adsr1.getID(), std::shared_ptr<MyADSR> (&adsr1) },
+    std::map<juce::String, ModSource*> modSources = {
+        { lfo1.getID(), &lfo1 },
+        { adsr1.getID(), &adsr1 },
     };
 
     std::map<juce::String, ModDestination*> modDestinations = {

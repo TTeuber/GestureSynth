@@ -80,7 +80,10 @@ public:
     }
     static float toReleaseCurve (const float time, const float sustain, const float exponent)
     {
-        return sustain * (std::pow (1 - time, 1 / exponent) + 1 - std::pow (time, exponent)) / 2;
+        jassert (time <= 1.0f && time >= 0.0f);
+        const float val = sustain * (std::pow (1 - time, 1 / exponent) + 1 - std::pow (time, exponent)) / 2;
+        jassert (!std::isnan (val));
+        return val;
     }
 
     [[nodiscard]] bool isActive() const { return state != State::Idle; }

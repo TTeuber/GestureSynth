@@ -91,7 +91,9 @@ public:
 
     [[nodiscard]] float getRawParameterValue() const noexcept override
     {
-        return parameter->getValue();
+        auto val = parameter->getValue();
+        jassert (!std::isnan (val));
+        return val;
     }
 
     [[nodiscard]] float getBaseValue() const noexcept override { return baseValue; }

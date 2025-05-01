@@ -27,6 +27,8 @@ set(PROJECT_NAME "SynthDemo")
 # allowing you to change parameters and behavior without breaking existing user projects
 set(PRODUCT_NAME "Demo Synth")
 
+set(CURRENT_VERSION "0.1.0")
+
 # Change me! Used for the MacOS bundle name and Installers
 set(COMPANY_NAME "Tyler Teuber")
 
@@ -84,7 +86,10 @@ juce_add_plugin("${PROJECT_NAME}"
     # This is how it's listed in the DAW
     # This can be different from PROJECT_NAME and can have spaces!
     # You might want to use v${MAJOR_VERSION} here once you go to v2...
-    PRODUCT_NAME "${PRODUCT_NAME}")
+    PRODUCT_NAME "${PRODUCT_NAME}"
+    VERSION "${CURRENT_VERSION}"
+)
+
 
 
 # This lets us use our code in both the JUCE targets and our Test target

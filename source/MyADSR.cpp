@@ -102,7 +102,7 @@ float MyADSR::getNextValue() noexcept
 
         case State::Decay:
             if (sustainLevel.getValue() < 1 && time < decayTime.getValue() + attackTime.getValue())
-                envelopeValue = toDecayCurve ((time - attackTime.getValue()) / decayTime.getValue(), sustainLevel.getValue(), decayExponent.getValue()); // Ease-out decay
+                envelopeValue = toDecayCurve (juce::jlimit<float> (0, 1, (time - attackTime.getValue()) / decayTime.getValue()), sustainLevel.getValue(), decayExponent.getValue()); // Ease-out decay
             else
             {
                 state = State::Sustain;
@@ -119,7 +119,7 @@ float MyADSR::getNextValue() noexcept
             if (envelopeValue <= 0.0f || time >= attackTime.getValue() + decayTime.getValue() + releaseTime.getValue())
                 state = State::Idle;
             else
-                envelopeValue = toReleaseCurve ((time - attackTime.getValue() - decayTime.getValue()) / releaseTime.getValue(), tempSustain, releaseExponent.getValue()); // Ease-out release
+                envelopeValue = toReleaseCurve (juce::jlimit<float> (0, 1, (time - attackTime.getValue() - decayTime.getValue()) / releaseTime.getValue()), tempSustain, releaseExponent.getValue()); // Ease-out release
             time += 1.0f / sampleRate;
             break;
 
@@ -130,5 +130,6 @@ float MyADSR::getNextValue() noexcept
         default:
             break;
     }
+    jassert (!std::isnan (envelopeValue));
     return envelopeValue;
 }

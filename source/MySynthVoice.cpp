@@ -46,11 +46,7 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
 
     juneOscillator.processBlock (block);
     filter.setCutoffFrequency (filterCutoff.getCurrentValue());
-    if (filterResonance.getNormalCurrentValue() < 0 || filterResonance.getNormalCurrentValue() > 1)
-    {
-        DBG ("Resonance" << filterResonance.getNormalCurrentValue());
-    }
-    filter.setResonance (juce::jmax<float> (0.01, filterResonance.getNormalCurrentValue()));
+    filter.setResonance (juce::jmax<float> (0.01, filterResonance.getCurrentValue()));
     filter.process (context);
     chorus.process (tempBuffer);
 
@@ -58,9 +54,9 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
 
     for (int sample = 0; sample < numSamples; ++sample)
     {
-        modMatrix.processSample();
-
         const float targetEnvVal = adsr1.getNextValue();
+
+        modMatrix.processSample();
 
         if (currentEnvVal < targetEnvVal)
             currentEnvVal = juce::jmin (currentEnvVal + slewRate, targetEnvVal);
@@ -83,7 +79,7 @@ const juce::AudioBuffer<float>& MySynthVoice::getWaveformBuffer()
 
 void MySynthVoice::addNodeToMatrix (const juce::ValueTree& childNode)
 {
-    const std::shared_ptr<ModSource> source = modSources[childNode.getProperty ("source").toString()];
+    ModSource* source = modSources[childNode.getProperty ("source").toString()];
     ModDestination* destination = modDestinations[childNode.getProperty ("destination").toString()];
     const float depth = childNode.getProperty ("depth");
     const bool isBipolar = childNode.getProperty ("isBipolar");
@@ -112,7 +108,7 @@ void MySynthVoice::valueTreeChildAdded (juce::ValueTree& parentTree, juce::Value
 }
 void MySynthVoice::valueTreeChildRemoved (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved)
 {
-    const std::shared_ptr<ModSource> source = modSources[childWhichHasBeenRemoved.getProperty ("source").toString()];
+    ModSource* source = modSources[childWhichHasBeenRemoved.getProperty ("source").toString()];
     ModDestination* destination = modDestinations[childWhichHasBeenRemoved.getProperty ("destination").toString()];
     modMatrix.removeModulation (source, destination);
 }

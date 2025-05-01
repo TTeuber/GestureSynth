@@ -33,33 +33,34 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     using namespace std;
-    using Parameter = juce::AudioParameterFloat;
-    using Normalize = juce::NormalisableRange<float>;
+    using namespace juce;
+    using Parameter = AudioParameterFloat;
+    using Normalize = NormalisableRange<float>;
 
-    layout.add (make_unique<Parameter> ("volume", "Volume", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> (ParameterID ("volume", 1), "Volume", 0.0f, 1.0f, 0.5f));
 
-    auto filterFrequency = make_unique<Parameter> ("filterFrequency", "Filter Frequency", Normalize (20.f, 20000.f, 0.01f, 0.25f), 20000.0f);
+    auto filterFrequency = make_unique<Parameter> (ParameterID ("filterFrequency", 1), "Filter Frequency", Normalize (20.f, 20000.f, 0.01f, 0.25f), 20000.0f);
     filterFrequency->range.setSkewForCentre (1200.0f);
     layout.add (std::move (filterFrequency));
 
-    auto filterResonance = make_unique<Parameter> ("filterResonance", "Filter Resonance", Normalize (0.1, 10, 0.01, 0.45), 0.71f);
+    auto filterResonance = make_unique<Parameter> (ParameterID ("filterResonance", 1), "Filter Resonance", Normalize (0.1, 10, 0.01, 0.45), 0.71f);
     filterResonance->range.setSkewForCentre (1.0f);
     layout.add (std::move (filterResonance));
 
-    layout.add (make_unique<Parameter> ("pulseWidth", "Pulse Width", 0.1f, 0.9f, 0.5f));
+    layout.add (make_unique<Parameter> (ParameterID ("pulseWidth", 1), "Pulse Width", 0.1f, 0.9f, 0.5f));
 
     for (int i = 1; i < 2; i++)
     {
-        layout.add (make_unique<Parameter> ("env" + std::to_string (i) + "Attack", "Envelope " + std::to_string (i) + " Attack", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.0f));
-        layout.add (make_unique<Parameter> ("env" + std::to_string (i) + "AttackCurve", "Envelope " + std::to_string (i) + " Attack Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
-        layout.add (make_unique<Parameter> ("env" + std::to_string (i) + "Decay", "Envelope " + std::to_string (i) + " Decay", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.5f));
-        layout.add (make_unique<Parameter> ("env" + std::to_string (i) + "DecayCurve", "Envelope " + std::to_string (i) + " Decay Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
-        layout.add (make_unique<Parameter> ("env" + std::to_string (i) + "Sustain", "Envelope " + std::to_string (i) + " Sustain", 0.0f, 1.0f, 1.0f));
-        layout.add (make_unique<Parameter> ("env" + std::to_string (i) + "Release", "Envelope " + std::to_string (i) + " Release", Normalize (0.0f, 10.0f, 0.001f, 0.3f), 0.0f));
-        layout.add (make_unique<Parameter> ("env" + std::to_string (i) + "ReleaseCurve", "Envelope " + std::to_string (i) + " Release Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
+        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Attack", 1), "Envelope " + std::to_string (i) + " Attack", Normalize (0.01f, 10.0f, 0.001f, 0.3f), 0.0f));
+        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "AttackCurve", 1), "Envelope " + std::to_string (i) + " Attack Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
+        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Decay", 1), "Envelope " + std::to_string (i) + " Decay", Normalize (0.01f, 10.0f, 0.001f, 0.3f), 0.5f));
+        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "DecayCurve", 1), "Envelope " + std::to_string (i) + " Decay Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
+        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Sustain", 1), "Envelope " + std::to_string (i) + " Sustain", 0.0f, 1.0f, 1.0f));
+        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Release", 1), "Envelope " + std::to_string (i) + " Release", Normalize (0.01f, 10.0f, 0.001f, 0.3f), 0.0f));
+        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "ReleaseCurve", 1), "Envelope " + std::to_string (i) + " Release Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
     }
 
-    layout.add (make_unique<Parameter> ("fineTune", "Fine Tune", -0.5f, 0.5f, 0.0f));
+    layout.add (make_unique<Parameter> (ParameterID ("fineTune", 1), "Fine Tune", -0.5f, 0.5f, 0.0f));
 
     return layout;
 }
@@ -236,17 +237,34 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor()
 //==============================================================================
 void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
-    ignoreUnused (destData);
+    // Get the ValueTree state
+    auto state = parameters.copyState();
+
+    // Convert to XML and write to MemoryBlock
+    std::unique_ptr<juce::XmlElement> xml (state.createXml());
+    juce::MemoryOutputStream stream (destData, true);
+    xml->writeTo (stream);
 }
 
 void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
-    juce::ignoreUnused (data, sizeInBytes);
+    // Create a MemoryInputStream from the provided data
+    juce::MemoryInputStream inputStream (data, static_cast<size_t> (sizeInBytes), false);
+
+    // Read the stream into a String
+    juce::String xmlString = inputStream.readString();
+
+    // Parse the string as XML
+    std::unique_ptr<juce::XmlElement> xml = juce::XmlDocument::parse (xmlString);
+
+    if (xml != nullptr)
+    {
+        // Convert XML back to ValueTree
+        juce::ValueTree tree = juce::ValueTree::fromXml (*xml);
+
+        // Update the parameters with the restored state
+        parameters.replaceState (tree);
+    }
 }
 
 //==============================================================================
