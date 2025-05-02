@@ -237,8 +237,11 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor()
 //==============================================================================
 void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // Get the ValueTree state
-    auto state = parameters.copyState();
+    juce::ValueTree state ("PluginState"); // Get the ValueTree state
+
+    state.addChild (parameters.copyState(), -1, nullptr);
+
+    state.addChild (modTree.createCopy(), -1, nullptr);
 
     // Convert to XML and write to MemoryBlock
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
@@ -256,14 +259,24 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 
     // Parse the string as XML
     std::unique_ptr<juce::XmlElement> xml = juce::XmlDocument::parse (xmlString);
-
     if (xml != nullptr)
     {
-        // Convert XML back to ValueTree
-        juce::ValueTree tree = juce::ValueTree::fromXml (*xml);
+        // Convert XML to ValueTree
+        juce::ValueTree state = juce::ValueTree::fromXml (*xml);
 
-        // Update the parameters with the restored state
-        parameters.replaceState (tree);
+        // Restore APVTS state (look for the child with the APVTS identifier, e.g., "MyPlugin")
+        juce::ValueTree paramState = state.getChildWithName (parameters.state.getType());
+        if (paramState.isValid())
+        {
+            parameters.replaceState (paramState);
+        }
+
+        // Restore custom state (look for the child with the custom identifier, e.g., "CustomState")
+        juce::ValueTree customStateRestored = state.getChildWithName (modTree.getType());
+        if (customStateRestored.isValid())
+        {
+            modTree = customStateRestored.createCopy();
+        }
     }
 }
 

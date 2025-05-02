@@ -45,6 +45,9 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
 
     width = 400;
     height = 200;
+
+    sustainLevel = (1 - sustainLevel) * height;
+
     setSize (width, height);
 
     startTimerHz (60);
