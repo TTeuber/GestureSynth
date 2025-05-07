@@ -47,6 +47,13 @@ juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayou
     filterResonance->range.setSkewForCentre (1.0f);
     layout.add (std::move (filterResonance));
 
+    layout.add (make_unique<Parameter> (ParameterID ("oscWaveform", 1), "Oscillator Waveform", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> (ParameterID ("oscDetune", 1), "Oscillator Detune", 0.0f, 1.0f, 0.0f));
+    layout.add (make_unique<Parameter> (ParameterID ("oscWidth", 1), "Oscillator Width", 0.5f, 1.0f, 1.0f));
+    layout.add (make_unique<Parameter> (ParameterID ("subOsc", 1), "Sub Oscillator", 0.0f, 1.0f, 0.0f));
+
+    layout.add (make_unique<Parameter> (ParameterID ("chorusMix", 1), "Chorus Mix", 0.0f, 1.0f, 0.5f));
+
     layout.add (make_unique<Parameter> (ParameterID ("pulseWidth", 1), "Pulse Width", 0.1f, 0.9f, 0.5f));
 
     for (int i = 1; i < 2; i++)

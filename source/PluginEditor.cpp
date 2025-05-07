@@ -4,7 +4,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     : AudioProcessorEditor (&p),
       processorRef (p),
       keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard),
-      matrixComponent (p.modTree)
+      matrixComponent (p.modTree),
+      waveformComponent (p.parameters, "oscWaveform", "pulseWidth", "oscDetune")
 {
     processorRef.keyboardState.addListener (this);
 
@@ -13,21 +14,15 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (matrixComponent);
 
     addAndMakeVisible (volumeDial);
-    addAndMakeVisible (filterCutoffDial);
-    addAndMakeVisible (filterResonanceDial);
-    addAndMakeVisible (pulseWidthDial);
-
-    // addAndMakeVisible (env1AttackDial);
-    // addAndMakeVisible (env1AttackCurveDial);
-    // addAndMakeVisible (env1DecayDial);
-    // addAndMakeVisible (env1DecayCurveDial);
-    // addAndMakeVisible (env1SustainDial);
-    // addAndMakeVisible (env1ReleaseDial);
-    // addAndMakeVisible (env1ReleaseCurveDial);
+    addAndMakeVisible (detuneDial);
+    addAndMakeVisible (oscWidthDial);
+    addAndMakeVisible (subDial);
+    addAndMakeVisible (chorusDial);
 
     addAndMakeVisible (ampADSRGraph);
     addAndMakeVisible (oscilloscope);
     addAndMakeVisible (filterDisplay);
+    addAndMakeVisible (waveformComponent);
 
     setSize (windowWidth, windowHeight);
 }
@@ -56,35 +51,25 @@ void PluginEditor::resized()
 
     const int containerHeight = area.getHeight() / 8;
 
-    juce::Rectangle<int> basicContainer = area.removeFromTop (containerHeight);
-    const int sectionAWidth = basicContainer.getWidth() / 4;
+    juce::Rectangle<int> dialContainerH = area.removeFromTop (containerHeight);
+    const int dialWidth = dialContainerH.getWidth() / 5;
+    volumeDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
+    detuneDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
+    oscWidthDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
+    subDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
+    chorusDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
+
+    juce::Rectangle<int> dialContainerV = area.removeFromRight (containerHeight * 2);
+    waveformComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
 
     const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (static_cast<int> (containerHeight * 2));
     ampADSRGraph.setBounds (ampADSRContainer.reduced (10));
 
-    juce::Rectangle<int> filterDisplayContainer = area.removeFromTop (containerHeight * 2);
+    const juce::Rectangle<int> filterDisplayContainer = area.removeFromTop (containerHeight * 2);
     filterDisplay.setBounds (filterDisplayContainer.reduced (10));
-    // const int sectionBWidth = ampDialContainer.getWidth() / 4;
-
-    // juce::Rectangle<int> ampCurveDialContainer = area.removeFromTop (containerHeight);
-    // const int sectionDWidth = ampCurveDialContainer.getWidth() / 3;
 
     const juce::Rectangle<int> oscilloscopeContainer = area.removeFromTop (containerHeight * 3);
     oscilloscope.setBounds (oscilloscopeContainer.reduced (10));
-
-    volumeDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
-    filterCutoffDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
-    filterResonanceDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
-    pulseWidthDial.setBounds (basicContainer.removeFromLeft (sectionAWidth));
-
-    // env1AttackDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
-    // env1DecayDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
-    // env1SustainDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
-    // env1ReleaseDial.setBounds (ampDialContainer.removeFromLeft (sectionBWidth));
-    //
-    // env1AttackCurveDial.setBounds (ampCurveDialContainer.removeFromLeft (sectionDWidth));
-    // env1DecayCurveDial.setBounds (ampCurveDialContainer.removeFromLeft (sectionDWidth));
-    // env1ReleaseCurveDial.setBounds (ampCurveDialContainer.removeFromLeft (sectionDWidth));
 }
 
 void PluginEditor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)

@@ -3,6 +3,7 @@
 #include "ADSRGraph.h"
 #include "FilterDisplay.h"
 #include "MatrixComponent.h"
+#include "OscGraph.h"
 #include "Oscilliscope.h"
 #include "ParameterDial.h"
 #include "PluginProcessor.h"
@@ -33,10 +34,17 @@ private:
 
     MatrixComponent matrixComponent;
 
+    WaveformComponent waveformComponent;
+
     ParameterDial volumeDial = { processorRef, "volume", "Volume" };
-    ParameterDial filterCutoffDial = { processorRef, "filterFrequency", "Filter Cutoff" };
-    ParameterDial filterResonanceDial = { processorRef, "filterResonance", "Filter Resonance" };
-    ParameterDial pulseWidthDial = { processorRef, "pulseWidth", "Pulse Width" };
+
+    ParameterDial detuneDial = { processorRef, "oscDetune", "Detune" };
+    ParameterDial oscWidthDial = { processorRef, "oscWidth", "Stereo Width" };
+    ParameterDial subDial = { processorRef, "subOsc", "Sub Oscillator" };
+    // ParameterDial pulseWidthDial = { processorRef, "pulseWidth", "Pulse Width" };
+
+    // ParameterDial waveformDial = { processorRef, "oscWaveform", "Waveform" };
+    ParameterDial chorusDial = { processorRef, "chorusMix", "Chorus Mix" };
 
     ADSRGraph ampADSRGraph = { processorRef.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", processorRef.getSynth().getAmpADSRPtr() };
     Oscilloscope oscilloscope = Oscilloscope { processorRef };

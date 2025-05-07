@@ -13,7 +13,7 @@
  * The Juno chorus had two modes (I and II) plus the ability to run both simultaneously.
  * This implementation recreates those three states (OFF, I, II, I+II).
  */
-class JuneChorus
+class JuneChorus : public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     enum ChorusMode {
@@ -24,19 +24,13 @@ public:
     };
 
     //==============================================================================
-    JuneChorus() : currentMode (Mode1),
-                   sampleRate (44100.0f),
-                   delayBufferLength (0),
-                   delayWritePosition (0),
-                   mode1Rate (0.513f), // in Hz, based on Juno-6 specs
-                   mode2Rate (0.816f), // in Hz, based on Juno-6 specs
-                   mode1Depth (0.0028f), // around 2.8ms max for mode I
-                   mode2Depth (0.0018f), // around 1.8ms max for mode II
-                   mode1Phase (0.0f),
-                   mode2Phase (0.0f),
-                   mix (0.5f),
-                   feedback (0.15f),
-                   stereoWidth (1.0f)
+    explicit JuneChorus (juce::AudioProcessorValueTreeState& p)
+        : parameters (p),
+          currentMode (Mode1),
+          mode1Depth (0.0028f), // around 2.8ms max for mode I
+          mode2Depth (0.0018f), // around 1.8ms max for mode II
+          mix (0.5f),
+          feedback (0.15f)
     {
         // Initialize LFO phases with stereo offset
         for (int channel = 0; channel < 2; ++channel)
@@ -45,9 +39,24 @@ public:
             mode1Phase[channel] = channel * 0.5f; // 180 degree offset between channels
             mode2Phase[channel] = channel * 0.25f; // 90 degree offset between channels
         }
+
+        parameters.addParameterListener ("chorusMix", this);
     }
 
-    ~JuneChorus() {}
+    ~JuneChorus() override
+    {
+        parameters.removeParameterListener ("chorusMix", this);
+    }
+
+    //==============================================================================
+
+    void parameterChanged (const juce::String& parameterID, float newValue) override
+    {
+        if (parameterID == "chorusMix")
+        {
+            mix = newValue;
+        }
+    }
 
     //==============================================================================
     void prepare (const juce::dsp::ProcessSpec& spec)
@@ -276,29 +285,31 @@ public:
 
 private:
     //==============================================================================
+    juce::AudioProcessorValueTreeState& parameters;
+
     // Parameters
     ChorusMode currentMode;
 
     // Delay line
     juce::AudioBuffer<float> delayBuffer;
-    float sampleRate;
-    int delayBufferLength;
-    int delayWritePosition;
+    float sampleRate = 44100.0f;
+    int delayBufferLength = 0;
+    int delayWritePosition = 0;
 
     // LFO parameters
-    float mode1Rate; // Hz
-    float mode2Rate; // Hz
+    float mode1Rate = 0.5; // Hz
+    float mode2Rate = 0.8; // Hz
     float mode1Depth; // seconds
     float mode2Depth; // seconds
-    float mode1Phase[2]; // One phase per channel for stereo
-    float mode2Phase[2];
+    float mode1Phase[2] = { 0, 0 }; // One phase per channel for stereo
+    float mode2Phase[2] = { 0, 0 }; // One phase per channel for stereo
     float mode1PhaseIncrement {};
     float mode2PhaseIncrement {};
 
     // Mixing and feedback
     float mix;
     float feedback;
-    float stereoWidth;
+    float stereoWidth = 1.0f; // Full stereo width
 
     // Filters for each channel and mode
     juce::IIRFilter mode1Filter[2];

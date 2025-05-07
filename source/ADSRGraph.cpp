@@ -43,13 +43,6 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
 
     totalDuration = attackTime + decayTime + releaseTime;
 
-    width = 400;
-    height = 200;
-
-    sustainLevel = (1 - sustainLevel) * height;
-
-    setSize (width, height);
-
     startTimerHz (60);
 }
 
@@ -97,6 +90,7 @@ void ADSRGraph::resized()
 {
     width = static_cast<float> (getWidth());
     height = static_cast<float> (getHeight());
+    sustainLevel = (1 - parameters.getRawParameterValue (sustainId)->load()) * height;
 }
 
 void ADSRGraph::paint (juce::Graphics& g)

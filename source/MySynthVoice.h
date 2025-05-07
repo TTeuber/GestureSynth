@@ -77,13 +77,14 @@ private:
     ModMatrix modMatrix;
 
     DynamicParameter pulseWidth = DynamicParameter (parameters.getParameter ("pulseWidth"));
-    JuneDCO juneOscillator = JuneDCO (pulseWidth);
+    JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth);
+    JuneDCO juneOscillator2 = JuneDCO (parameters, pulseWidth);
 
     MyLFO lfo1 = MyLFO ("lfo1", "LFO 1", 0.3f);
 
     DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
 
-    JuneChorus chorus = JuneChorus();
+    JuneChorus chorus = JuneChorus (parameters);
 
     juce::dsp::StateVariableTPTFilter<float> filter = juce::dsp::StateVariableTPTFilter<float>();
 

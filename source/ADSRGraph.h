@@ -91,11 +91,13 @@ private:
     };
     Point selectedPoint;
 
+    float sustain;
+
     float attackTime;
     float attackCurve;
     float decayTime;
     float decayCurve;
-    float sustainLevel;
+    float sustainLevel = -1.0f;
     float releaseTime;
     float releaseCurve;
     float totalDuration = 1.0f;
