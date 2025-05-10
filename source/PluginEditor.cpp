@@ -5,7 +5,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       processorRef (p),
       keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard),
       matrixComponent (p.modTree),
-      waveformComponent (p.parameters, "oscWaveform", "pulseWidth", "oscDetune")
+      waveformComponent (p.parameters, "oscWaveform", "pulseWidth"),
+      detuneComponent (p.parameters, "oscDetune", "oscWidth")
 {
     processorRef.keyboardState.addListener (this);
 
@@ -14,8 +15,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (matrixComponent);
 
     addAndMakeVisible (volumeDial);
-    addAndMakeVisible (detuneDial);
-    addAndMakeVisible (oscWidthDial);
     addAndMakeVisible (subDial);
     addAndMakeVisible (chorusDial);
 
@@ -23,6 +22,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (oscilloscope);
     addAndMakeVisible (filterDisplay);
     addAndMakeVisible (waveformComponent);
+    addAndMakeVisible (detuneComponent);
 
     setSize (windowWidth, windowHeight);
 }
@@ -54,13 +54,12 @@ void PluginEditor::resized()
     juce::Rectangle<int> dialContainerH = area.removeFromTop (containerHeight);
     const int dialWidth = dialContainerH.getWidth() / 5;
     volumeDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
-    detuneDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
-    oscWidthDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
     subDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
     chorusDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
 
     juce::Rectangle<int> dialContainerV = area.removeFromRight (containerHeight * 2);
     waveformComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
+    detuneComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
 
     const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (static_cast<int> (containerHeight * 2));
     ampADSRGraph.setBounds (ampADSRContainer.reduced (10));

@@ -27,15 +27,15 @@ public:
     explicit JuneChorus (juce::AudioProcessorValueTreeState& p)
         : parameters (p),
           currentMode (Mode1),
-          mode1Depth (0.0028f), // around 2.8ms max for mode I
-          mode2Depth (0.0018f), // around 1.8ms max for mode II
+          mode1Depth (0.0028f / 2.0f), // around 2.8 ms max for mode I
+          mode2Depth (0.0018f / 2.0f), // around 1.8 ms max for mode II
           mix (0.5f),
           feedback (0.15f)
     {
         // Initialize LFO phases with stereo offset
         for (int channel = 0; channel < 2; ++channel)
         {
-            // Create phase offsets for stereo effect
+            // Create phase offsets for the stereo effect
             mode1Phase[channel] = channel * 0.5f; // 180 degree offset between channels
             mode2Phase[channel] = channel * 0.25f; // 90 degree offset between channels
         }
@@ -50,7 +50,7 @@ public:
 
     //==============================================================================
 
-    void parameterChanged (const juce::String& parameterID, float newValue) override
+    void parameterChanged (const juce::String& parameterID, const float newValue) override
     {
         if (parameterID == "chorusMix")
         {
@@ -107,7 +107,7 @@ public:
         const int numChannels = buffer.getNumChannels();
         const int numSamples = buffer.getNumSamples();
 
-        // If chorus is off, just pass the signal through
+        // If the chorus is off, pass the signal through
         if (currentMode == Off)
             return;
 
@@ -136,14 +136,14 @@ public:
 
             for (int i = 0; i < numSamples; ++i)
             {
-                // Calculate the delay time for each mode using channel-specific phase
+                // Calculate the delay time for each mode using a channel-specific phase
                 float mode1Delay = 0.0f;
                 float mode2Delay = 0.0f;
 
                 if (currentMode == Mode1 || currentMode == ModeBoth)
                 {
                     // Calculate LFO value for mode 1 with stereo width
-                    float lfoValue = 0.5f + 0.5f * sinf (2.0f * juce::float_Pi * mode1Phase[channel]);
+                    float lfoValue = 0.5f + 0.5f * sinf (2.0f * juce::MathConstants<float>::pi * mode1Phase[channel]);
                     mode1Delay = mode1Depth * sampleRate * lfoValue;
                     mode1Phase[channel] += mode1PhaseIncrement;
                     if (mode1Phase[channel] >= 1.0f)
@@ -153,7 +153,7 @@ public:
                 if (currentMode == Mode2 || currentMode == ModeBoth)
                 {
                     // Calculate LFO value for mode 2 with stereo width
-                    float lfoValue = 0.5f + 0.5f * sinf (2.0f * juce::float_Pi * mode2Phase[channel]);
+                    float lfoValue = 0.5f + 0.5f * sinf (2.0f * juce::MathConstants<float>::pi * mode2Phase[channel]);
                     mode2Delay = mode2Depth * sampleRate * lfoValue;
                     mode2Phase[channel] += mode2PhaseIncrement;
                     if (mode2Phase[channel] >= 1.0f)

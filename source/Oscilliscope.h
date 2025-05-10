@@ -31,22 +31,14 @@ public:
 
         wavePath.startNewSubPath (0, halfHeight);
 
-        int numSamples = 2 * static_cast<int> (processor.getSampleRate() / pitchTracker->frequency);
-        while (numSamples > waveform.size())
-            numSamples /= 2;
+        // int numSamples = 2 * static_cast<int> (processor.getSampleRate() / pitchTracker->frequency);
+        // while (numSamples > waveform.size())
+        //     numSamples /= 2;
+        const int numSamples = juce::jmin<int> (waveform.size(), 1024);
 
-        bool zeroCrossing = false;
-        float xOffset = 0;
         for (int i = 0; i < numSamples; ++i)
         {
-            // if (std::abs (waveform[i] > 0.0001f || waveform[i] < waveform[(i + 10) % numSamples]) && !zeroCrossing)
-            // {
-            //     xOffset += 1;
-            //     continue;
-            // }
-            // else
-            //     zeroCrossing = true;
-            // const float x = static_cast<float> (i) / static_cast<float> (waveform.size()) * width; // Scale to width
+            constexpr float xOffset = 0;
             const float x = static_cast<float> (i) / static_cast<float> (numSamples) * width - xOffset; // Scale to width
             const float y = halfHeight - waveform[i] * halfHeight * 1.0f; // Scale amplitude
             wavePath.lineTo (x, y);

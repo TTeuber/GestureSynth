@@ -15,29 +15,25 @@ class WaveformComponent final : public juce::Component,
 public:
     WaveformComponent (juce::AudioProcessorValueTreeState& apvts,
         const juce::StringRef waveformParamId,
-        const juce::StringRef pulseWidthParamId,
-        const juce::StringRef detuneParamId)
+        const juce::StringRef pulseWidthParamId)
         : apvts (apvts),
           waveformParamId (waveformParamId),
-          pulseWidthParamId (pulseWidthParamId),
-          detuneParamId (detuneParamId)
+          pulseWidthParamId (pulseWidthParamId)
     {
         // Register as a listener for both parameters
         apvts.addParameterListener (waveformParamId, this);
         apvts.addParameterListener (pulseWidthParamId, this);
-        apvts.addParameterListener (detuneParamId, this);
 
         // Set initial values from parameters
-        waveformValue = apvts.getRawParameterValue (waveformParamId)->load();
-        pulseWidthValue = apvts.getRawParameterValue (pulseWidthParamId)->load();
-        detuneValue = apvts.getRawParameterValue (detuneParamId)->load();
+        waveformValue = apvts.getParameter (waveformParamId)->getValue();
+        pulseWidthValue = apvts.getParameter (pulseWidthParamId)->getValue();
     }
 
     ~WaveformComponent() override
     {
         // Remove listeners
         apvts.removeParameterListener (waveformParamId, this);
-        apvts.removeParameterListener (detuneParamId, this);
+        apvts.removeParameterListener (pulseWidthParamId, this);
     }
 
     void paint (juce::Graphics& g) override
@@ -47,24 +43,11 @@ public:
 
         // Calculate dimensions for the waveform
         const auto bounds = getLocalBounds().reduced (20);
-        const float width = bounds.getWidth();
-        // float height = bounds.getHeight();
         const float centerY = bounds.getCentreY();
 
         // Draw main waveform
         g.setColour (TEXT_COLOR);
-        drawWaveform (g, bounds, centerY, 0.0f, waveformValue);
-
-        // Draw detune shadow waveform if detune > 0
-        if (detuneValue > 0.0f)
-        {
-            g.setColour (SECONDARY_COLOR);
-
-            // Draw left and right detune shadows
-            float detuneOffset = detuneValue * width * 0.1f; // Scale detune effect
-            drawWaveform (g, bounds, centerY, -detuneOffset, waveformValue);
-            // No need for a right shadow as the main waveform will serve as the right side
-        }
+        drawPath (g, bounds, centerY, 0.0f, waveformValue);
 
         // Draw percentage text indicators
         g.setColour (juce::Colours::white);
@@ -80,9 +63,9 @@ public:
             juce::Justification::bottomLeft,
             true);
 
-        // Display detune percentage (top right)
-        int detunePercentage = static_cast<int> (detuneValue * 100.0f);
-        g.drawText ("detune: " + juce::String (detunePercentage) + "%",
+        // Display pulse width percentage (top right)
+        int widthPercentage = static_cast<int> (pulseWidthValue * 100.0f);
+        g.drawText ("pulse width: " + juce::String (widthPercentage) + "%",
             getWidth() - 120,
             5,
             110,
@@ -105,7 +88,6 @@ public:
         mouseDownY = e.y;
         initialWaveformValue = waveformValue;
         initialPulseWidthValue = pulseWidthValue;
-        initialDetuneValue = detuneValue;
 
         isDragging = true;
     }
@@ -140,16 +122,14 @@ private:
     {
         // Update local values when parameters change
         if (parameterID == waveformParamId)
-            waveformValue = newValue;
-        else if (parameterID == detuneParamId)
-            detuneValue = newValue;
+            waveformValue = apvts.getParameterRange (waveformParamId).convertTo0to1 (newValue);
         else if (parameterID == pulseWidthParamId)
-            pulseWidthValue = newValue;
+            pulseWidthValue = apvts.getParameterRange (pulseWidthParamId).convertTo0to1 (newValue);
 
         repaint();
     }
 
-    void drawWaveform (juce::Graphics& g, const juce::Rectangle<int>& bounds, const float centerY, const float xOffset, const float waveformMix) const
+    void drawPath (juce::Graphics& g, const juce::Rectangle<int>& bounds, const float centerY, const float xOffset, const float waveformMix) const
     {
         // Create waveform path
         juce::Path path;
@@ -187,12 +167,10 @@ private:
     // Parameter IDs
     juce::String waveformParamId;
     juce::String pulseWidthParamId;
-    juce::String detuneParamId;
 
     // Current parameter values
     float waveformValue = 0.0f;
     float pulseWidthValue = 0.0f;
-    float detuneValue = 0.0f;
 
     float padding = 0.4f; // Padding for waveform drawing
 
@@ -202,7 +180,4 @@ private:
     int mouseDownY = 0;
     float initialWaveformValue = 0.0f;
     float initialPulseWidthValue = 0.0f;
-    float initialDetuneValue = 0.0f;
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (WaveformComponent)
 };

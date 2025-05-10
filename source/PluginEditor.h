@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ADSRGraph.h"
+#include "DetuneComponent.h"
 #include "FilterDisplay.h"
 #include "MatrixComponent.h"
 #include "OscGraph.h"
@@ -35,11 +36,10 @@ private:
     MatrixComponent matrixComponent;
 
     WaveformComponent waveformComponent;
+    DetuneComponent detuneComponent;
 
     ParameterDial volumeDial = { processorRef, "volume", "Volume" };
 
-    ParameterDial detuneDial = { processorRef, "oscDetune", "Detune" };
-    ParameterDial oscWidthDial = { processorRef, "oscWidth", "Stereo Width" };
     ParameterDial subDial = { processorRef, "subOsc", "Sub Oscillator" };
     // ParameterDial pulseWidthDial = { processorRef, "pulseWidth", "Pulse Width" };
 

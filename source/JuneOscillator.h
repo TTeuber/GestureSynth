@@ -80,7 +80,7 @@ public:
         // phaseIncrement = this->frequency / sampleRate;
         phaseIncrementL = frequencyL / sampleRate;
         phaseIncrementR = frequencyR / sampleRate;
-        subPhaseIncrement = phaseIncrement * 0.5f; // Sub-oscillator is one octave lower
+        subPhaseIncrement = this->frequency / sampleRate / 2; // Sub-oscillator is one octave lower
     }
 
     // Set mix levels (0.0 to 1.0)
@@ -202,11 +202,23 @@ public:
     {
         auto osBuffer = oversampling.processSamplesUp (buffer);
 
-        for (int i = 0; i < osBuffer.getNumSamples(); ++i)
+        if (detune == 0.0f)
         {
-            const std::array<float, 2> vals = process();
-            osBuffer.getChannelPointer (0)[i] = vals[0] * stereoWidth + vals[1] * (1.0f - stereoWidth); // Mono output
-            osBuffer.getChannelPointer (1)[i] = vals[1] * stereoWidth + vals[0] * (1.0f - stereoWidth); // Stereo output
+            for (int i = 0; i < osBuffer.getNumSamples(); ++i)
+            {
+                const std::array<float, 2> vals = process();
+                osBuffer.getChannelPointer (0)[i] = vals[0]; // Mono output
+                osBuffer.getChannelPointer (1)[i] = vals[0]; // Stereo output
+            }
+        }
+        else
+        {
+            for (int i = 0; i < osBuffer.getNumSamples(); ++i)
+            {
+                const std::array<float, 2> vals = process();
+                osBuffer.getChannelPointer (0)[i] = vals[0] * stereoWidth + vals[1] * (1.0f - stereoWidth); // Mono output
+                osBuffer.getChannelPointer (1)[i] = vals[1] * stereoWidth + vals[0] * (1.0f - stereoWidth); // Stereo output
+            }
         }
         oversampling.processSamplesDown (buffer);
     }

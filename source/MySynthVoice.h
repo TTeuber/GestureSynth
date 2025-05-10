@@ -117,7 +117,7 @@ private:
         void write (const float sample, const int numSamples)
         {
             buffer.setSample (0, writePos, sample);
-            writePos = (writePos + 1) % numSamples;
+            writePos = (writePos + 1) % 1024;
         }
         void writeBuffer (const juce::AudioBuffer<float>& inputBuffer, const int numSamples)
         {
