@@ -8,6 +8,7 @@
 #include "Oscilliscope.h"
 #include "ParameterDial.h"
 #include "PluginProcessor.h"
+#include "SubOscillatorComponent.h"
 #include "Theme.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 
@@ -37,10 +38,12 @@ private:
 
     WaveformComponent waveformComponent;
     DetuneComponent detuneComponent;
+    SubOscillatorComponent subOscillatorComponent;
 
     ParameterDial volumeDial = { processorRef, "volume", "Volume" };
 
-    ParameterDial subDial = { processorRef, "subOsc", "Sub Oscillator" };
+    ParameterDial subDial = { processorRef, "subOsc", "Sub Level" };
+    ParameterDial subWaveDial = { processorRef, "subOscWave", "Sub Wave" };
     // ParameterDial pulseWidthDial = { processorRef, "pulseWidth", "Pulse Width" };
 
     // ParameterDial waveformDial = { processorRef, "oscWaveform", "Waveform" };

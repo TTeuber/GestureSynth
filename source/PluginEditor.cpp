@@ -5,8 +5,9 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       processorRef (p),
       keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard),
       matrixComponent (p.modTree),
-      waveformComponent (p.parameters, "oscWaveform", "pulseWidth"),
-      detuneComponent (p.parameters, "oscDetune", "oscWidth")
+      waveformComponent (p.parameters.getParameter ("oscWaveform"), p.parameters.getParameter ("pulseWidth")),
+      detuneComponent (p.parameters.getParameter ("oscDetune"), p.parameters.getParameter ("oscWidth")),
+      subOscillatorComponent (p.parameters.getParameter ("subOsc"), p.parameters.getParameter ("subOscWave"))
 {
     processorRef.keyboardState.addListener (this);
 
@@ -16,13 +17,16 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     addAndMakeVisible (volumeDial);
     addAndMakeVisible (subDial);
+    addAndMakeVisible (subWaveDial);
     addAndMakeVisible (chorusDial);
 
     addAndMakeVisible (ampADSRGraph);
     addAndMakeVisible (oscilloscope);
     addAndMakeVisible (filterDisplay);
+
     addAndMakeVisible (waveformComponent);
     addAndMakeVisible (detuneComponent);
+    addAndMakeVisible (subOscillatorComponent);
 
     setSize (windowWidth, windowHeight);
 }
@@ -55,11 +59,13 @@ void PluginEditor::resized()
     const int dialWidth = dialContainerH.getWidth() / 5;
     volumeDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
     subDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
+    subWaveDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
     chorusDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
 
     juce::Rectangle<int> dialContainerV = area.removeFromRight (containerHeight * 2);
     waveformComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
     detuneComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
+    subOscillatorComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
 
     const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (static_cast<int> (containerHeight * 2));
     ampADSRGraph.setBounds (ampADSRContainer.reduced (10));
