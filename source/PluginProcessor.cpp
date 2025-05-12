@@ -28,51 +28,6 @@ PluginProcessor::PluginProcessor()
     }
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout PluginProcessor::createLayout() const
-{
-    juce::AudioProcessorValueTreeState::ParameterLayout layout;
-
-    using namespace std;
-    using namespace juce;
-    using Parameter = AudioParameterFloat;
-    using Normalize = NormalisableRange<float>;
-
-    layout.add (make_unique<Parameter> (ParameterID ("volume", 1), "Volume", 0.0f, 1.0f, 0.5f));
-
-    auto filterFrequency = make_unique<Parameter> (ParameterID ("filterFrequency", 1), "Filter Frequency", Normalize (20.f, 20000.f, 0.01f, 0.25f), 20000.0f);
-    filterFrequency->range.setSkewForCentre (1200.0f);
-    layout.add (std::move (filterFrequency));
-
-    auto filterResonance = make_unique<Parameter> (ParameterID ("filterResonance", 1), "Filter Resonance", Normalize (0.1, 10, 0.01, 0.45), 0.71f);
-    filterResonance->range.setSkewForCentre (1.0f);
-    layout.add (std::move (filterResonance));
-
-    layout.add (make_unique<Parameter> (ParameterID ("oscWaveform", 1), "Waveform", 0.0f, 1.0f, 0.5f));
-    layout.add (make_unique<Parameter> (ParameterID ("oscDetune", 1), "Detune", 0.0f, 1.0f, 0.0f));
-    layout.add (make_unique<Parameter> (ParameterID ("oscWidth", 1), "Width", 0.5f, 1.0f, 1.0f));
-    layout.add (make_unique<Parameter> (ParameterID ("subOsc", 1), "Sub Level", 0.0f, 1.0f, 0.0f));
-    layout.add (make_unique<Parameter> (ParameterID ("subOscWave", 1), "Sub Wave", Normalize (1, 4, 1), 1.0f));
-
-    layout.add (make_unique<Parameter> (ParameterID ("chorusMix", 1), "Chorus Mix", 0.0f, 1.0f, 0.5f));
-
-    layout.add (make_unique<Parameter> (ParameterID ("pulseWidth", 1), "Pulse Width", 0.1f, 0.9f, 0.5f));
-
-    for (int i = 1; i < 2; i++)
-    {
-        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Attack", 1), "Envelope " + std::to_string (i) + " Attack", Normalize (0.01f, 10.0f, 0.001f, 0.3f), 0.0f));
-        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "AttackCurve", 1), "Envelope " + std::to_string (i) + " Attack Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
-        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Decay", 1), "Envelope " + std::to_string (i) + " Decay", Normalize (0.01f, 10.0f, 0.001f, 0.3f), 0.5f));
-        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "DecayCurve", 1), "Envelope " + std::to_string (i) + " Decay Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
-        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Sustain", 1), "Envelope " + std::to_string (i) + " Sustain", 0.0f, 1.0f, 1.0f));
-        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Release", 1), "Envelope " + std::to_string (i) + " Release", Normalize (0.01f, 10.0f, 0.001f, 0.3f), 0.0f));
-        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "ReleaseCurve", 1), "Envelope " + std::to_string (i) + " Release Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
-    }
-
-    layout.add (make_unique<Parameter> (ParameterID ("fineTune", 1), "Fine Tune", -0.5f, 0.5f, 0.0f));
-
-    return layout;
-}
-
 PluginProcessor::~PluginProcessor() = default;
 
 //==============================================================================

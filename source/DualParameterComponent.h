@@ -15,9 +15,11 @@ class DualParameterComponent : public juce::Component,
 {
 public:
     DualParameterComponent (juce::RangedAudioParameter* param1,
-        juce::RangedAudioParameter* param2)
+        juce::RangedAudioParameter* param2,
+        juce::AudioParameterBool* activeParam = nullptr)
         : param1 (param1),
-          param2 (param2)
+          param2 (param2),
+          activeParam (activeParam)
     {
         // Register as a listener for both parameters
         param1->addListener (this);
@@ -26,6 +28,17 @@ public:
         // Set initial values from parameters
         param1Value = param1->getValue();
         param2Value = param2->getValue();
+
+        // Register as listener for active parameter if provided
+        if (activeParam != nullptr)
+        {
+            activeParam->addListener (this);
+            isActive = activeParam->get();
+        }
+        else
+        {
+            isActive = true; // Default to active if no parameter provided
+        }
     }
 
     ~DualParameterComponent() override
@@ -33,6 +46,9 @@ public:
         // Remove listeners
         param1->removeListener (this);
         param2->removeListener (this);
+
+        if (activeParam != nullptr)
+            activeParam->removeListener (this);
     }
 
     void paint (juce::Graphics& g) override
@@ -43,12 +59,21 @@ public:
         // Calculate dimensions for the drawing
         const auto bounds = getLocalBounds().reduced (20);
 
+        // Apply darkening if inactive
+        if (!isActive)
+        {
+            g.setOpacity (0.5f);
+            g.setColour (TEXT_INACTIVE_COLOR);
+        }
+        else
+        {
+            g.setColour (TEXT_COLOR);
+        }
+
         // Draw the main visualization
-        g.setColour (TEXT_COLOR);
         drawVisualization (g, bounds);
 
         // Draw text indicators
-        g.setColour (juce::Colours::white);
         g.setFont (14.0f);
 
         // Display parameter 1 text (bottom left)
@@ -68,6 +93,22 @@ public:
             20,
             juce::Justification::topRight,
             true);
+
+        // Draw the active toggle button in the top-left if we have an active parameter
+        if (activeParam != nullptr)
+        {
+            const int toggleSize = 12;
+            const juce::Rectangle<int> toggleRect (10, 10, toggleSize, toggleSize);
+
+            g.setOpacity (1.0f); // Ensure the toggle is fully visible even when inactive
+            g.setColour (juce::Colours::white);
+            g.drawRect (toggleRect, 1.0f);
+
+            if (isActive)
+            {
+                g.fillRect (toggleRect.reduced (2));
+            }
+        }
     }
 
     void resized() override
@@ -79,6 +120,22 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
+        // Check if clicking the toggle button
+        if (activeParam != nullptr)
+        {
+            const juce::Rectangle<int> toggleRect (10, 10, 12, 12);
+            if (toggleRect.contains (e.getPosition()) || e.mods.isRightButtonDown())
+            {
+                // Toggle the active state
+                activeParam->setValueNotifyingHost (isActive ? 0.0f : 1.0f);
+                return;
+            }
+        }
+
+        // Only process drag if the component is active
+        if (!isActive)
+            return;
+
         // Store initial mouse position and parameter values for drag
         mouseDownX = e.x;
         mouseDownY = e.y;
@@ -90,7 +147,7 @@ public:
 
     void mouseDrag (const juce::MouseEvent& e) override
     {
-        if (!isDragging)
+        if (!isDragging || !isActive)
             return;
 
         const auto bounds = getLocalBounds();
@@ -117,6 +174,10 @@ protected:
     // Parameter pointers
     juce::RangedAudioParameter* param1;
     juce::RangedAudioParameter* param2;
+    juce::AudioParameterBool* activeParam;
+
+    // Active state
+    bool isActive = true;
 
     // Current parameter values
     float param1Value = 0.0f;
@@ -166,8 +227,10 @@ private:
     {
         if (parameterIndex == param1->getParameterIndex())
             param1Value = newValue;
-        else
+        else if (parameterIndex == param2->getParameterIndex())
             param2Value = newValue;
+        else if (activeParam != nullptr && parameterIndex == activeParam->getParameterIndex())
+            isActive = activeParam->get();
 
         repaint();
     }

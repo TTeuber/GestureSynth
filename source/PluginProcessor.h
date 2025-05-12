@@ -2,6 +2,7 @@
 
 #include "Modulation.h"
 #include "MySynth.h"
+#include "Parameters.h"
 #include "PitchTracker.h"
 #include "juce_dsp/juce_dsp.h"
 #include <functional>
@@ -45,8 +46,6 @@ public:
 
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
-
-    juce::AudioProcessorValueTreeState::ParameterLayout createLayout() const;
 
     juce::MidiKeyboardState keyboardState;
     juce::AudioProcessorValueTreeState parameters { *this, nullptr, "parameters", createLayout() };

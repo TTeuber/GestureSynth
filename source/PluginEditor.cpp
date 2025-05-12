@@ -5,9 +5,9 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       processorRef (p),
       keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard),
       matrixComponent (p.modTree),
-      waveformComponent (p.parameters.getParameter ("oscWaveform"), p.parameters.getParameter ("pulseWidth")),
-      detuneComponent (p.parameters.getParameter ("oscDetune"), p.parameters.getParameter ("oscWidth")),
-      subOscillatorComponent (p.parameters.getParameter ("subOsc"), p.parameters.getParameter ("subOscWave"))
+      waveformComponent (p.parameters),
+      detuneComponent (p.parameters),
+      subOscillatorComponent (p.parameters)
 {
     processorRef.keyboardState.addListener (this);
 
@@ -16,8 +16,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (matrixComponent);
 
     addAndMakeVisible (volumeDial);
-    addAndMakeVisible (subDial);
-    addAndMakeVisible (subWaveDial);
     addAndMakeVisible (chorusDial);
 
     addAndMakeVisible (ampADSRGraph);
@@ -55,17 +53,15 @@ void PluginEditor::resized()
 
     const int containerHeight = area.getHeight() / 8;
 
-    juce::Rectangle<int> dialContainerH = area.removeFromTop (containerHeight);
-    const int dialWidth = dialContainerH.getWidth() / 5;
-    volumeDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
-    subDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
-    subWaveDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
-    chorusDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
-
-    juce::Rectangle<int> dialContainerV = area.removeFromRight (containerHeight * 2);
+    juce::Rectangle<int> dialContainerV = area.removeFromLeft (containerHeight * 2);
     waveformComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
     detuneComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
     subOscillatorComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
+
+    juce::Rectangle<int> dialContainerH = area.removeFromBottom (containerHeight);
+    const int dialWidth = dialContainerH.getWidth() / 5;
+    volumeDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
+    chorusDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
 
     const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (static_cast<int> (containerHeight * 2));
     ampADSRGraph.setBounds (ampADSRContainer.reduced (10));

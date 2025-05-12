@@ -17,6 +17,14 @@ public:
         jassert (subOscParam->getName (15).contains ("Sub") && subOscWaveParam->getName (15).contains ("Wave"));
     }
 
+    SubOscillatorComponent (juce::AudioProcessorValueTreeState& apvts)
+        : DualParameterComponent (
+              apvts.getParameter ("subOsc"),
+              apvts.getParameter ("subOscWave"),
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("subOn")))
+    {
+    }
+
     ~SubOscillatorComponent() override = default;
 
 protected:
@@ -39,13 +47,13 @@ protected:
         drawWaveform (wavePath, bounds, waveType, amplitude, centerY);
 
         // Draw the path
-        g.setColour (TEXT_COLOR);
+        // g.setColour (TEXT_COLOR);
         g.strokePath (wavePath, juce::PathStrokeType (2.0f));
     }
 
     juce::String getParam2Text() const override
     {
-        auto wave = param2->convertFrom0to1 (param2Value);
+        const float wave = param2->convertFrom0to1 (param2Value);
         if (wave == 1)
             return "Wave: Sine";
         if (wave == 2)
@@ -59,7 +67,7 @@ protected:
     };
 
 private:
-    void drawWaveform (juce::Path& path, const juce::Rectangle<int>& bounds, int waveType, float amplitude, float centerY) const
+    static void drawWaveform (juce::Path& path, const juce::Rectangle<int>& bounds, int waveType, float amplitude, float centerY)
     {
         const float width = bounds.getWidth();
         const float maxHeight = bounds.getHeight() / 2.0f * amplitude;
@@ -113,6 +121,12 @@ private:
                 path.lineTo (bounds.getX() + width, centerY);
             }
             break;
+
+            default:
+            {
+                jassertfalse;
+                break;
+            }
         }
     }
 };

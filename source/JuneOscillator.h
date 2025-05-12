@@ -6,9 +6,17 @@
 #include "MyParameter.h"
 #include <juce_dsp/juce_dsp.h>
 
-class JuneDCO : public juce::AudioProcessorValueTreeState::Listener
+class JuneDCO final : public juce::AudioProcessorValueTreeState::Listener
 {
 public:
+    // Define enum for waveform types
+    enum class SubWaveType {
+        Sine = 1,
+        Triangle = 2,
+        Square = 3,
+        Saw = 4
+    };
+
     JuneDCO (juce::AudioProcessorValueTreeState& p, DynamicParameter& pw)
         : parameters (p), pulseWidth (pw)
     {
@@ -16,12 +24,23 @@ public:
         parameters.addParameterListener ("oscDetune", this);
         parameters.addParameterListener ("oscWidth", this);
         parameters.addParameterListener ("subOsc", this);
+        parameters.addParameterListener ("subOscWave", this);
+        parameters.addParameterListener ("oscOn", this);
+        parameters.addParameterListener ("subOn", this);
+        parameters.addParameterListener ("detuneOn", this);
 
         reset();
     }
     ~JuneDCO() override
     {
         parameters.removeParameterListener ("oscWaveform", this);
+        parameters.removeParameterListener ("oscDetune", this);
+        parameters.removeParameterListener ("oscWidth", this);
+        parameters.removeParameterListener ("subOsc", this);
+        parameters.removeParameterListener ("subOscWave", this);
+        parameters.removeParameterListener ("oscOn", this);
+        parameters.removeParameterListener ("subOn", this);
+        parameters.removeParameterListener ("detuneOn", this);
     }
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
@@ -50,6 +69,24 @@ public:
             // Handle sub-oscillator level change if needed
             subLevel = newValue;
         }
+        else if (parameterID == "subOscWave")
+        {
+            // Handle sub-oscillator waveform change
+            int waveformValue = static_cast<int> (newValue);
+            subOscWaveform = static_cast<SubWaveType> (waveformValue);
+        }
+        else if (parameterID == "oscOn")
+        {
+            oscillatorEnabled = newValue > 0.5f;
+        }
+        else if (parameterID == "subOn")
+        {
+            subOscillatorEnabled = newValue > 0.5f;
+        }
+        else if (parameterID == "detuneOn")
+        {
+            detuneEnabled = newValue > 0.5f;
+        }
     }
 
     // Prepare oscillator for playback
@@ -65,7 +102,7 @@ public:
     // Reset phase and state
     void reset()
     {
-        // phase = 0.0;
+        phase = 0.0;
         phaseL = 0.0;
         phaseR = 0.0;
         subPhase = 0.0;
@@ -77,7 +114,7 @@ public:
         this->frequency = frequency / std::pow (2, oversampling.factorOversampling);
         frequencyL = this->frequency * std::pow (2, detune * detuneAmount / 12.0f);
         frequencyR = this->frequency * std::pow (2, -(detune * detuneAmount) / 12.0f);
-        // phaseIncrement = this->frequency / sampleRate;
+        phaseIncrement = this->frequency / sampleRate;
         phaseIncrementL = frequencyL / sampleRate;
         phaseIncrementR = frequencyR / sampleRate;
         subPhaseIncrement = this->frequency / sampleRate / 2; // Sub-oscillator is one octave lower
@@ -117,17 +154,17 @@ public:
     std::array<float, 2> process()
     {
         // Store previous phase for discontinuity detection
-        // float previousPhase = phase;
+        float previousPhase = phase;
         float previousPhaseL = phaseL;
         float previousPhaseR = phaseR;
         float previousSubPhase = subPhase;
 
         // Update phase (0.0 to 1.0)
-        // phase += phaseIncrement;
+        phase += phaseIncrement;
         phaseL += phaseIncrementL;
         phaseR += phaseIncrementR;
-        // if (phase >= 1.0)
-        //     phase -= 1.0;
+        if (phase >= 1.0)
+            phase -= 1.0;
         if (phaseL >= 1.0)
             phaseL -= 1.0;
         if (phaseR >= 1.0)
@@ -138,60 +175,139 @@ public:
         if (subPhase >= 1.0)
             subPhase -= 1.0;
 
-        // Generate band-limited sawtooth wave using PolyBLEP
-        // float saw = 2.0f * phase - 1.0f; // Naive sawtooth: -1 to 1
-        float sawL = 2.0f * phaseL - 1.0f; // Naive sawtooth: -1 to 1
-        float sawR = 2.0f * phaseR - 1.0f; // Naive sawtooth: -1 to 1
+        // Initialize outputs
+        float sawOutput = 0.0f;
+        float sawOutputL = 0.0f;
+        float sawOutputR = 0.0f;
+        float pulseOutput = 0.0f;
+        float pulseOutputL = 0.0f;
+        float pulseOutputR = 0.0f;
+        float subOutput = 0.0f;
 
-        // Apply PolyBLEP correction at discontinuity
-        // For sawtooth, there's one discontinuity when the phase wraps
-        // if (previousPhase > phase) // Phase wrapped around
-        //     saw -= polyBlep (phase, phaseIncrement);
-        if (previousPhaseL > phaseL) // Phase wrapped around
-            sawL -= polyBlep (phaseL, phaseIncrementL);
-        if (previousPhaseR > phaseR) // Phase wrapped around
-            sawR -= polyBlep (phaseR, phaseIncrementR);
+        // Process oscillators based on enabled flags
+        if (oscillatorEnabled)
+        {
+            // Process main oscillators
+            if (detuneEnabled)
+            {
+                // Detuned stereo processing
+                sawOutputL = 2.0f * phaseL - 1.0f;
+                sawOutputR = 2.0f * phaseR - 1.0f;
 
-        // Generate band-limited pulse wave using PolyBLEP
-        // float pulse = (phase < pulseWidth.getCurrentValue()) ? -1.0 : 1.0; // Naive pulse wave
-        float pulseL = (phaseL < pulseWidth.getCurrentValue()) ? -1.0 : 1.0; // Naive pulse wave
-        float pulseR = (phaseR < pulseWidth.getCurrentValue()) ? -1.0 : 1.0; // Naive pulse wave
+                // Apply PolyBLEP correction at discontinuity
+                if (previousPhaseL > phaseL)
+                    sawOutputL -= polyBlep (phaseL, phaseIncrementL);
+                if (previousPhaseR > phaseR)
+                    sawOutputR -= polyBlep (phaseR, phaseIncrementR);
 
-        // Apply PolyBLEP correction at rising and falling edges
-        // if (phase < phaseIncrement) // Rising edge
-        //     pulse += polyBlep (phase, phaseIncrement);
-        // if (phase > pulseWidth.getCurrentValue() && phase < pulseWidth.getCurrentValue() + phaseIncrement) // Falling edge
-        //     pulse -= polyBlep (phase - pulseWidth.getCurrentValue(), phaseIncrement);
-        if (phaseL < phaseIncrementL) // Rising edge
-            pulseL += polyBlep (phaseL, phaseIncrementL);
-        if (phaseL > pulseWidth.getCurrentValue() && phaseL < pulseWidth.getCurrentValue() + phaseIncrementL) // Falling edge
-            pulseL -= polyBlep (phaseL - pulseWidth.getCurrentValue(), phaseIncrementL);
-        if (phaseR < phaseIncrementR) // Rising edge
-            pulseR += polyBlep (phaseR, phaseIncrementR);
-        if (phaseR > pulseWidth.getCurrentValue() && phaseR < pulseWidth.getCurrentValue() + phaseIncrementR) // Falling edge
-            pulseR -= polyBlep (phaseR - pulseWidth.getCurrentValue(), phaseIncrementR);
+                // Pulse wave processing
+                pulseOutputL = (phaseL < pulseWidth.getCurrentValue()) ? -1.0 : 1.0;
+                pulseOutputR = (phaseR < pulseWidth.getCurrentValue()) ? -1.0 : 1.0;
 
-        // Generate band-limited sub-oscillator (square wave with 50% duty cycle)
-        float sub = (subPhase < 0.5) ? 1.0 : -1.0; // Naive square wave
+                // Apply PolyBLEP correction at rising and falling edges
+                if (phaseL < phaseIncrementL)
+                    pulseOutputL += polyBlep (phaseL, phaseIncrementL);
+                if (phaseL > pulseWidth.getCurrentValue() && phaseL < pulseWidth.getCurrentValue() + phaseIncrementL)
+                    pulseOutputL -= polyBlep (phaseL - pulseWidth.getCurrentValue(), phaseIncrementL);
+                if (phaseR < phaseIncrementR)
+                    pulseOutputR += polyBlep (phaseR, phaseIncrementR);
+                if (phaseR > pulseWidth.getCurrentValue() && phaseR < pulseWidth.getCurrentValue() + phaseIncrementR)
+                    pulseOutputR -= polyBlep (phaseR - pulseWidth.getCurrentValue(), phaseIncrementR);
+            }
+            else
+            {
+                // Mono processing
+                sawOutput = 2.0f * phase - 1.0f;
 
-        // Apply PolyBLEP correction for sub-oscillator
-        if (subPhase < subPhaseIncrement) // Rising edge
-            sub += polyBlep (subPhase, subPhaseIncrement);
-        if (subPhase > 0.5 && subPhase < 0.5 + subPhaseIncrement) // Falling edge
-            sub -= polyBlep (subPhase - 0.5, subPhaseIncrement);
+                // Apply PolyBLEP correction at discontinuity
+                if (previousPhase > phase)
+                    sawOutput -= polyBlep (phase, phaseIncrement);
+
+                // Pulse wave processing
+                pulseOutput = (phase < pulseWidth.getCurrentValue()) ? -1.0 : 1.0;
+
+                // Apply PolyBLEP correction at rising and falling edges
+                if (phase < phaseIncrement)
+                    pulseOutput += polyBlep (phase, phaseIncrement);
+                if (phase > pulseWidth.getCurrentValue() && phase < pulseWidth.getCurrentValue() + phaseIncrement)
+                    pulseOutput -= polyBlep (phase - pulseWidth.getCurrentValue(), phaseIncrement);
+            }
+        }
+
+        // Process sub oscillator if enabled
+        if (subOscillatorEnabled)
+        {
+            // Generate different waveforms based on subOscWaveform value
+            switch (subOscWaveform)
+            {
+                case SubWaveType::Sine:
+                    // Sine wave: sin(2*PI*phase)
+                    subOutput = std::sin (2.0f * juce::MathConstants<float>::pi * subPhase);
+                    break;
+
+                case SubWaveType::Triangle:
+                    // Triangle wave: 2.0 * |2.0 * phase - 1.0| - 1.0
+                    subOutput = 2.0f * std::abs (2.0f * subPhase - 1.0f) - 1.0f;
+                    break;
+
+                case SubWaveType::Square:
+                    // Square wave (original implementation)
+                    subOutput = (subPhase < 0.5) ? 1.0 : -1.0;
+
+                    // Apply PolyBLEP correction for sub-oscillator
+                    if (subPhase < subPhaseIncrement)
+                        subOutput += polyBlep (subPhase, subPhaseIncrement);
+                    if (subPhase > 0.5 && subPhase < 0.5 + subPhaseIncrement)
+                        subOutput -= polyBlep (subPhase - 0.5, subPhaseIncrement);
+                    break;
+
+                case SubWaveType::Saw:
+                    // Sawtooth wave: 2.0 * phase - 1.0
+                    subOutput = 2.0f * subPhase - 1.0f;
+
+                    // Apply PolyBLEP correction at discontinuity
+                    if (previousSubPhase > subPhase)
+                        subOutput -= polyBlep (subPhase, subPhaseIncrement);
+                    break;
+            }
+        }
 
         // Mix waveforms
-        // float output = saw * sawLevel + pulse * pulseLevel + sub * subLevel;
-        float outputL = sawL * sawLevel + pulseL * pulseLevel + sub * subLevel;
-        float outputR = sawR * sawLevel + pulseR * pulseLevel + sub * subLevel;
+        float outputL, outputR;
 
-        // // Normalize output to prevent clipping
-        const float mixSum = sawLevel + pulseLevel + subLevel;
-        if (mixSum > 0.0)
+        if (detuneEnabled)
         {
-            // output /= mixSum;
-            outputL /= mixSum;
-            outputR /= mixSum;
+            // Mix stereo signals
+            float leftSignal = sawOutputL * sawLevel + pulseOutputL * pulseLevel + subOutput * subLevel;
+            float rightSignal = sawOutputR * sawLevel + pulseOutputR * pulseLevel + subOutput * subLevel;
+
+            // Apply stereo width
+            // When stereoWidth is 0, both channels should be the same (mono)
+            // When stereoWidth is 1, channels are fully separated
+            float monoSignal = (leftSignal + rightSignal) * 0.5f;
+
+            outputL = monoSignal * (1.0f - stereoWidth) + leftSignal * stereoWidth;
+            outputR = monoSignal * (1.0f - stereoWidth) + rightSignal * stereoWidth;
+        }
+        else
+        {
+            // Mix mono signal
+            float monoOut = sawOutput * sawLevel + pulseOutput * pulseLevel + subOutput * subLevel;
+            outputL = monoOut;
+            outputR = monoOut;
+        }
+
+        // Normalize output to prevent clipping
+        float activeMixSum = 0.0f;
+        if (oscillatorEnabled)
+            activeMixSum += sawLevel + pulseLevel;
+        if (subOscillatorEnabled)
+            activeMixSum += subLevel;
+
+        if (activeMixSum > 0.0f)
+        {
+            outputL /= activeMixSum;
+            outputR /= activeMixSum;
         }
 
         return { outputL, outputR };
@@ -202,24 +318,13 @@ public:
     {
         auto osBuffer = oversampling.processSamplesUp (buffer);
 
-        if (detune == 0.0f)
+        for (int i = 0; i < osBuffer.getNumSamples(); ++i)
         {
-            for (int i = 0; i < osBuffer.getNumSamples(); ++i)
-            {
-                const std::array<float, 2> vals = process();
-                osBuffer.getChannelPointer (0)[i] = vals[0]; // Mono output
-                osBuffer.getChannelPointer (1)[i] = vals[0]; // Stereo output
-            }
+            const std::array<float, 2> vals = process();
+            osBuffer.getChannelPointer (0)[i] = vals[0];
+            osBuffer.getChannelPointer (1)[i] = vals[1];
         }
-        else
-        {
-            for (int i = 0; i < osBuffer.getNumSamples(); ++i)
-            {
-                const std::array<float, 2> vals = process();
-                osBuffer.getChannelPointer (0)[i] = vals[0] * stereoWidth + vals[1] * (1.0f - stereoWidth); // Mono output
-                osBuffer.getChannelPointer (1)[i] = vals[1] * stereoWidth + vals[0] * (1.0f - stereoWidth); // Stereo output
-            }
-        }
+
         oversampling.processSamplesDown (buffer);
     }
 
@@ -244,6 +349,10 @@ private:
     float detune = 0.0f;
     float detuneAmount = 0.25f;
     float stereoWidth = 1.0f;
+    bool oscillatorEnabled = true; // Default to on
+    bool subOscillatorEnabled = true; // Default to on
+    bool detuneEnabled = true; // Default to on
+    SubWaveType subOscWaveform = SubWaveType::Square; // Default to square wave
     // size_t numSamples = 512;
     juce::dsp::Oversampling<float> oversampling = juce::dsp::Oversampling<float> (
         2, // Stereo

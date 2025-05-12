@@ -19,6 +19,14 @@ public:
     {
     }
 
+    WaveformComponent (juce::AudioProcessorValueTreeState& apvts)
+        : DualParameterComponent (
+              apvts.getParameter ("oscWaveform"),
+              apvts.getParameter ("pulseWidth"),
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("oscOn")))
+    {
+    }
+
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {

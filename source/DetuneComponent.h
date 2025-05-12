@@ -13,8 +13,17 @@ class DetuneComponent final : public DualParameterComponent
 {
 public:
     DetuneComponent (juce::RangedAudioParameter* detuneParam,
-        juce::RangedAudioParameter* stereoParam)
-        : DualParameterComponent (detuneParam, stereoParam)
+        juce::RangedAudioParameter* stereoParam,
+        juce::AudioParameterBool* stereoParamBool = nullptr)
+        : DualParameterComponent (detuneParam, stereoParam, stereoParamBool)
+    {
+    }
+
+    DetuneComponent (juce::AudioProcessorValueTreeState& apvts)
+        : DualParameterComponent (
+              apvts.getParameter ("oscDetune"),
+              apvts.getParameter ("oscWidth"),
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("detuneOn")))
     {
     }
 

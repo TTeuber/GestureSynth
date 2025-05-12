@@ -42,11 +42,6 @@ private:
 
     ParameterDial volumeDial = { processorRef, "volume", "Volume" };
 
-    ParameterDial subDial = { processorRef, "subOsc", "Sub Level" };
-    ParameterDial subWaveDial = { processorRef, "subOscWave", "Sub Wave" };
-    // ParameterDial pulseWidthDial = { processorRef, "pulseWidth", "Pulse Width" };
-
-    // ParameterDial waveformDial = { processorRef, "oscWaveform", "Waveform" };
     ParameterDial chorusDial = { processorRef, "chorusMix", "Chorus Mix" };
 
     ADSRGraph ampADSRGraph = { processorRef.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", processorRef.getSynth().getAmpADSRPtr() };
