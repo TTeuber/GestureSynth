@@ -6,7 +6,6 @@
 #include <juce_dsp/juce_dsp.h>
 #include <vector>
 
-// class DynamicParameter;
 class ModSource
 {
 public:
@@ -14,10 +13,9 @@ public:
     {
     }
     virtual ~ModSource() = default;
-    void prepare (const juce::dsp::ProcessSpec& spec) { sampleRate = static_cast<float> (spec.sampleRate); }
+    virtual void prepare (const juce::dsp::ProcessSpec& spec) { sampleRate = static_cast<float> (spec.sampleRate); }
     [[nodiscard]] virtual float getCurrentValue() const noexcept { return -1.0f; }
     virtual float getNextValue() noexcept = 0;
-    // virtual void addParameters() = 0;
     [[nodiscard]] virtual juce::String getID() const noexcept { return id; }
     [[nodiscard]] virtual juce::String getName() const noexcept { return name; }
 
@@ -25,7 +23,6 @@ protected:
     float sampleRate = 44100.0f;
     juce::String id;
     juce::String name;
-    // std::vector<DynamicParameter&> parameters;
 };
 
 class ModDestination

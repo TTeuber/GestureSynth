@@ -3,14 +3,20 @@
 //
 
 #include "FilterDisplay.h"
-FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts) : audioProcessorValueTreeState (apvts)
+FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts) : apvts (apvts)
 {
     // Add listeners to the parameters
-    audioProcessorValueTreeState.addParameterListener ("filterFrequency", this);
-    audioProcessorValueTreeState.addParameterListener ("filterResonance", this);
+    this->apvts.addParameterListener ("filterFrequency", this);
+    this->apvts.addParameterListener ("filterResonance", this);
+    this->apvts.addParameterListener ("filterOn", this);
 
-    cutoffParam = audioProcessorValueTreeState.getParameter ("filterFrequency");
-    resonanceParam = audioProcessorValueTreeState.getParameter ("filterResonance");
+    cutoffParam = apvts.getParameter ("filterFrequency");
+    resonanceParam = apvts.getParameter ("filterResonance");
+
+    // Initialize filterEnabled based on the actual parameter value
+    auto* filterOnParam = apvts.getParameter ("filterOn");
+    if (filterOnParam != nullptr)
+        filterEnabled = filterOnParam->getValue() > 0.5f;
 
     // Get initial parameter values
     updateParameterValues();
@@ -20,8 +26,9 @@ FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts) : audio
 FilterDisplay::~FilterDisplay()
 {
     // Remove listeners
-    audioProcessorValueTreeState.removeParameterListener ("filterFrequency", this);
-    audioProcessorValueTreeState.removeParameterListener ("filterResonance", this);
+    apvts.removeParameterListener ("filterFrequency", this);
+    apvts.removeParameterListener ("filterResonance", this);
+    apvts.removeParameterListener ("filterOn", this);
 }
 
 void FilterDisplay::paint (juce::Graphics& g)
@@ -35,22 +42,36 @@ void FilterDisplay::paint (juce::Graphics& g)
     // Draw parameter values
     drawParameterValues (g);
 
-    // Draw filter response curve
+    // Draw the filter response curve
     drawFrequencyPath (g);
 }
 void FilterDisplay::resized()
 {
-    // Update calculations for new size
+    // Update calculations for a new size
     updateControlPointPosition();
 }
 
 void FilterDisplay::mouseDown (const juce::MouseEvent& e)
 {
-    // Check if mouse is near the control point
+    if (e.mods.isRightButtonDown())
+    {
+        // Get the current parameter
+        auto* filterOnParam = apvts.getParameter ("filterOn");
+        if (filterOnParam != nullptr)
+        {
+            // Toggle the parameter and notify the host
+            filterOnParam->beginChangeGesture();
+            filterOnParam->setValueNotifyingHost (!filterEnabled);
+            filterOnParam->endChangeGesture();
+
+            repaint();
+        }
+    }
+    // Check if the mouse is near the control point
     if (isMouseOverControlPoint (e.getPosition()))
     {
         isDragging = true;
-        // Store original mouse position for fine control
+        // Store the original mouse position for fine control
         dragStartPosition = e.position;
         // Store original parameter values for fine control
         dragStartCutoff = normalizedCutoff;
@@ -120,12 +141,16 @@ void FilterDisplay::parameterChanged (const juce::String& parameterID, float new
             repaint();
         });
     }
+    else if (parameterID == "filterOn")
+    {
+        filterEnabled = newValue > 0.5f;
+    }
 }
 void FilterDisplay::updateParameterValues()
 {
     // Get the normalized values (0-1)
-    const auto* cutoffParam = audioProcessorValueTreeState.getParameter ("filterFrequency");
-    auto* resonanceParam = audioProcessorValueTreeState.getParameter ("filterResonance");
+    const auto* cutoffParam = apvts.getParameter ("filterFrequency");
+    auto* resonanceParam = apvts.getParameter ("filterResonance");
 
     if (cutoffParam && resonanceParam)
     {
@@ -148,7 +173,7 @@ void FilterDisplay::drawFrequencyPath (juce::Graphics& g) const
     {
         const double x = static_cast<double> (xPixel) / getWidth(); // Normalize to 0-1
         const double dB = getYCoordinate (x);
-        // Map dB to y-pixel (invert and scale, e.g., 0 dB at middle of height)
+        // Map dB to y-pixel (invert and scale, e.g., 0 dB at the middle of height)
         const float yPixel = getHeight() / 2.0f - dB * getHeight() / 50.0f; // Example scaling
         if (xPixel == 0)
         {
@@ -160,7 +185,7 @@ void FilterDisplay::drawFrequencyPath (juce::Graphics& g) const
         }
     }
 
-    g.setColour (TEXT_COLOR);
+    g.setColour (filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
     g.strokePath (path, juce::PathStrokeType (2.0f));
 }
 
@@ -178,7 +203,7 @@ double FilterDisplay::getYCoordinate (const float x, const int order) const
     // Calculate total gain in dB by summing stages
     double totalGainDb = 0.0;
     const int numSecondOrderStages = order / 2; // Number of second-order stages
-    const bool hasFirstOrderStage = order % 2 == 1; // True if order is odd
+    const bool hasFirstOrderStage = order % 2 == 1; // True if the order is odd
 
     // Process second-order stages
     for (int i = 0; i < numSecondOrderStages; ++i)
@@ -186,7 +211,7 @@ double FilterDisplay::getYCoordinate (const float x, const int order) const
         totalGainDb += computeSecondOrderStage (freq, cutoffFrequency, resonance);
     }
 
-    // Process first-order stage if order is odd
+    // Process the first-order stage if the order is odd
     if (hasFirstOrderStage)
     {
         totalGainDb += computeFirstOrderStage (freq, cutoffFrequency);
@@ -242,15 +267,15 @@ bool FilterDisplay::isMouseOverControlPoint (const juce::Point<int>& mousePositi
 void FilterDisplay::drawControlPoint (juce::Graphics& g) const
 {
     // Draw outer circle
-    g.setColour (juce::Colours::white);
+    g.setColour (filterEnabled ? juce::Colours::white : juce::Colours::grey);
     g.drawEllipse (controlPoint.x - controlPointRadius,
         controlPoint.y - controlPointRadius,
         controlPointRadius * 2.0f,
         controlPointRadius * 2.0f,
         2.0f);
 
-    // Draw inner circle
-    g.setColour (isDragging ? juce::Colours::orange : juce::Colours::grey);
+    // Draw the inner circle
+    g.setColour (filterEnabled ? (isDragging ? juce::Colours::orange : juce::Colours::grey) : juce::Colours::black);
     g.fillEllipse (controlPoint.x - (controlPointRadius - 2.0f),
         controlPoint.y - (controlPointRadius - 2.0f),
         (controlPointRadius - 2.0f) * 2.0f,
@@ -258,7 +283,7 @@ void FilterDisplay::drawControlPoint (juce::Graphics& g) const
 }
 void FilterDisplay::drawParameterValues (juce::Graphics& g) const
 {
-    g.setColour (TEXT_COLOR);
+    g.setColour (filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
     g.setFont (14.0f);
 
     // Format the frequency value
@@ -274,7 +299,7 @@ void FilterDisplay::drawParameterValues (juce::Graphics& g) const
     // Draw resonance text
     g.drawText ("Resonance: " + juce::String (resonance, 2), getWidth() / 2 + 5, 5, getWidth() / 2 - 10, 20, juce::Justification::topRight, true);
 
-    // Draw shift key hint when dragging
+    // Draw a shift key hint when dragging
     if (isDragging)
     {
         g.setFont (12.0f);

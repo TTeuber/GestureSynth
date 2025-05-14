@@ -50,12 +50,6 @@ void ModMatrix::processSample() const noexcept
     for (const auto& [destination, mods] : matrix)
     {
         float value = destination->getRawParameterValue();
-        if (std::isnan (value))
-        {
-            DBG (destination->getName() << " has NaN value");
-            continue;
-        }
-        // float value = destination->getBaseValue();
         for (const auto& [source, depth, isBipolar] : mods)
         {
             if (isBipolar)

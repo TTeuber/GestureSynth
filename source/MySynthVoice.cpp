@@ -14,6 +14,8 @@ MySynthVoice::MySynthVoice (
 {
     modTree.addListener (this);
 
+    parameters.addParameterListener ("filterOn", this);
+
     // Initialize the mod destinations
     // Currently this is how the current value is updated when there are no mod sources
     for (const auto& [_, d] : modDestinations)
@@ -22,7 +24,7 @@ MySynthVoice::MySynthVoice (
     for (auto* env : envs)
         env->setSampleRate (currentSampleRate);
 
-    lfo1.setFrequency (1.0f);
+    // lfo1.setFrequency (1.0f);
 }
 
 void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, const int startSample, const int numSamples)
@@ -45,10 +47,13 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     const juce::dsp::ProcessContextReplacing context (block);
 
     juneOscillator.processBlock (block);
-    filter.setCutoffFrequency (filterCutoff.getCurrentValue());
-    filter.setResonance (juce::jmax<float> (0.01, filterResonance.getCurrentValue()));
-    filter.process (context);
-    chorus.process (tempBuffer);
+    if (filterEnabled)
+    {
+        filter.setCutoffFrequency (filterCutoff.getCurrentValue());
+        filter.setResonance (juce::jmax<float> (0.01, filterResonance.getCurrentValue()));
+        filter.process (context);
+    }
+    // chorus.process (tempBuffer);
 
     volume = parameters.getParameter ("volume")->getValue();
 
@@ -92,14 +97,10 @@ float MySynthVoice::frequencyToPhaseIncrement (const float frequency) const
 
 void MySynthVoice::parameterChanged (const juce::String& parameterID, float newValue)
 {
-    // for (auto& [id, source] : modSources)
-    // {
-    //     if (id == parameterID)
-    //     {
-    //         source->setValue (newValue);
-    //         break;
-    //     }
-    // }
+    if (parameterID == "filterOn")
+    {
+        filterEnabled = newValue > 0.5f;
+    }
 }
 
 void MySynthVoice::valueTreeChildAdded (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
@@ -146,7 +147,7 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     spec.numChannels = numChannels;
 
     juneOscillator.prepare (spec);
-    chorus.prepare (spec);
+    // chorus.prepare (spec);
     filter.prepare (spec);
     // osc.prepare (spec);
     modMatrix.prepare (spec);

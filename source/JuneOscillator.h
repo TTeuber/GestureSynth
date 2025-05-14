@@ -316,7 +316,10 @@ public:
     // Process a block of samples
     void processBlock (juce::dsp::AudioBlock<float>& buffer)
     {
-        auto osBuffer = oversampling.processSamplesUp (buffer);
+        if (!oscillatorEnabled && !subOscillatorEnabled)
+            return;
+
+        const auto osBuffer = oversampling.processSamplesUp (buffer);
 
         for (int i = 0; i < osBuffer.getNumSamples(); ++i)
         {
@@ -357,7 +360,7 @@ private:
     juce::dsp::Oversampling<float> oversampling = juce::dsp::Oversampling<float> (
         2, // Stereo
         2, // 2x oversampling
-        juce::dsp::Oversampling<float>::filterHalfBandFIREquiripple,
+        juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR,
         true, // High-quality upsampling
         false // Normal-quality downsampling
     );

@@ -28,7 +28,7 @@ public:
     void mouseUp (const juce::MouseEvent& e) override;
 
 private:
-    juce::AudioProcessorValueTreeState& audioProcessorValueTreeState;
+    juce::AudioProcessorValueTreeState& apvts;
 
     juce::RangedAudioParameter* cutoffParam = nullptr;
     juce::RangedAudioParameter* resonanceParam = nullptr;
@@ -36,6 +36,8 @@ private:
     // Normalized parameter values (0-1)
     float normalizedCutoff = 0.5f;
     float normalizedResonance = 0.5f;
+
+    bool filterEnabled = true;
 
     // Actual parameter values
     float cutoffFrequency = 1000.0f;

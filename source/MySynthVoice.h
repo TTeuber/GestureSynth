@@ -8,7 +8,7 @@
 #include "MyParameter.h"
 #include "PitchTracker.h"
 // #include "WaveTableOscillator.h"
-#include "Chorus.h"
+// #include "Chorus.h"
 #include "JuneOscillator.h"
 
 #include <juce_dsp/juce_dsp.h>
@@ -84,7 +84,7 @@ private:
 
     DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
 
-    JuneChorus chorus = JuneChorus (parameters);
+    // JuneChorus chorus = JuneChorus (parameters);
 
     juce::dsp::StateVariableTPTFilter<float> filter = juce::dsp::StateVariableTPTFilter<float>();
 
@@ -99,6 +99,7 @@ private:
 
     DynamicParameter filterCutoff = DynamicParameter (parameters.getParameter ("filterFrequency"));
     DynamicParameter filterResonance = DynamicParameter (parameters.getParameter ("filterResonance"));
+    bool filterEnabled = false;
 
     std::shared_ptr<MySynthVoice*> voicePtr;
 

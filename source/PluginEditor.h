@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ADSRGraph.h"
+// #include "ChorusComponent.h"
 #include "DetuneComponent.h"
 #include "FilterDisplay.h"
 #include "MatrixComponent.h"
@@ -39,6 +40,7 @@ private:
     WaveformComponent waveformComponent;
     DetuneComponent detuneComponent;
     SubOscillatorComponent subOscillatorComponent;
+    // ChorusComponent chorusComponent;
 
     ParameterDial volumeDial = { processorRef, "volume", "Volume" };
 

@@ -10,25 +10,22 @@
 /**
  * JunoChorus - A class that mimics the classic Juno-6 chorus effect
  *
- * The Juno chorus had two modes (I and II) plus the ability to run both simultaneously.
- * This implementation recreates those three states (OFF, I, II, I+II).
+ * This implementation recreates the chorus effect with two states (OFF, ON).
  */
 class JuneChorus : public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     enum ChorusMode {
         Off = 0,
-        Mode1 = 1,
-        Mode2 = 2,
-        ModeBoth = 3
+        On = 1
     };
 
     //==============================================================================
     explicit JuneChorus (juce::AudioProcessorValueTreeState& p)
         : parameters (p),
-          currentMode (Mode1),
-          mode1Depth (0.0028f / 2.0f), // around 2.8 ms max for mode I
-          mode2Depth (0.0018f / 2.0f), // around 1.8 ms max for mode II
+          currentMode (On),
+          rate (0.5), // around 2.8 ms max
+          depth (0.0028f),
           mix (0.5f),
           feedback (0.15f)
     {
@@ -36,16 +33,21 @@ public:
         for (int channel = 0; channel < 2; ++channel)
         {
             // Create phase offsets for the stereo effect
-            mode1Phase[channel] = channel * 0.5f; // 180 degree offset between channels
-            mode2Phase[channel] = channel * 0.25f; // 90 degree offset between channels
+            phase[channel] = channel * 0.5f; // 180 degree offset between channels
         }
 
         parameters.addParameterListener ("chorusMix", this);
+        parameters.addParameterListener ("chorusDepth", this);
+        parameters.addParameterListener ("chorusRate", this);
+        parameters.addParameterListener ("chorusOn", this);
     }
 
     ~JuneChorus() override
     {
         parameters.removeParameterListener ("chorusMix", this);
+        parameters.removeParameterListener ("chorusOn", this);
+        parameters.removeParameterListener ("chorusDepth", this);
+        parameters.removeParameterListener ("chorusRate", this);
     }
 
     //==============================================================================
@@ -55,6 +57,23 @@ public:
         if (parameterID == "chorusMix")
         {
             mix = newValue;
+        }
+        else if (parameterID == "chorusOn")
+        {
+            currentMode = newValue > 0.5f ? On : Off;
+        }
+        else if (parameterID == "chorusDepth")
+        {
+            depth = newValue;
+        }
+        else if (parameterID == "chorusRate")
+        {
+            rate = newValue;
+            phaseIncrement = rate / sampleRate;
+        }
+        else
+        {
+            jassertfalse;
         }
     }
 
@@ -71,17 +90,14 @@ public:
         delayBufferLength = static_cast<int> (2.0 * sampleRate);
         delayWritePosition = 0;
 
-        // Initialize LFOs
-        mode1PhaseIncrement = mode1Rate / sampleRate;
-        mode2PhaseIncrement = mode2Rate / sampleRate;
+        // Initialize LFO
+        phaseIncrement = rate / sampleRate;
 
         // Reset filters
         for (int i = 0; i < 2; ++i)
         {
-            mode1Filter[i].reset();
-            mode2Filter[i].reset();
-            mode1Filter[i].setCoefficients (juce::IIRCoefficients::makeLowPass (sampleRate, 8000.0));
-            mode2Filter[i].setCoefficients (juce::IIRCoefficients::makeLowPass (sampleRate, 8000.0));
+            filter[i].reset();
+            filter[i].setCoefficients (juce::IIRCoefficients::makeLowPass (sampleRate, 8000.0));
         }
     }
 
@@ -91,12 +107,10 @@ public:
         delayBuffer.clear();
         for (int i = 0; i < 2; ++i)
         {
-            mode1Filter[i].reset();
-            mode2Filter[i].reset();
+            filter[i].reset();
 
             // Reset phases but maintain stereo offset
-            mode1Phase[i] = i * 0.5f;
-            mode2Phase[i] = i * 0.25f;
+            phase[i] = i * 0.5f;
         }
 
         delayWritePosition = 0;
@@ -136,68 +150,25 @@ public:
 
             for (int i = 0; i < numSamples; ++i)
             {
-                // Calculate the delay time for each mode using a channel-specific phase
-                float mode1Delay = 0.0f;
-                float mode2Delay = 0.0f;
+                // Calculate the delay time using a channel-specific phase
+                float delayTime = 0.0f;
 
-                if (currentMode == Mode1 || currentMode == ModeBoth)
-                {
-                    // Calculate LFO value for mode 1 with stereo width
-                    float lfoValue = 0.5f + 0.5f * sinf (2.0f * juce::MathConstants<float>::pi * mode1Phase[channel]);
-                    mode1Delay = mode1Depth * sampleRate * lfoValue;
-                    mode1Phase[channel] += mode1PhaseIncrement;
-                    if (mode1Phase[channel] >= 1.0f)
-                        mode1Phase[channel] -= 1.0f;
-                }
+                // Calculate LFO value with stereo width
+                float lfoValue = 0.5f + 0.5f * sinf (2.0f * juce::MathConstants<float>::pi * phase[channel]);
+                delayTime = depth * sampleRate * lfoValue;
+                phase[channel] += phaseIncrement;
+                if (phase[channel] >= 1.0f)
+                    phase[channel] -= 1.0f;
 
-                if (currentMode == Mode2 || currentMode == ModeBoth)
-                {
-                    // Calculate LFO value for mode 2 with stereo width
-                    float lfoValue = 0.5f + 0.5f * sinf (2.0f * juce::MathConstants<float>::pi * mode2Phase[channel]);
-                    mode2Delay = mode2Depth * sampleRate * lfoValue;
-                    mode2Phase[channel] += mode2PhaseIncrement;
-                    if (mode2Phase[channel] >= 1.0f)
-                        mode2Phase[channel] -= 1.0f;
-                }
+                // Read the delayed sample
+                int delayPos = static_cast<int> (delayWritePosition + i - delayTime + delayBufferLength) % delayBufferLength;
 
-                // Read the delayed samples
-                float outMode1 = 0.0f;
-                float outMode2 = 0.0f;
+                // Ensure the position is valid
+                jassert (delayPos >= 0 && delayPos < delayBufferLength);
+                float wetSignal = filter[channel].processSingleSampleRaw (delayData[delayPos]);
 
-                if (currentMode == Mode1 || currentMode == ModeBoth)
-                {
-                    int delayPos1 = static_cast<int> (delayWritePosition + i - mode1Delay + delayBufferLength) % delayBufferLength;
-                    // Ensure the position is valid
-                    jassert (delayPos1 >= 0 && delayPos1 < delayBufferLength);
-                    outMode1 = mode1Filter[channel].processSingleSampleRaw (delayData[delayPos1]);
-                }
-
-                if (currentMode == Mode2 || currentMode == ModeBoth)
-                {
-                    int delayPos2 = static_cast<int> (delayWritePosition + i - mode2Delay + delayBufferLength) % delayBufferLength;
-                    // Ensure the position is valid
-                    jassert (delayPos2 >= 0 && delayPos2 < delayBufferLength);
-                    outMode2 = mode2Filter[channel].processSingleSampleRaw (delayData[delayPos2]);
-                }
-
-                // Mix the original signal with the delayed signals
+                // Mix the original signal with the delayed signal
                 const float drySignal = output[i];
-                float wetSignal = 0.0f;
-
-                switch (currentMode)
-                {
-                    case Mode1:
-                        wetSignal = outMode1;
-                        break;
-                    case Mode2:
-                        wetSignal = outMode2;
-                        break;
-                    case ModeBoth:
-                        wetSignal = 0.5f * (outMode1 + outMode2);
-                        break;
-                    default:
-                        break;
-                }
 
                 // Apply the wet/dry mix
                 output[i] = (1.0f - mix) * drySignal + mix * wetSignal;
@@ -209,7 +180,7 @@ public:
     }
 
     //==============================================================================
-    // Set the chorus mode (OFF, I, II, I+II)
+    // Set the chorus mode (OFF, ON)
     void setMode (ChorusMode mode)
     {
         currentMode = mode;
@@ -245,30 +216,17 @@ public:
         return feedback;
     }
 
-    // Set the rate for Mode I
-    void setMode1Rate (float newRate)
+    // Set the rate
+    void setRate (float newRate)
     {
-        mode1Rate = newRate;
-        mode1PhaseIncrement = mode1Rate / sampleRate;
+        rate = newRate;
+        phaseIncrement = rate / sampleRate;
     }
 
-    // Set the rate for Mode II
-    void setMode2Rate (float newRate)
+    // Set the depth
+    void setDepth (float newDepth)
     {
-        mode2Rate = newRate;
-        mode2PhaseIncrement = mode2Rate / sampleRate;
-    }
-
-    // Set the depth for Mode I
-    void setMode1Depth (float newDepth)
-    {
-        mode1Depth = newDepth;
-    }
-
-    // Set the depth for Mode II
-    void setMode2Depth (float newDepth)
-    {
-        mode2Depth = newDepth;
+        depth = newDepth;
     }
 
     // Set the stereo width (0.0 = mono, 1.0 = full stereo)
@@ -297,23 +255,18 @@ private:
     int delayWritePosition = 0;
 
     // LFO parameters
-    float mode1Rate = 0.5; // Hz
-    float mode2Rate = 0.8; // Hz
-    float mode1Depth; // seconds
-    float mode2Depth; // seconds
-    float mode1Phase[2] = { 0, 0 }; // One phase per channel for stereo
-    float mode2Phase[2] = { 0, 0 }; // One phase per channel for stereo
-    float mode1PhaseIncrement {};
-    float mode2PhaseIncrement {};
+    float rate; // Hz
+    float depth; // seconds
+    float phase[2] = { 0, 0 }; // One phase per channel for stereo
+    float phaseIncrement {};
 
     // Mixing and feedback
     float mix;
     float feedback;
     float stereoWidth = 1.0f; // Full stereo width
 
-    // Filters for each channel and mode
-    juce::IIRFilter mode1Filter[2];
-    juce::IIRFilter mode2Filter[2];
+    // Filters for each channel
+    juce::IIRFilter filter[2];
 
     //    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(JuneChorus)
 };

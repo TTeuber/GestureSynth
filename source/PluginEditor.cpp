@@ -8,6 +8,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       waveformComponent (p.parameters),
       detuneComponent (p.parameters),
       subOscillatorComponent (p.parameters)
+// chorusComponent (p.parameters)
 {
     processorRef.keyboardState.addListener (this);
 
@@ -25,6 +26,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (waveformComponent);
     addAndMakeVisible (detuneComponent);
     addAndMakeVisible (subOscillatorComponent);
+    // addAndMakeVisible (chorusComponent);
 
     setSize (windowWidth, windowHeight);
 }
@@ -57,6 +59,7 @@ void PluginEditor::resized()
     waveformComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
     detuneComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
     subOscillatorComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
+    // chorusComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
 
     juce::Rectangle<int> dialContainerH = area.removeFromBottom (containerHeight);
     const int dialWidth = dialContainerH.getWidth() / 5;

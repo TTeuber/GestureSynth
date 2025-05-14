@@ -42,6 +42,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     // ================================================================================================================================================
     // Chorus Parameters
     layout.add (make_unique<Parameter> (ParameterID ("chorusMix", 1), "Chorus Mix", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> (ParameterID ("chorusDepth", 1), "Chorus Depth", 0.0f, 0.01f, 0.0028f));
+    layout.add (make_unique<Parameter> (ParameterID ("chorusRate", 1), "Chorus Rate", 0.0f, 10.0f, 0.5f));
 
     // ================================================================================================================================================
     // Boolean Parameters
