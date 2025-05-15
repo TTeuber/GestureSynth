@@ -7,8 +7,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       matrixComponent (p.modTree),
       waveformComponent (p.parameters),
       detuneComponent (p.parameters),
-      subOscillatorComponent (p.parameters)
-// chorusComponent (p.parameters)
+      subOscillatorComponent (p.parameters),
+      chorusComponent (p.parameters)
 {
     processorRef.keyboardState.addListener (this);
 
@@ -16,17 +16,18 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     addAndMakeVisible (matrixComponent);
 
-    addAndMakeVisible (volumeDial);
-    addAndMakeVisible (chorusDial);
+    addAndMakeVisible (volumeComponent);
+    addAndMakeVisible (chorusMixComponent);
 
     addAndMakeVisible (ampADSRGraph);
     addAndMakeVisible (oscilloscope);
     addAndMakeVisible (filterDisplay);
+    addAndMakeVisible (lfoComponent);
 
     addAndMakeVisible (waveformComponent);
     addAndMakeVisible (detuneComponent);
     addAndMakeVisible (subOscillatorComponent);
-    // addAndMakeVisible (chorusComponent);
+    addAndMakeVisible (chorusComponent);
 
     setSize (windowWidth, windowHeight);
 }
@@ -50,30 +51,32 @@ void PluginEditor::resized()
     const juce::Rectangle<int> keyboardContainer = area.removeFromBottom (100);
     keyboardComponent.setBounds (keyboardContainer.reduced (10));
 
-    const juce::Rectangle<int> matrixContainer = area.removeFromRight (300);
-    matrixComponent.setBounds (matrixContainer.reduced (10));
-
     const int containerHeight = area.getHeight() / 8;
+
+    juce::Rectangle<int> matrixContainer = area.removeFromRight (300);
+    juce::Rectangle<int> dialContainerH = matrixContainer.removeFromBottom (containerHeight);
+    const int dialWidth = matrixContainer.getWidth() / 4;
+    volumeComponent.setBounds (dialContainerH.removeFromLeft (dialWidth).reduced (10));
+    chorusMixComponent.setBounds (dialContainerH.removeFromLeft (dialWidth).reduced (10));
+    matrixComponent.setBounds (matrixContainer.reduced (10));
 
     juce::Rectangle<int> dialContainerV = area.removeFromLeft (containerHeight * 2);
     waveformComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
     detuneComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
     subOscillatorComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
-    // chorusComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
+    chorusComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
 
-    juce::Rectangle<int> dialContainerH = area.removeFromBottom (containerHeight);
-    const int dialWidth = dialContainerH.getWidth() / 5;
-    volumeDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
-    chorusDial.setBounds (dialContainerH.removeFromLeft (dialWidth));
-
-    const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (static_cast<int> (containerHeight * 2));
+    const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (containerHeight * 2);
     ampADSRGraph.setBounds (ampADSRContainer.reduced (10));
 
     const juce::Rectangle<int> filterDisplayContainer = area.removeFromTop (containerHeight * 2);
     filterDisplay.setBounds (filterDisplayContainer.reduced (10));
 
-    const juce::Rectangle<int> oscilloscopeContainer = area.removeFromTop (containerHeight * 3);
+    const juce::Rectangle<int> oscilloscopeContainer = area.removeFromTop (containerHeight * 2);
     oscilloscope.setBounds (oscilloscopeContainer.reduced (10));
+
+    const juce::Rectangle<int> filterContainer = area.removeFromTop (containerHeight * 2);
+    lfoComponent.setBounds (filterContainer.reduced (10));
 }
 
 void PluginEditor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)

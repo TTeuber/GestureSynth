@@ -1,7 +1,14 @@
 #include "PluginProcessor.h"
-
 #include "MySynthVoice.h"
 #include "PluginEditor.h"
+#include <csignal>
+
+// Signal handler for audio overloads
+void audioOverloadHandler (int signal)
+{
+    // This will cause your program to break into the debugger
+    raise (SIGTRAP);
+}
 
 //==============================================================================
 PluginProcessor::PluginProcessor()
@@ -15,8 +22,13 @@ PluginProcessor::PluginProcessor()
               ),
       synth (parameters, modTree, pitchTracker, voicePtr),
       waveFifo (1024),
-      waveData (1024)
+      waveData (1024),
+      lastProcessingTimeMs (0.0),
+      maxAllowedProcessingTimeMs (0.0)
 {
+    // Set up signal handler for catching overloads
+    signal (SIGUSR1, audioOverloadHandler);
+
     for (size_t i = 0; i < modList.size(); i++)
     {
         juce::ValueTree childNode (juce::String ("modulation" + i));
@@ -108,6 +120,9 @@ void PluginProcessor::prepareToPlay (const double sampleRate, const int samplesP
             voice->prepare (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
         }
     }
+
+    // Calculate maximum allowed processing time (90% of the theoretical maximum)
+    maxAllowedProcessingTimeMs = (samplesPerBlock / sampleRate) * 1000.0 * 0.9;
 }
 
 void PluginProcessor::releaseResources()
@@ -141,8 +156,11 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     juce::MidiBuffer& midiMessages)
 {
+    // Start timing the processing
+    const double startTime = juce::Time::getMillisecondCounterHiRes();
+
     keyboardState.processNextMidiBuffer (midiMessages, 0, buffer.getNumSamples(), true);
-    ignoreUnused (midiMessages);
+    juce::ignoreUnused (midiMessages);
 
     juce::ScopedNoDenormals noDenormals;
     const auto totalNumInputChannels = getTotalNumInputChannels();
@@ -169,6 +187,18 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         // {
         //     waveData[writeHandler.startIndex1 + i] = voiceBuffer.getSample (0, i);
         // }
+    }
+
+    // Calculate processing time
+    lastProcessingTimeMs = juce::Time::getMillisecondCounterHiRes() - startTime;
+
+    // Detect potential overload and trigger debugger break
+    if (lastProcessingTimeMs > maxAllowedProcessingTimeMs)
+    {
+        DBG ("AUDIO OVERLOAD DETECTED: Processing took " + juce::String (lastProcessingTimeMs) + "ms, limit is " + juce::String (maxAllowedProcessingTimeMs) + "ms");
+
+        // This will trigger our signal the handler which will break into the debugger
+        raise (SIGUSR1);
     }
 }
 

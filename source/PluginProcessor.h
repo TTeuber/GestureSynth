@@ -1,12 +1,13 @@
 #pragma once
 
+#include "LFOData.h"
 #include "Modulation.h"
 #include "MySynth.h"
 #include "Parameters.h"
 #include "PitchTracker.h"
-#include "juce_dsp/juce_dsp.h"
 #include <functional>
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_dsp/juce_dsp.h>
 
 #if (MSVC)
     #include "ipps.h"
@@ -66,11 +67,15 @@ public:
     MySynth& getSynth() { return synth; }
 
     std::shared_ptr<PitchTracker> pitchTracker = std::make_shared<PitchTracker>();
+    std::shared_ptr<LFOData> lfoData = std::make_shared<LFOData>();
 
 private:
     juce::MidiBuffer midiBuffer;
 
     MySynth synth;
+
+    double lastProcessingTimeMs;
+    double maxAllowedProcessingTimeMs;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

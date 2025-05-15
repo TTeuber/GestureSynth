@@ -1,14 +1,16 @@
 #pragma once
 
 #include "ADSRGraph.h"
-// #include "ChorusComponent.h"
+#include "ChorusComponent.h"
 #include "DetuneComponent.h"
 #include "FilterDisplay.h"
+#include "LFOComponent.h"
 #include "MatrixComponent.h"
 #include "OscGraph.h"
 #include "Oscilliscope.h"
 #include "ParameterDial.h"
 #include "PluginProcessor.h"
+#include "SingleParameterComponent.h"
 #include "SubOscillatorComponent.h"
 #include "Theme.h"
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -40,14 +42,14 @@ private:
     WaveformComponent waveformComponent;
     DetuneComponent detuneComponent;
     SubOscillatorComponent subOscillatorComponent;
-    // ChorusComponent chorusComponent;
+    ChorusComponent chorusComponent;
 
-    ParameterDial volumeDial = { processorRef, "volume", "Volume" };
-
-    ParameterDial chorusDial = { processorRef, "chorusMix", "Chorus Mix" };
+    SingleParameterComponent volumeComponent { processorRef.parameters.getParameter ("volume") };
+    SingleParameterComponent chorusMixComponent { processorRef.parameters.getParameter ("chorusMix") };
 
     ADSRGraph ampADSRGraph = { processorRef.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", processorRef.getSynth().getAmpADSRPtr() };
     Oscilloscope oscilloscope = Oscilloscope { processorRef };
+    LFOComponent lfoComponent = LFOComponent { processorRef.lfoData };
 
     FilterDisplay filterDisplay = FilterDisplay { processorRef.parameters };
 

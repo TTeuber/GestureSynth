@@ -149,14 +149,12 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     juneOscillator.prepare (spec);
     // chorus.prepare (spec);
     filter.prepare (spec);
-    // osc.prepare (spec);
     modMatrix.prepare (spec);
 }
 
 void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
     frequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
-    // osc.setFrequency (static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber)), true);
     juneOscillator.setFrequency (frequency);
     this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
     for (auto* env : envs)
