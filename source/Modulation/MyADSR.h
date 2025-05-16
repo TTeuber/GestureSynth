@@ -1,7 +1,7 @@
 #pragma once
 
+#include "../Utility/MyParameter.h"
 #include "Modulation.h"
-#include "MyParameter.h"
 
 #include <juce_dsp/juce_dsp.h>
 #include <juce_graphics/juce_graphics.h>

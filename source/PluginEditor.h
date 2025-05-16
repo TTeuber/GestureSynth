@@ -1,17 +1,17 @@
 #pragma once
 
-#include "ADSRGraph.h"
-#include "ChorusComponent.h"
-#include "DetuneComponent.h"
-#include "FilterDisplay.h"
-#include "LFOComponent.h"
-#include "MatrixComponent.h"
-#include "OscGraph.h"
-#include "Oscilliscope.h"
-#include "ParameterDial.h"
+#include "Editor/ADSRGraph.h"
+#include "Editor/ChorusComponent.h"
+#include "Editor/DetuneComponent.h"
+#include "Editor/FilterDisplay.h"
+#include "Editor/LFOComponent.h"
+#include "Editor/MatrixComponent.h"
+#include "Editor/OscGraph.h"
+#include "Editor/Oscilliscope.h"
+#include "Editor/ParameterDial.h"
+#include "Editor/SingleParameterComponent.h"
+#include "Editor/SubOscillatorComponent.h"
 #include "PluginProcessor.h"
-#include "SingleParameterComponent.h"
-#include "SubOscillatorComponent.h"
 #include "Theme.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 

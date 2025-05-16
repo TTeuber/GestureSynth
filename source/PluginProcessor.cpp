@@ -1,6 +1,6 @@
 #include "PluginProcessor.h"
-#include "MySynthVoice.h"
 #include "PluginEditor.h"
+#include "Synthesizer/MySynthVoice.h"
 #include <csignal>
 
 // Signal handler for audio overloads

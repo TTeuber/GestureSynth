@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Modulation.h"
-#include "Theme.h"
+#include "../Modulation/Modulation.h"
+#include "../Theme.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 class MatrixComponent final : public juce::Component, public juce::ValueTree::Listener

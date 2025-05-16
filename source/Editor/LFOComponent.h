@@ -2,7 +2,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "LFOData.h"
+#include "../Modulation/LFOData.h"
 
 class LFOComponent final : public juce::Component, LFOData::Listener
 {

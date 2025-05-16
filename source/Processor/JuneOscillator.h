@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "MyParameter.h"
+#include "../Utility/MyParameter.h"
 #include <juce_dsp/juce_dsp.h>
 
 class JuneDCO final : public juce::AudioProcessorValueTreeState::Listener

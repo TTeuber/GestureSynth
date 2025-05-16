@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Modulation.h"
+#include "../Modulation/Modulation.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
 

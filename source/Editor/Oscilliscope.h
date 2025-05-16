@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "PitchTracker.h"
-#include "PluginProcessor.h"
-#include "Theme.h"
+#include "../PluginProcessor.h"
+#include "../Theme.h"
+#include "../Utility/PitchTracker.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
 

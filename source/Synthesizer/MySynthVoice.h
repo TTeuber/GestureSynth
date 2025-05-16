@@ -1,15 +1,13 @@
 #pragma once
 
 // #include "AntiAliasOscillator.h"
-#include "CustomOscillator.h"
-#include "Modulation.h"
-#include "MyADSR.h"
-#include "MyLFO.h"
-#include "MyParameter.h"
-#include "PitchTracker.h"
-// #include "WaveTableOscillator.h"
-// #include "Chorus.h"
-#include "JuneOscillator.h"
+#include "../Modulation/Modulation.h"
+#include "../Modulation/MyADSR.h"
+#include "../Modulation/MyLFO.h"
+#include "../Processor/Chorus.h"
+#include "../Processor/JuneOscillator.h"
+#include "../Utility/MyParameter.h"
+#include "../Utility/PitchTracker.h"
 
 #include <juce_dsp/juce_dsp.h>
 

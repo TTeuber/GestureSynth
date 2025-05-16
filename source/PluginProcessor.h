@@ -1,10 +1,10 @@
 #pragma once
 
-#include "LFOData.h"
-#include "Modulation.h"
-#include "MySynth.h"
-#include "Parameters.h"
-#include "PitchTracker.h"
+#include "Modulation/LFOData.h"
+#include "Modulation/Modulation.h"
+#include "Synthesizer/MySynth.h"
+#include "Utility/Parameters.h"
+#include "Utility/PitchTracker.h"
 #include <functional>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
