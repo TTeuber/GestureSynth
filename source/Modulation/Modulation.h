@@ -3,6 +3,8 @@
 //
 #pragma once
 
+#include "../Utility/LockFreeQueue.h"
+
 #include <juce_dsp/juce_dsp.h>
 #include <vector>
 
@@ -53,6 +55,22 @@ struct Modulation
     bool isBipolar;
 };
 
+enum class ModCommandType
+{
+    Add,
+    Remove,
+    Update
+};
+
+struct ModCommand
+{
+    ModCommandType type;
+    ModSource* source;
+    ModDestination* destination;
+    float depth;
+    bool isBipolar;
+};
+
 class ModMatrix
 {
 public:
@@ -70,6 +88,14 @@ public:
 
     void updateModulation (const ModSource* source, ModDestination* destination, float depth);
 
+    // Thread-safe queuing methods (call from UI thread)
+    void queueAddModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar = false);
+    void queueRemoveModulation (ModSource* source, ModDestination* destination);
+    void queueUpdateModulation (ModSource* source, ModDestination* destination, float depth);
+
+    // Process pending commands (call at start of audio block)
+    void processPendingCommands() noexcept;
+
     void prepare (const juce::dsp::ProcessSpec& spec) const;
 
     void processSample() const noexcept;
@@ -78,4 +104,5 @@ public:
 
 private:
     std::map<ModDestination*, std::vector<Modulation>> matrix = {};
+    LockFreeQueue<ModCommand, 16> commandQueue;
 };

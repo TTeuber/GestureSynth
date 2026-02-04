@@ -27,6 +27,9 @@ MySynthVoice::MySynthVoice (
 
 void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, const int startSample, const int numSamples)
 {
+    // Process any pending modulation commands from UI thread
+    modMatrix.processPendingCommands();
+
     if (!adsr1.isActive())
     {
         clearCurrentNote();
@@ -84,9 +87,11 @@ void MySynthVoice::addNodeToMatrix (const juce::ValueTree& childNode)
 {
     ModSource* source = modSources[childNode.getProperty ("source").toString()];
     ModDestination* destination = modDestinations[childNode.getProperty ("destination").toString()];
+    if (source == nullptr || destination == nullptr)
+        return;
     const float depth = childNode.getProperty ("depth");
     const bool isBipolar = childNode.getProperty ("isBipolar");
-    modMatrix.addModulation (destination, source, depth, isBipolar);
+    modMatrix.queueAddModulation (destination, source, depth, isBipolar);
 }
 float MySynthVoice::frequencyToPhaseIncrement (const float frequency) const
 {
@@ -109,7 +114,9 @@ void MySynthVoice::valueTreeChildRemoved (juce::ValueTree& parentTree, juce::Val
 {
     ModSource* source = modSources[childWhichHasBeenRemoved.getProperty ("source").toString()];
     ModDestination* destination = modDestinations[childWhichHasBeenRemoved.getProperty ("destination").toString()];
-    modMatrix.removeModulation (source, destination);
+    if (source == nullptr || destination == nullptr)
+        return;
+    modMatrix.queueRemoveModulation (source, destination);
 }
 void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
 {
@@ -117,16 +124,19 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
     const juce::StringRef destinationId = treeWhosePropertyHasChanged.getProperty ("destination").toString();
     const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
 
-    const auto source = modSources[sourceId];
-    const auto destination = modDestinations[destinationId];
+    auto* const source = modSources[sourceId];
+    auto* const destination = modDestinations[destinationId];
+    if (source == nullptr || destination == nullptr)
+        return;
+
     if (property.toString() == "depth")
     {
-        modMatrix.updateModulation (source, destination, depth);
+        modMatrix.queueUpdateModulation (source, destination, depth);
     }
     else if (property.toString() == "source" || property.toString() == "destination")
     {
-        modMatrix.removeModulation (source, destination);
-        modMatrix.addModulation (destination, source, depth, false);
+        modMatrix.queueRemoveModulation (source, destination);
+        modMatrix.queueAddModulation (destination, source, depth, false);
     }
 }
 

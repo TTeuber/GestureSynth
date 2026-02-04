@@ -37,6 +37,44 @@ void ModMatrix::updateModulation (const ModSource* source, ModDestination* desti
     }
 }
 
+void ModMatrix::queueAddModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar)
+{
+    ModCommand cmd { ModCommandType::Add, source, destination, depth, isBipolar };
+    commandQueue.push (cmd);
+}
+
+void ModMatrix::queueRemoveModulation (ModSource* source, ModDestination* destination)
+{
+    ModCommand cmd { ModCommandType::Remove, source, destination, 0.0f, false };
+    commandQueue.push (cmd);
+}
+
+void ModMatrix::queueUpdateModulation (ModSource* source, ModDestination* destination, float depth)
+{
+    ModCommand cmd { ModCommandType::Update, source, destination, depth, false };
+    commandQueue.push (cmd);
+}
+
+void ModMatrix::processPendingCommands() noexcept
+{
+    ModCommand cmd;
+    while (commandQueue.pop (cmd))
+    {
+        switch (cmd.type)
+        {
+            case ModCommandType::Add:
+                addModulation (cmd.destination, cmd.source, cmd.depth, cmd.isBipolar);
+                break;
+            case ModCommandType::Remove:
+                removeModulation (cmd.source, cmd.destination);
+                break;
+            case ModCommandType::Update:
+                updateModulation (cmd.source, cmd.destination, cmd.depth);
+                break;
+        }
+    }
+}
+
 void ModMatrix::prepare (const juce::dsp::ProcessSpec& spec) const
 {
     for (const auto& [_, mods] : matrix)
