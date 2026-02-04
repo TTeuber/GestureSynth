@@ -72,12 +72,12 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     outputBuffer.addFrom (0, startSample, tempBuffer, 0, 0, numSamples);
     outputBuffer.addFrom (1, startSample, tempBuffer, 1, 0, numSamples);
 
-    waveformBuffer.writeBuffer (outputBuffer, outputBuffer.getNumSamples());
+    waveformBuffer.write (tempBuffer, numSamples);
 }
 
-const juce::AudioBuffer<float>& MySynthVoice::getWaveformBuffer()
+int MySynthVoice::readWaveformData (float* dest, int maxSamples)
 {
-    return waveformBuffer.getBuffer();
+    return waveformBuffer.read (dest, maxSamples);
 }
 
 void MySynthVoice::addNodeToMatrix (const juce::ValueTree& childNode)
@@ -148,6 +148,7 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     // chorus.prepare (spec);
     filter.prepare (spec);
     modMatrix.prepare (spec);
+    waveformBuffer.reset();
 }
 
 void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
@@ -160,7 +161,7 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
     *env1ptr = &adsr1;
     pitchTracker->updateFrequency (frequency);
     waveLength = static_cast<int> (std::ceil (2 * currentSampleRate / frequency));
-    while (waveLength > waveformBuffer.getBuffer().getNumSamples())
+    while (waveLength > WaveformBuffer::kBufferSize)
         waveLength /= 2;
 }
 void MySynthVoice::stopNote (float velocity, const bool allowTailOff)

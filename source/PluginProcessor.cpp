@@ -177,20 +177,20 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         {
             if (voice->isVoiceActive())
             {
-                const auto& voiceBuffer = voice->getWaveformBuffer();
-                const int numSamples = juce::jmin (voiceBuffer.getNumSamples(), 1024);
+                // Read from voice's thread-safe FIFO into temp buffer
+                std::array<float, 1024> tempVoiceData {};
+                const int samplesRead = voice->readWaveformData (tempVoiceData.data(), 1024);
 
-                // Write to FIFO for thread-safe transfer to UI
-                const auto scope = waveFifo.write (numSamples);
-                if (scope.blockSize1 > 0)
+                if (samplesRead > 0)
                 {
-                    for (int j = 0; j < scope.blockSize1; ++j)
-                        waveData[static_cast<size_t> (scope.startIndex1 + j)] = voiceBuffer.getSample (0, j);
-                }
-                if (scope.blockSize2 > 0)
-                {
-                    for (int j = 0; j < scope.blockSize2; ++j)
-                        waveData[static_cast<size_t> (scope.startIndex2 + j)] = voiceBuffer.getSample (0, scope.blockSize1 + j);
+                    // Write to processor's FIFO for UI thread
+                    const auto scope = waveFifo.write (samplesRead);
+                    if (scope.blockSize1 > 0)
+                        for (int j = 0; j < scope.blockSize1; ++j)
+                            waveData[static_cast<size_t> (scope.startIndex1 + j)] = tempVoiceData[j];
+                    if (scope.blockSize2 > 0)
+                        for (int j = 0; j < scope.blockSize2; ++j)
+                            waveData[static_cast<size_t> (scope.startIndex2 + j)] = tempVoiceData[scope.blockSize1 + j];
                 }
                 break; // Only capture from one active voice
             }

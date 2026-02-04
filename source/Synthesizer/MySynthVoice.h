@@ -41,7 +41,7 @@ public:
     void controllerMoved (int, int) override {}
 
     void renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
-    const juce::AudioBuffer<float>& getWaveformBuffer();
+    int readWaveformData (float* dest, int maxSamples);
 
     [[nodiscard]] float frequencyToPhaseIncrement (float frequency) const;
 
@@ -104,29 +104,56 @@ private:
 
     std::shared_ptr<PitchTracker> pitchTracker;
 
-    struct CircularBuffer
+    struct WaveformBuffer
     {
-        explicit CircularBuffer()
+        static constexpr int kBufferSize = 2048;
+
+        WaveformBuffer() : fifo (kBufferSize)
         {
+            buffer.setSize (1, kBufferSize);
             buffer.clear();
         }
-        juce::AudioBuffer<float>& getBuffer() { return buffer; }
-        void write (const float sample, const int numSamples)
+
+        void write (const juce::AudioBuffer<float>& inputBuffer, int numSamples)
         {
-            buffer.setSample (0, writePos, sample);
-            writePos = (writePos + 1) % 1024;
+            const int samplesToWrite = juce::jmin (numSamples, fifo.getFreeSpace());
+            if (samplesToWrite == 0)
+                return;
+
+            const auto scope = fifo.write (samplesToWrite);
+            if (scope.blockSize1 > 0)
+                for (int i = 0; i < scope.blockSize1; ++i)
+                    buffer.setSample (0, scope.startIndex1 + i, inputBuffer.getSample (0, i));
+            if (scope.blockSize2 > 0)
+                for (int i = 0; i < scope.blockSize2; ++i)
+                    buffer.setSample (0, scope.startIndex2 + i, inputBuffer.getSample (0, scope.blockSize1 + i));
         }
-        void writeBuffer (const juce::AudioBuffer<float>& inputBuffer, const int numSamples)
+
+        int read (float* dest, int maxSamples)
         {
-            for (int i = 0; i < numSamples; ++i)
-            {
-                write (inputBuffer.getSample (0, i), numSamples);
-            }
+            const int numReady = fifo.getNumReady();
+            if (numReady == 0)
+                return 0;
+
+            const int samplesToRead = juce::jmin (numReady, maxSamples);
+            const auto scope = fifo.read (samplesToRead);
+            if (scope.blockSize1 > 0)
+                for (int i = 0; i < scope.blockSize1; ++i)
+                    dest[i] = buffer.getSample (0, scope.startIndex1 + i);
+            if (scope.blockSize2 > 0)
+                for (int i = 0; i < scope.blockSize2; ++i)
+                    dest[scope.blockSize1 + i] = buffer.getSample (0, scope.startIndex2 + i);
+            return samplesToRead;
         }
-        juce::AudioBuffer<float> buffer = juce::AudioBuffer<float> (1, 1024);
-        int writePos = 0;
+
+        int getNumReady() const { return fifo.getNumReady(); }
+        void reset() { fifo.reset(); }
+
+    private:
+        juce::AbstractFifo fifo;
+        juce::AudioBuffer<float> buffer;
     };
-    CircularBuffer waveformBuffer;
+    WaveformBuffer waveformBuffer;
     double startTime = 0.0;
     int waveLength = 1024;
 
