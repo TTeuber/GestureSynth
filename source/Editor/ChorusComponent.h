@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "DualParameterComponent.h"
+#include "Utility/DualParameterComponent.h"
 
 class ChorusComponent final : public DualParameterComponent
 {

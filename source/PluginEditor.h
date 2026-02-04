@@ -8,9 +8,9 @@
 #include "Editor/MatrixComponent.h"
 #include "Editor/OscGraph.h"
 #include "Editor/Oscilliscope.h"
-#include "Editor/ParameterDial.h"
-#include "Editor/SingleParameterComponent.h"
 #include "Editor/SubOscillatorComponent.h"
+#include "Editor/Utility/ParameterDial.h"
+#include "Editor/Utility/SingleParameterComponent.h"
 #include "PluginProcessor.h"
 #include "Theme.h"
 #include <juce_audio_utils/juce_audio_utils.h>

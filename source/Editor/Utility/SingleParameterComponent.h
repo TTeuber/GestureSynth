@@ -7,7 +7,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "../Theme.h"
+#include "../../Theme.h"
 
 // Base Component Class for single parameter controls
 class SingleParameterComponent : public juce::Component,
@@ -94,7 +94,7 @@ public:
             const juce::Rectangle toggleRect (10, 10, toggleSize, toggleSize);
 
             g.setOpacity (1.0f); // Ensure the toggle is fully visible even when inactive
-            g.setColour (juce::Colours::white);
+            g.setColour (SECONDARY_COLOR);
             g.drawRect (toggleRect, 1.0f);
 
             if (isActive)
@@ -145,7 +145,7 @@ public:
 
         // Calculate vertical movement for the parameter
         // Moving up increases the value
-        const float verticalDelta = (mouseDownY - e.y) / (bounds.getHeight() - padding);
+        const float verticalDelta = (mouseDownY - e.y) / (bounds.getHeight() - padding) / 2.0f;
         const float newParamValue = juce::jlimit (0.0f, 1.0f, initialParamValue + verticalDelta);
 
         // Update parameter

@@ -7,7 +7,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "DualParameterComponent.h"
+#include "Utility/DualParameterComponent.h"
 
 class DetuneComponent final : public DualParameterComponent
 {
