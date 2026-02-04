@@ -8,7 +8,7 @@
 class MySynth final : public juce::Synthesiser
 {
 public:
-    explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::shared_ptr<MySynthVoice*> vp);
+    explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt);
     static void updateParameter (float& currentValue, float newValue, const std::function<void (float)>& setterFunction);
 
     float getVolume() const { return masterVolume; }

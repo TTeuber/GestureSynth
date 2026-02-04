@@ -53,9 +53,8 @@ public:
 
     juce::ValueTree modTree { "modTree" };
 
-    juce::AbstractFifo waveFifo;
-    std::vector<float> waveData;
-    std::shared_ptr<MySynthVoice*> voicePtr = std::make_shared<MySynthVoice*> (nullptr);
+    juce::AbstractFifo waveFifo { 2048 };
+    std::vector<float> waveData = std::vector<float> (2048, 0.0f);
 
     using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;
     ModList modList = {

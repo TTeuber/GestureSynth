@@ -4,11 +4,9 @@ MySynthVoice::MySynthVoice (
     juce::AudioProcessorValueTreeState& p,
     juce::ValueTree& mt,
     std::shared_ptr<MyADSR*> ampEnvPtr,
-    std::shared_ptr<PitchTracker> pt,
-    std::shared_ptr<MySynthVoice*> vp)
+    std::shared_ptr<PitchTracker> pt)
     : parameters (p),
       modTree (mt),
-      voicePtr (std::move (vp)),
       env1ptr (std::move (ampEnvPtr)),
       pitchTracker (std::move (pt))
 {
@@ -160,7 +158,6 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
     for (auto* env : envs)
         env->noteOn();
     *env1ptr = &adsr1;
-    *voicePtr = this;
     pitchTracker->updateFrequency (frequency);
     waveLength = static_cast<int> (std::ceil (2 * currentSampleRate / frequency));
     while (waveLength > waveformBuffer.getBuffer().getNumSamples())

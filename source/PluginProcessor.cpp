@@ -20,9 +20,7 @@ PluginProcessor::PluginProcessor()
               .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
 #endif
               ),
-      synth (parameters, modTree, pitchTracker, voicePtr),
-      waveFifo (1024),
-      waveData (1024),
+      synth (parameters, modTree, pitchTracker),
       lastProcessingTimeMs (0.0),
       maxAllowedProcessingTimeMs (0.0)
 {
@@ -172,21 +170,31 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     synth.updateParameters();
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 
-    if (*voicePtr != nullptr)
+    // Find an active voice and copy its waveform data using the FIFO
+    for (int i = 0; i < synth.getNumVoices(); ++i)
     {
-        const auto& voiceBuffer = (*voicePtr)->getWaveformBuffer();
-        const int numSamples = voiceBuffer.getNumSamples();
-        // const int numSamples = juce::jmin<int> (1024, 2 * static_cast<int> (getSampleRate() / pitchTracker->frequency));
-        // const juce::AbstractFifo::ScopedWrite writeHandler = waveFifo.write (numSamples);
-        // for (int i = 0; i < writeHandler.blockSize1; ++i)
-        for (int i = 0; i < numSamples; ++i)
+        if (auto* voice = dynamic_cast<MySynthVoice*> (synth.getVoice (i)))
         {
-            // waveData[writeHandler.startIndex1 + i] = voiceBuffer.getSample (0, i);
-            waveData[i] = voiceBuffer.getSample (0, i);
+            if (voice->isVoiceActive())
+            {
+                const auto& voiceBuffer = voice->getWaveformBuffer();
+                const int numSamples = juce::jmin (voiceBuffer.getNumSamples(), 1024);
+
+                // Write to FIFO for thread-safe transfer to UI
+                const auto scope = waveFifo.write (numSamples);
+                if (scope.blockSize1 > 0)
+                {
+                    for (int j = 0; j < scope.blockSize1; ++j)
+                        waveData[static_cast<size_t> (scope.startIndex1 + j)] = voiceBuffer.getSample (0, j);
+                }
+                if (scope.blockSize2 > 0)
+                {
+                    for (int j = 0; j < scope.blockSize2; ++j)
+                        waveData[static_cast<size_t> (scope.startIndex2 + j)] = voiceBuffer.getSample (0, scope.blockSize1 + j);
+                }
+                break; // Only capture from one active voice
+            }
         }
-        // {
-        //     waveData[writeHandler.startIndex1 + i] = voiceBuffer.getSample (0, i);
-        // }
     }
 
     // Calculate processing time
@@ -204,16 +212,28 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
 bool PluginProcessor::getWaveformData (float* dest, const int maxSamples)
 {
-    // const int numReady = waveFifo.getNumReady();
-    // if (numReady == 0)
-    //     return false;
-    // const int numToRead = juce::jmin (numReady, maxSamples);
-    // const auto readHandler = waveFifo.read (numToRead);
-    for (int i = 0; i < 1024; ++i)
+    const int numReady = waveFifo.getNumReady();
+    if (numReady == 0)
+        return false;
+
+    const int numToRead = juce::jmin (numReady, maxSamples);
+    const auto scope = waveFifo.read (numToRead);
+
+    if (scope.blockSize1 > 0)
     {
-        // dest[i] = waveData[readHandler.startIndex1 + i];
-        dest[i] = waveData[i];
+        for (int i = 0; i < scope.blockSize1; ++i)
+            dest[i] = waveData[static_cast<size_t> (scope.startIndex1 + i)];
     }
+    if (scope.blockSize2 > 0)
+    {
+        for (int i = 0; i < scope.blockSize2; ++i)
+            dest[scope.blockSize1 + i] = waveData[static_cast<size_t> (scope.startIndex2 + i)];
+    }
+
+    // Zero out the rest if we didn't fill the buffer
+    for (int i = numToRead; i < maxSamples; ++i)
+        dest[i] = 0.0f;
+
     return true;
 }
 //==============================================================================

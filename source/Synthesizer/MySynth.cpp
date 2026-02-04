@@ -1,10 +1,10 @@
 #include "MySynth.h"
 
-MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::shared_ptr<MySynthVoice*> vp) : parameters (p), modTree (mt)
+MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt) : parameters (p), modTree (mt)
 {
     clearVoices();
     for (int i = 0; i < 8; ++i)
-        addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pt, vp));
+        addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pt));
 
     clearSounds();
     addSound (new MySynthSound());

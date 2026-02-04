@@ -22,7 +22,7 @@ public:
 class MySynthVoice final : public juce::SynthesiserVoice, public juce::ValueTree::Listener, juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<PitchTracker> pt, std::shared_ptr<MySynthVoice*> vp);
+    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<PitchTracker> pt);
     void addNodeToMatrix (const juce::ValueTree& childNode);
 
     void parameterChanged (const juce::String& parameterID, float newValue) override;
@@ -98,8 +98,6 @@ private:
     DynamicParameter filterCutoff = DynamicParameter (parameters.getParameter ("filterFrequency"));
     DynamicParameter filterResonance = DynamicParameter (parameters.getParameter ("filterResonance"));
     bool filterEnabled = false;
-
-    std::shared_ptr<MySynthVoice*> voicePtr;
 
     MyADSR adsr1 = MyADSR (parameters, 1);
     std::shared_ptr<MyADSR*> env1ptr;
