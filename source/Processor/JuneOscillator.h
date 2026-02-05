@@ -57,8 +57,9 @@ public:
             detune = newValue;
             frequencyL = frequency * std::pow (2, detune * detuneAmount / 12.0f);
             frequencyR = frequency * std::pow (2, -(detune * detuneAmount) / 12.0f);
-            phaseIncrementL = frequencyL / sampleRate;
-            phaseIncrementR = frequencyR / sampleRate;
+            const float oversampledSampleRate = sampleRate * static_cast<float> (oversampling.getOversamplingFactor());
+            phaseIncrementL = frequencyL / oversampledSampleRate;
+            phaseIncrementR = frequencyR / oversampledSampleRate;
         }
         else if (parameterID == "oscWidth")
         {
@@ -109,15 +110,16 @@ public:
     }
 
     // Set frequency in Hz
-    void setFrequency (const float frequency)
+    void setFrequency (const float freq)
     {
-        this->frequency = frequency / std::pow (2, oversampling.factorOversampling);
-        frequencyL = this->frequency * std::pow (2, detune * detuneAmount / 12.0f);
-        frequencyR = this->frequency * std::pow (2, -(detune * detuneAmount) / 12.0f);
-        const float oversampledSampleRate = sampleRate * oversampling.factorOversampling;
-        phaseIncrement = frequency / oversampledSampleRate;        phaseIncrementL = frequencyL / sampleRate;
-        phaseIncrementR = frequencyR / sampleRate;
-        subPhaseIncrement = this->frequency / sampleRate / 2; // Sub-oscillator is one octave lower
+        frequency = freq;
+        frequencyL = frequency * std::pow (2, detune * detuneAmount / 12.0f);
+        frequencyR = frequency * std::pow (2, -(detune * detuneAmount) / 12.0f);
+        const float oversampledSampleRate = sampleRate * static_cast<float> (oversampling.getOversamplingFactor());
+        phaseIncrement = frequency / oversampledSampleRate;
+        phaseIncrementL = frequencyL / oversampledSampleRate;
+        phaseIncrementR = frequencyR / oversampledSampleRate;
+        subPhaseIncrement = frequency / oversampledSampleRate / 2; // Sub-oscillator is one octave lower
     }
 
     // Set mix levels (0.0 to 1.0)
