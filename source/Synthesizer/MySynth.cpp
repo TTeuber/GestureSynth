@@ -17,35 +17,33 @@ void MySynth::updateParameter (float& currentValue, const float newValue, const 
         setterFunction (currentValue);
     }
 }
-struct ParameterUpdater
-{
-    const char* name;
-    float& valueRef;
-    std::function<void (float)> setter;
-};
-
 /**
  * Updates all synth parameters by checking for changes in the AudioProcessorValueTreeState.
  * This function handles the synchronization of various synth parameters including:
  * - Volume and filter settings
- * - Amplitude envelope parameters (attack, decay, sustain, release and their curves)
- * - Filter envelope parameters (attack, decay, sustain, release and their curves)
  * When a parameter change is detected, it applies the new value to all voices in the synth.
  */
 void MySynth::updateParameters()
 {
-    std::vector<ParameterUpdater> parameterUpdaters = {
-        { "volume", masterVolume, [this] (float value) {
-             applyToAllVoices ([value] (MySynthVoice* voice) { voice->setVolume (value); });
-         } },
-        { "filterFrequency", filterCutoff, [this] (float value) { applyToAllVoices ([value] (MySynthVoice* voice) { voice->setFilterCutoff (value); }); } },
-        { "filterResonance", filterResonance, [this] (float value) { applyToAllVoices ([value] (MySynthVoice* voice) { voice->setFilterResonance (value); }); } },
-    };
-
-    for (const auto& updater : parameterUpdaters)
+    const float newVolume = *parameters.getRawParameterValue ("volume");
+    if (masterVolume != newVolume)
     {
-        const float newValue = *parameters.getRawParameterValue (updater.name);
-        updateParameter (updater.valueRef, newValue, updater.setter);
+        masterVolume = newVolume;
+        applyToAllVoices ([newVolume] (MySynthVoice* voice) { voice->setVolume (newVolume); });
+    }
+
+    const float newFilterCutoff = *parameters.getRawParameterValue ("filterFrequency");
+    if (filterCutoff != newFilterCutoff)
+    {
+        filterCutoff = newFilterCutoff;
+        applyToAllVoices ([newFilterCutoff] (MySynthVoice* voice) { voice->setFilterCutoff (newFilterCutoff); });
+    }
+
+    const float newFilterResonance = *parameters.getRawParameterValue ("filterResonance");
+    if (filterResonance != newFilterResonance)
+    {
+        filterResonance = newFilterResonance;
+        applyToAllVoices ([newFilterResonance] (MySynthVoice* voice) { voice->setFilterResonance (newFilterResonance); });
     }
 }
 
