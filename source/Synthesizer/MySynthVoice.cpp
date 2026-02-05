@@ -28,6 +28,8 @@ MySynthVoice::MySynthVoice (
 
 void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, const int startSample, const int numSamples)
 {
+    juce::ScopedNoDenormals noDenormals;
+
     // Process any pending modulation commands from UI thread
     modMatrix.processPendingCommands();
 
