@@ -114,8 +114,8 @@ public:
         this->frequency = frequency / std::pow (2, oversampling.factorOversampling);
         frequencyL = this->frequency * std::pow (2, detune * detuneAmount / 12.0f);
         frequencyR = this->frequency * std::pow (2, -(detune * detuneAmount) / 12.0f);
-        phaseIncrement = this->frequency / sampleRate;
-        phaseIncrementL = frequencyL / sampleRate;
+        const float oversampledSampleRate = sampleRate * oversampling.factorOversampling;
+        phaseIncrement = frequency / oversampledSampleRate;        phaseIncrementL = frequencyL / sampleRate;
         phaseIncrementR = frequencyR / sampleRate;
         subPhaseIncrement = this->frequency / sampleRate / 2; // Sub-oscillator is one octave lower
     }
