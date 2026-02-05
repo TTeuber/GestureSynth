@@ -50,11 +50,26 @@ public:
     };
     void addListener (Listener* listener)
     {
+        juce::SpinLock::ScopedLockType lock (listenersLock);
         listeners.addIfNotAlreadyThere (listener);
     }
+
+    void removeListener (Listener* listener)
+    {
+        juce::SpinLock::ScopedLockType lock (listenersLock);
+        listeners.removeFirstMatchingValue (listener);
+    }
+
     void updateListeners()
     {
-        for (Listener* listener : listeners)
+        // Copy listeners while holding lock, then notify without lock
+        // to avoid deadlock if callback modifies LFO data
+        juce::Array<Listener*> listenersCopy;
+        {
+            juce::SpinLock::ScopedLockType lock (listenersLock);
+            listenersCopy = listeners;
+        }
+        for (Listener* listener : listenersCopy)
         {
             listener->lfoDataChanged();
         }
@@ -280,4 +295,5 @@ private:
     std::vector<LFOPoint> points; // Array of points defining the LFO shape
     mutable juce::SpinLock pointsLock; // Lock for thread-safe access to points
     juce::Array<Listener*> listeners; // List of listeners to notify when the LFO data changes
+    mutable juce::SpinLock listenersLock; // Lock for thread-safe access to listeners
 };
