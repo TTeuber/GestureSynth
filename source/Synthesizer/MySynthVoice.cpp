@@ -56,8 +56,6 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     }
     // chorus.process (tempBuffer);
 
-    volume = parameters.getParameter ("volume")->getValue();
-
     for (int sample = 0; sample < numSamples; ++sample)
     {
         const float targetEnvVal = adsr1.getNextValue();
