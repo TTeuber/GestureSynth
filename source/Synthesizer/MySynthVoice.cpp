@@ -13,6 +13,7 @@ MySynthVoice::MySynthVoice (
     modTree.addListener (this);
 
     parameters.addParameterListener ("filterOn", this);
+    filterEnabled = *parameters.getRawParameterValue ("filterOn") > 0.5f;
 
     // Initialize the mod destinations
     // Currently this is how the current value is updated when there are no mod sources
@@ -100,7 +101,12 @@ void MySynthVoice::parameterChanged (const juce::String& parameterID, float newV
 {
     if (parameterID == "filterOn")
     {
+        const bool wasEnabled = filterEnabled;
         filterEnabled = newValue > 0.5f;
+
+        // Reset filter state when re-enabled to prevent clicks/pops
+        if (filterEnabled && !wasEnabled)
+            filter.reset();
     }
 }
 
