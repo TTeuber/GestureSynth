@@ -6,6 +6,9 @@
 
 void ModMatrix::addModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar)
 {
+    if (destination == nullptr || source == nullptr)
+        return;
+
     if (matrix.contains (destination))
         matrix[destination].emplace_back (source, depth, isBipolar);
     else
@@ -80,16 +83,25 @@ void ModMatrix::prepare (const juce::dsp::ProcessSpec& spec) const
     for (const auto& [_, mods] : matrix)
     {
         for (auto& mod : mods)
-            mod.source->prepare (spec);
+        {
+            if (mod.source != nullptr)
+                mod.source->prepare (spec);
+        }
     }
 }
 void ModMatrix::processSample() const noexcept
 {
     for (const auto& [destination, mods] : matrix)
     {
+        if (destination == nullptr)
+            continue;
+
         float value = destination->getRawParameterValue();
         for (const auto& [source, depth, isBipolar] : mods)
         {
+            if (source == nullptr)
+                continue;
+
             if (isBipolar)
                 value += (source->getNextValue() * 2.0f - 1.0f) * depth;
             else
@@ -105,9 +117,15 @@ void ModMatrix::debug()
 {
     for (const auto& [destination, mods] : matrix)
     {
+        if (destination == nullptr)
+            continue;
+
         DBG ("Destination: " << destination->getName() << "\n");
         for (const auto& mod : mods)
         {
+            if (mod.source == nullptr)
+                continue;
+
             DBG ("  Source: " << mod.source->getName() << ", Depth: " << mod.depth << ", Bipolar: " << (mod.isBipolar ? "true" : "false") << "\n");
         }
     }
