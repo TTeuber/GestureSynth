@@ -16,7 +16,7 @@ public:
             auto* rotarySlider = new juce::Slider (juce::Slider::RotaryVerticalDrag, juce::Slider::NoTextBox);
             rotarySlider->setValue (modTree.getChild (i).getProperty ("depth")); // Set initial value
             rotarySlider->setRange (0.0, 1.0); // Set range for the slider
-            rotarySliders.push_back (rotarySlider); // Store in the vector
+            rotarySliders.add (rotarySlider); // Store in the OwnedArray
             addAndMakeVisible (rotarySlider); // Add to the interface
             rotarySlider->onValueChange = [this, i] {
                 modTree.getChild (i).setProperty ("depth", rotarySliders[i]->getValue(), nullptr);
@@ -26,11 +26,7 @@ public:
 
     ~MatrixComponent() override
     {
-        // Destroy dynamically allocated sliders
-        for (const auto* rotarySlider : rotarySliders)
-        {
-            delete rotarySlider;
-        }
+        modTree.removeListener (this);
     }
 
     void paint (juce::Graphics& g) override
@@ -85,5 +81,5 @@ public:
 private:
     juce::ValueTree& modTree;
 
-    std::vector<juce::Slider*> rotarySliders; // Vector to store slider pointers
+    juce::OwnedArray<juce::Slider> rotarySliders; // OwnedArray automatically manages slider lifetime
 };
