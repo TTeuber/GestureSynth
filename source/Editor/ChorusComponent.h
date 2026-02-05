@@ -59,12 +59,12 @@ protected:
 
     juce::String getParam1Text() const override
     {
-        return formatParameterText (param1, param1Value, juce::StringRef ("Chrs Depth: ") + juce::String (param1Value * 10, param1Value == 1 ? 0 : 2) + juce::StringRef ("ms"));
+        return formatParameterText (param1, param1Value, juce::StringRef ("Chrs Depth: ") + juce::String (param1Value * 30, param1Value == 1 ? 0 : 2) + juce::StringRef ("ms"));
     }
 
     juce::String getParam2Text() const override
     {
-        return formatParameterText (param2, param2Value, juce::StringRef ("Chrs Rate: ") + juce::String (param2Value * 10, param2Value == 1 ? 0 : 2) + juce::StringRef ("Hz"));
+        return formatParameterText (param2, param2Value, juce::StringRef ("Chrs Rate: ") + juce::String (param2Value, param2Value == 1 ? 0 : 2) + juce::StringRef ("Hz"));
     }
 
 private:

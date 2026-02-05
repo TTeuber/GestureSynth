@@ -2,6 +2,7 @@
 
 #include "Modulation/LFOData.h"
 #include "Modulation/Modulation.h"
+#include "Processor/Chorus.h"
 #include "Synthesizer/MySynth.h"
 #include "Utility/Parameters.h"
 #include "Utility/PitchTracker.h"
@@ -72,6 +73,7 @@ private:
     juce::MidiBuffer midiBuffer;
 
     MySynth synth;
+    JuneChorus chorus { parameters };
 
     double lastProcessingTimeMs;
     double maxAllowedProcessingTimeMs;

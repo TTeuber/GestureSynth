@@ -57,8 +57,6 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
         filter.setResonance (juce::jmax<float> (0.01, filterResonance.getCurrentValue()));
         filter.process (context);
     }
-    // chorus.process (tempBuffer);
-
     for (int sample = 0; sample < numSamples; ++sample)
     {
         const float targetEnvVal = adsr1.getNextValue();
@@ -161,7 +159,6 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     spec.numChannels = numChannels;
 
     juneOscillator.prepare (spec);
-    // chorus.prepare (spec);
     filter.prepare (spec);
     modMatrix.prepare (spec);
     waveformBuffer.reset();

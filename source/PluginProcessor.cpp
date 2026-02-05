@@ -75,7 +75,7 @@ bool PluginProcessor::isMidiEffect() const
 
 double PluginProcessor::getTailLengthSeconds() const
 {
-    return 0.0;
+    return 0.01;
 }
 
 int PluginProcessor::getNumPrograms()
@@ -108,7 +108,9 @@ void PluginProcessor::changeProgramName (int index, const juce::String& newName)
 //==============================================================================
 void PluginProcessor::prepareToPlay (const double sampleRate, const int samplesPerBlock)
 {
-    // juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (getMainBusNumOutputChannels()) };
+    juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (getMainBusNumOutputChannels()) };
+
+    chorus.prepare (spec);
 
     synth.setCurrentPlaybackSampleRate (sampleRate);
     for (int i = 0; i < synth.getNumVoices(); ++i)
@@ -169,6 +171,8 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     synth.updateParameters();
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+
+    chorus.process (buffer);
 
     // Find an active voice and copy its waveform data using the FIFO
     for (int i = 0; i < synth.getNumVoices(); ++i)

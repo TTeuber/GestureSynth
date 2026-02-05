@@ -4,7 +4,6 @@
 #include "../Modulation/Modulation.h"
 #include "../Modulation/MyADSR.h"
 #include "../Modulation/MyLFO.h"
-#include "../Processor/Chorus.h"
 #include "../Processor/JuneOscillator.h"
 #include "../Utility/MyParameter.h"
 #include "../Utility/PitchTracker.h"
@@ -81,8 +80,6 @@ private:
     MyLFO lfo1 = MyLFO ("lfo1", "LFO 1", 0.3f);
 
     DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
-
-    // JuneChorus chorus = JuneChorus (parameters);
 
     juce::dsp::StateVariableTPTFilter<float> filter = juce::dsp::StateVariableTPTFilter<float>();
 

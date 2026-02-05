@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 
@@ -24,15 +25,14 @@ public:
     explicit JuneChorus (juce::AudioProcessorValueTreeState& p)
         : parameters (p),
           currentMode (On),
-          rate (0.5), // around 2.8 ms max
-          depth (0.0028f),
+          rate (0.1f),
+          depth (0.001f),
           mix (0.5f),
-          feedback (0.15f)
+          feedback (0.0f)
     {
         // Initialize LFO phases with stereo offset
         for (int channel = 0; channel < 2; ++channel)
         {
-            // Create phase offsets for the stereo effect
             phase[channel] = channel * 0.5f; // 180 degree offset between channels
         }
 
@@ -56,20 +56,20 @@ public:
     {
         if (parameterID == "chorusMix")
         {
-            mix = newValue;
+            mix.store (newValue, std::memory_order_relaxed);
         }
         else if (parameterID == "chorusOn")
         {
-            currentMode = newValue > 0.5f ? On : Off;
+            currentMode.store (newValue > 0.5f ? On : Off, std::memory_order_relaxed);
         }
         else if (parameterID == "chorusDepth")
         {
-            depth = newValue;
+            depth.store (newValue, std::memory_order_relaxed);
         }
         else if (parameterID == "chorusRate")
         {
-            rate = newValue;
-            phaseIncrement = rate / sampleRate;
+            rate.store (newValue, std::memory_order_relaxed);
+            phaseIncrement.store (newValue / sampleRate, std::memory_order_relaxed);
         }
         else
         {
@@ -82,16 +82,19 @@ public:
     {
         sampleRate = static_cast<float> (spec.sampleRate);
 
-        // Clear any previous settings
-        delayBuffer.setSize (2, 2 * static_cast<int> (sampleRate), false, true, false);
+        // 60ms buffer covers max depth (30ms) + base delay + headroom
+        delayBufferLength = static_cast<int> (0.06f * sampleRate);
+        delayBuffer.setSize (2, delayBufferLength, false, true, false);
         delayBuffer.clear();
 
-        // Calculate delay buffer length based on max possible delay
-        delayBufferLength = static_cast<int> (2.0 * sampleRate);
         delayWritePosition = 0;
 
         // Initialize LFO
-        phaseIncrement = rate / sampleRate;
+        phaseIncrement.store (rate.load (std::memory_order_relaxed) / sampleRate, std::memory_order_relaxed);
+
+        // Initialize depth smoothing (20ms time constant)
+        depthSmoothCoeff = 1.0f - std::exp (-1.0f / (0.02f * sampleRate));
+        currentSmoothedDepth = depth.load (std::memory_order_relaxed);
 
         // Reset filters
         for (int i = 0; i < 2; ++i)
@@ -114,64 +117,71 @@ public:
         }
 
         delayWritePosition = 0;
+        currentSmoothedDepth = depth.load (std::memory_order_relaxed);
     }
 
     void process (juce::AudioBuffer<float>& buffer)
     {
+        if (delayBufferLength <= 0)
+            return;
+
         const int numChannels = buffer.getNumChannels();
         const int numSamples = buffer.getNumSamples();
 
-        // If the chorus is off, pass the signal through
-        if (currentMode == Off)
+        // Load atomic parameters once per block
+        const int mode = currentMode.load (std::memory_order_relaxed);
+        if (mode == Off)
             return;
 
-        // Copy input to delay buffer
-        for (int channel = 0; channel < juce::jmin (numChannels, 2); ++channel)
-        {
-            // Copy input to delay buffer
-            if (delayBufferLength > 0)
-            {
-                const float* input = buffer.getReadPointer (channel);
-                float* delayData = delayBuffer.getWritePointer (channel);
+        const float localMix = mix.load (std::memory_order_relaxed);
+        const float localDepth = depth.load (std::memory_order_relaxed);
+        const float localPhaseInc = phaseIncrement.load (std::memory_order_relaxed);
 
-                for (int i = 0; i < numSamples; ++i)
-                {
-                    const int position = (delayWritePosition + i) % delayBufferLength;
-                    delayData[position] = input[i] + feedback * delayData[position];
-                }
-            }
+        const int channelCount = juce::jmin (numChannels, 2);
+        float* outputPtrs[2] = {};
+        float* delayPtrs[2] = {};
+        for (int ch = 0; ch < channelCount; ++ch)
+        {
+            outputPtrs[ch] = buffer.getWritePointer (ch);
+            delayPtrs[ch] = delayBuffer.getWritePointer (ch);
         }
 
-        // Process with chorus effect
-        for (int channel = 0; channel < juce::jmin (numChannels, 2); ++channel)
+        constexpr float minDelaySeconds = 0.0005f; // 0.5ms base delay
+
+        for (int i = 0; i < numSamples; ++i)
         {
-            float* output = buffer.getWritePointer (channel);
-            const float* delayData = delayBuffer.getReadPointer (channel);
+            // Smooth depth once per sample to prevent pops/stepping
+            currentSmoothedDepth += depthSmoothCoeff * (localDepth - currentSmoothedDepth);
+            const int writePos = (delayWritePosition + i) % delayBufferLength;
 
-            for (int i = 0; i < numSamples; ++i)
+            for (int channel = 0; channel < channelCount; ++channel)
             {
-                // Calculate the delay time using a channel-specific phase
-                float delayTime = 0.0f;
+                const float drySignal = outputPtrs[channel][i];
 
-                // Calculate LFO value with stereo width
-                float lfoValue = 0.5f + 0.5f * sinf (2.0f * juce::MathConstants<float>::pi * phase[channel]);
-                delayTime = depth * sampleRate * lfoValue;
-                phase[channel] += phaseIncrement;
+                // Triangle LFO (0 to 1 range)
+                const float lfoValue = 1.0f - std::abs (2.0f * phase[channel] - 1.0f);
+                const float delayTime = (minDelaySeconds + currentSmoothedDepth * lfoValue) * sampleRate;
+
+                phase[channel] += localPhaseInc;
                 if (phase[channel] >= 1.0f)
                     phase[channel] -= 1.0f;
 
-                // Read the delayed sample
-                int delayPos = static_cast<int> (delayWritePosition + i - delayTime + delayBufferLength) % delayBufferLength;
+                // Read delayed sample with linear interpolation
+                const float readPos = static_cast<float> (delayWritePosition + i) - delayTime
+                                    + static_cast<float> (delayBufferLength);
+                const int readIdx = static_cast<int> (readPos) % delayBufferLength;
+                const int readIdxNext = (readIdx + 1) % delayBufferLength;
+                const float frac = readPos - std::floor (readPos);
 
-                // Ensure the position is valid
-                jassert (delayPos >= 0 && delayPos < delayBufferLength);
-                float wetSignal = filter[channel].processSingleSampleRaw (delayData[delayPos]);
+                const float interpolated = delayPtrs[channel][readIdx]
+                                         + frac * (delayPtrs[channel][readIdxNext] - delayPtrs[channel][readIdx]);
+                const float wetSignal = filter[channel].processSingleSampleRaw (interpolated);
 
-                // Mix the original signal with the delayed signal
-                const float drySignal = output[i];
+                // Write input + feedback into delay buffer
+                delayPtrs[channel][writePos] = drySignal + feedback * wetSignal;
 
-                // Apply the wet/dry mix
-                output[i] = (1.0f - mix) * drySignal + mix * wetSignal;
+                // Mix dry/wet
+                outputPtrs[channel][i] = (1.0f - localMix) * drySignal + localMix * wetSignal;
             }
         }
 
@@ -183,25 +193,25 @@ public:
     // Set the chorus mode (OFF, ON)
     void setMode (ChorusMode mode)
     {
-        currentMode = mode;
+        currentMode.store (mode, std::memory_order_relaxed);
     }
 
     // Get the current mode
     ChorusMode getMode() const
     {
-        return currentMode;
+        return static_cast<ChorusMode> (currentMode.load (std::memory_order_relaxed));
     }
 
     // Set the wet/dry mix amount (0.0 = dry only, 1.0 = wet only)
     void setMix (float newMix)
     {
-        mix = juce::jlimit (0.0f, 1.0f, newMix);
+        mix.store (juce::jlimit (0.0f, 1.0f, newMix), std::memory_order_relaxed);
     }
 
     // Get the current mix amount
     float getMix() const
     {
-        return mix;
+        return mix.load (std::memory_order_relaxed);
     }
 
     // Set the feedback amount
@@ -219,14 +229,14 @@ public:
     // Set the rate
     void setRate (float newRate)
     {
-        rate = newRate;
-        phaseIncrement = rate / sampleRate;
+        rate.store (newRate, std::memory_order_relaxed);
+        phaseIncrement.store (newRate / sampleRate, std::memory_order_relaxed);
     }
 
     // Set the depth
     void setDepth (float newDepth)
     {
-        depth = newDepth;
+        depth.store (newDepth, std::memory_order_relaxed);
     }
 
     // Set the stereo width (0.0 = mono, 1.0 = full stereo)
@@ -245,8 +255,8 @@ private:
     //==============================================================================
     juce::AudioProcessorValueTreeState& parameters;
 
-    // Parameters
-    ChorusMode currentMode;
+    // Parameters (atomic for thread safety between message and audio threads)
+    std::atomic<int> currentMode;
 
     // Delay line
     juce::AudioBuffer<float> delayBuffer;
@@ -255,18 +265,20 @@ private:
     int delayWritePosition = 0;
 
     // LFO parameters
-    float rate; // Hz
-    float depth; // seconds
+    std::atomic<float> rate;
+    std::atomic<float> depth;
     float phase[2] = { 0, 0 }; // One phase per channel for stereo
-    float phaseIncrement {};
+    std::atomic<float> phaseIncrement { 0.0f };
 
     // Mixing and feedback
-    float mix;
+    std::atomic<float> mix;
     float feedback;
     float stereoWidth = 1.0f; // Full stereo width
 
+    // Depth smoothing
+    float currentSmoothedDepth = 0.0028f;
+    float depthSmoothCoeff = 0.0f;
+
     // Filters for each channel
     juce::IIRFilter filter[2];
-
-    //    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(JuneChorus)
 };
