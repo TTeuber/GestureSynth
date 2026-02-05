@@ -85,7 +85,6 @@ public:
     explicit DynamicParameter (juce::RangedAudioParameter* p)
         : MyParameter (p), ModDestination (p->getParameterID(), p->getName (20))
     {
-        parameter = p;
         currentValue = range.convertFrom0to1 (p->getValue());
     }
 
@@ -113,6 +112,5 @@ public:
     [[nodiscard]] juce::NormalisableRange<float> getRange() const noexcept override { return range; }
 
 private:
-    juce::RangedAudioParameter* parameter;
     float currentValue;
 };
