@@ -20,7 +20,7 @@ PluginProcessor::PluginProcessor()
               .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
 #endif
               ),
-      synth (parameters, modTree, pitchTracker),
+      synth (parameters, modTree, pitchTracker, lfoData),
       lastProcessingTimeMs (0.0),
       maxAllowedProcessingTimeMs (0.0)
 {
@@ -260,6 +260,8 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 
     state.addChild (modTree.createCopy(), -1, nullptr);
 
+    state.addChild (lfoData->toValueTree(), -1, nullptr);
+
     // Convert to XML and write to MemoryBlock
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     juce::MemoryOutputStream stream (destData, true);
@@ -293,6 +295,13 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
         if (customStateRestored.isValid())
         {
             modTree = customStateRestored.createCopy();
+        }
+
+        // Restore LFO state
+        juce::ValueTree lfoState = state.getChildWithName ("LFOData");
+        if (lfoState.isValid())
+        {
+            lfoData->fromValueTree (lfoState);
         }
     }
 }

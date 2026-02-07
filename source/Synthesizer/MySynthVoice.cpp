@@ -4,12 +4,15 @@ MySynthVoice::MySynthVoice (
     juce::AudioProcessorValueTreeState& p,
     juce::ValueTree& mt,
     std::shared_ptr<MyADSR*> ampEnvPtr,
-    std::shared_ptr<PitchTracker> pt)
+    std::shared_ptr<PitchTracker> pt,
+    std::shared_ptr<LFOData> lfoData)
     : parameters (p),
       modTree (mt),
       env1ptr (std::move (ampEnvPtr)),
       pitchTracker (std::move (pt))
 {
+    if (lfoData)
+        lfo1.setLFOData (lfoData);
     modTree.addListener (this);
 
     parameters.addParameterListener ("filterOn", this);

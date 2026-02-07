@@ -189,6 +189,122 @@ public:
     }
 
     /**
+     * Returns the number of points without copying the vector
+     */
+    size_t getNumPoints() const
+    {
+        juce::SpinLock::ScopedLockType lock (pointsLock);
+        return points.size();
+    }
+
+    /**
+     * Updates a single point's position, value, and curve. Re-sorts and notifies listeners.
+     */
+    void updatePoint (size_t index, float position, float value, float curve)
+    {
+        juce::SpinLock::ScopedLockType lock (pointsLock);
+        if (index >= points.size())
+            return;
+
+        points[index].position = juce::jlimit (0.0f, 1.0f, position);
+        points[index].value = juce::jlimit (0.0f, 1.0f, value);
+        points[index].curve = juce::jlimit (-1.0f, 1.0f, curve);
+        sortPoints();
+        updateListeners();
+    }
+
+    /**
+     * Updates only the value of a point (useful for boundary linking)
+     */
+    void updatePointValue (size_t index, float value)
+    {
+        juce::SpinLock::ScopedLockType lock (pointsLock);
+        if (index >= points.size())
+            return;
+
+        points[index].value = juce::jlimit (0.0f, 1.0f, value);
+        updateListeners();
+    }
+
+    /**
+     * Updates just the curve parameter of a point (no sort needed)
+     */
+    void updateCurve (size_t index, float curve)
+    {
+        juce::SpinLock::ScopedLockType lock (pointsLock);
+        if (index >= points.size())
+            return;
+
+        points[index].curve = juce::jlimit (-1.0f, 1.0f, curve);
+        updateListeners();
+    }
+
+    /**
+     * Removes a point by index. Cannot remove first or last point, or if only 2 points remain.
+     * Returns true if the point was removed.
+     */
+    bool removePoint (size_t index)
+    {
+        juce::SpinLock::ScopedLockType lock (pointsLock);
+        if (points.size() <= 2 || index == 0 || index >= points.size() - 1)
+            return false;
+
+        points.erase (points.begin() + static_cast<std::ptrdiff_t> (index));
+        updateListeners();
+        return true;
+    }
+
+    /**
+     * Serializes points to a ValueTree for state persistence
+     */
+    juce::ValueTree toValueTree() const
+    {
+        juce::SpinLock::ScopedLockType lock (pointsLock);
+        juce::ValueTree tree ("LFOData");
+
+        for (size_t i = 0; i < points.size(); ++i)
+        {
+            juce::ValueTree pointTree ("Point");
+            pointTree.setProperty ("position", points[i].position, nullptr);
+            pointTree.setProperty ("value", points[i].value, nullptr);
+            pointTree.setProperty ("curve", points[i].curve, nullptr);
+            tree.addChild (pointTree, -1, nullptr);
+        }
+
+        return tree;
+    }
+
+    /**
+     * Deserializes points from a ValueTree
+     */
+    void fromValueTree (const juce::ValueTree& tree)
+    {
+        if (!tree.isValid() || tree.getType().toString() != "LFOData")
+            return;
+
+        std::vector<LFOPoint> newPoints;
+        for (int i = 0; i < tree.getNumChildren(); ++i)
+        {
+            auto pointTree = tree.getChild (i);
+            if (pointTree.getType().toString() == "Point")
+            {
+                float pos = pointTree.getProperty ("position", 0.0f);
+                float val = pointTree.getProperty ("value", 0.0f);
+                float crv = pointTree.getProperty ("curve", 0.0f);
+                newPoints.emplace_back (pos, val, crv);
+            }
+        }
+
+        if (!newPoints.empty())
+        {
+            juce::SpinLock::ScopedLockType lock (pointsLock);
+            points = newPoints;
+            sortPoints();
+            updateListeners();
+        }
+    }
+
+    /**
      * Gets a value at a specific normalized position in the waveform
      */
     float getValueAt (float normalizedPosition) const

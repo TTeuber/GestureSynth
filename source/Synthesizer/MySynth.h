@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Modulation/LFOData.h"
 #include "../Utility/PitchTracker.h"
 #include "MySynthVoice.h"
 
@@ -8,7 +9,7 @@
 class MySynth final : public juce::Synthesiser
 {
 public:
-    explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt);
+    explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::shared_ptr<LFOData> lfoData);
     static void updateParameter (float& currentValue, float newValue, const std::function<void (float)>& setterFunction);
 
     float getVolume() const { return masterVolume; }
@@ -50,6 +51,8 @@ private:
     float filterSustain = 0.0f;
     float filterRelease = 0.0f;
     float filterReleaseCurve = 1.0f;
+
+    float lfo1Rate = 1.0f;
 
     std::shared_ptr<MyADSR*> ampEnvPtr = std::make_shared<MyADSR*>();
     std::shared_ptr<MyADSR*> filterEnvPtr = std::make_shared<MyADSR*>();

@@ -48,6 +48,12 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (std::move (chorusRate));
 
     // ================================================================================================================================================
+    // LFO Parameters
+    auto lfo1Rate = make_unique<Parameter> (ParameterID ("lfo1Rate", 1), "LFO 1 Rate", Normalize (0.01f, 20.0f, 0.001f, 0.35f), 1.0f);
+    lfo1Rate->range.setSkewForCentre (2.0f);
+    layout.add (std::move (lfo1Rate));
+
+    // ================================================================================================================================================
     // Boolean Parameters
     layout.add (make_unique<AudioParameterBool> (ParameterID ("oscOn", 1), "Osc On", true));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("detuneOn", 1), "Detune On", true));

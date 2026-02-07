@@ -49,7 +49,7 @@ private:
 
     ADSRGraph ampADSRGraph = { processorRef.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", processorRef.getSynth().getAmpADSRPtr() };
     Oscilloscope oscilloscope = Oscilloscope { processorRef };
-    LFOComponent lfoComponent = LFOComponent { processorRef.lfoData };
+    LFOComponent lfoComponent { processorRef.lfoData, processorRef.parameters };
 
     FilterDisplay filterDisplay = FilterDisplay { processorRef.parameters };
 

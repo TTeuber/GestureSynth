@@ -1,10 +1,10 @@
 #include "MySynth.h"
 
-MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt) : parameters (p), modTree (mt)
+MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::shared_ptr<LFOData> lfoData) : parameters (p), modTree (mt)
 {
     clearVoices();
     for (int i = 0; i < 8; ++i)
-        addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pt));
+        addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pt, lfoData));
 
     clearSounds();
     addSound (new MySynthSound());
@@ -44,6 +44,13 @@ void MySynth::updateParameters()
     {
         filterResonance = newFilterResonance;
         applyToAllVoices ([newFilterResonance] (MySynthVoice* voice) { voice->setFilterResonance (newFilterResonance); });
+    }
+
+    const float newLfo1Rate = *parameters.getRawParameterValue ("lfo1Rate");
+    if (lfo1Rate != newLfo1Rate)
+    {
+        lfo1Rate = newLfo1Rate;
+        applyToAllVoices ([newLfo1Rate] (MySynthVoice* voice) { voice->setLFORate (newLfo1Rate); });
     }
 }
 

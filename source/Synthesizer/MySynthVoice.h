@@ -21,7 +21,7 @@ public:
 class MySynthVoice final : public juce::SynthesiserVoice, public juce::ValueTree::Listener, juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<PitchTracker> pt);
+    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<PitchTracker> pt, std::shared_ptr<LFOData> lfoData);
     void addNodeToMatrix (const juce::ValueTree& childNode);
 
     void parameterChanged (const juce::String& parameterID, float newValue) override;
@@ -62,6 +62,8 @@ public:
         filterResonance.setBaseValue (newFilterResonance);
         // osc.setFilterResonance (newFilterResonance);
     }
+    void setLFORate (float rate) { lfo1.setRate (rate); }
+
     [[nodiscard]] int getWavelength() const
     {
         return waveLength;
@@ -77,7 +79,7 @@ private:
     JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth);
     JuneDCO juneOscillator2 = JuneDCO (parameters, pulseWidth);
 
-    MyLFO lfo1 = MyLFO ("lfo1", "LFO 1", 0.3f);
+    MyLFO lfo1 { "lfo1", "LFO 1", 1.0f };
 
     DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
 
