@@ -388,6 +388,11 @@ void LFOComponent::mouseDrag (const juce::MouseEvent& e)
 
         // Displacement from the linear midpoint
         float displacement = (linearMidY - my) / (getGraphBounds().getHeight() * 0.5f);
+
+        // Flip for ascending segments so dragging up always bows the curve upward
+        if (p2.value > p1.value)
+            displacement = -displacement;
+
         float newCurve = juce::jlimit (-1.0f, 1.0f, displacement);
 
         lfoData->updateCurve (static_cast<size_t> (selectedCurveIndex), newCurve);
