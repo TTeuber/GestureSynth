@@ -1,22 +1,12 @@
 #pragma once
 
-#include "Editor/ADSRGraph.h"
-#include "Editor/ChorusComponent.h"
-#include "Editor/DetuneComponent.h"
-#include "Editor/FilterDisplay.h"
-#include "Editor/LFOComponent.h"
-#include "Editor/MatrixComponent.h"
-#include "Editor/OscGraph.h"
-#include "Editor/Oscilliscope.h"
-#include "Editor/SubOscillatorComponent.h"
-#include "Editor/Utility/ParameterDial.h"
-#include "Editor/Utility/SingleParameterComponent.h"
+#include "Editor/Tabs/TabContent.h"
 #include "PluginProcessor.h"
 #include "Theme.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 
-#define HEIGHT 800
-#define WIDTH 1000
+#define HEIGHT 840
+#define WIDTH 1100
 
 //==============================================================================
 class PluginEditor final : public juce::AudioProcessorEditor, public juce::MidiKeyboardStateListener
@@ -37,21 +27,12 @@ private:
 
     juce::MidiKeyboardComponent keyboardComponent;
 
-    MatrixComponent matrixComponent;
+    std::unique_ptr<MainTabContent> mainTab;
+    std::unique_ptr<OscillatorTabContent> oscillatorTab;
+    std::unique_ptr<ModulationTabContent> modulationTab;
+    std::unique_ptr<EffectsTabContent> effectsTab;
 
-    WaveformComponent waveformComponent;
-    DetuneComponent detuneComponent;
-    SubOscillatorComponent subOscillatorComponent;
-    ChorusComponent chorusComponent;
-
-    SingleParameterComponent volumeComponent { processorRef.parameters.getParameter ("volume") };
-    SingleParameterComponent chorusMixComponent { processorRef.parameters.getParameter ("chorusMix") };
-
-    ADSRGraph ampADSRGraph = { processorRef.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", processorRef.getSynth().getAmpADSRPtr() };
-    Oscilloscope oscilloscope = Oscilloscope { processorRef };
-    LFOComponent lfoComponent { processorRef.lfoData, processorRef.parameters };
-
-    FilterDisplay filterDisplay = FilterDisplay { processorRef.parameters };
+    juce::TabbedComponent tabbedComponent { juce::TabbedButtonBar::TabsAtTop };
 
     void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
     void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/) override;

@@ -1,23 +1,27 @@
 #include "LFOComponent.h"
 
-LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorValueTreeState& parameters)
-    : lfoData (std::move (data))
+LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorValueTreeState& parameters, bool showRateSlider)
+    : lfoData (std::move (data)),
+      hasRateSlider (showRateSlider)
 {
     lfoData->addListener (this);
 
-    rateSlider.setSliderStyle (juce::Slider::LinearHorizontal);
-    rateSlider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 50, 20);
-    rateSlider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
-    rateSlider.setColour (juce::Slider::textBoxBackgroundColourId, SECONDARY_COLOR);
-    rateSlider.setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
-    rateSlider.setTextValueSuffix (" Hz");
-    addAndMakeVisible (rateSlider);
+    if (hasRateSlider)
+    {
+        rateSlider.setSliderStyle (juce::Slider::LinearHorizontal);
+        rateSlider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 50, 20);
+        rateSlider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
+        rateSlider.setColour (juce::Slider::textBoxBackgroundColourId, SECONDARY_COLOR);
+        rateSlider.setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+        rateSlider.setTextValueSuffix (" Hz");
+        addAndMakeVisible (rateSlider);
 
-    rateLabel.setText ("Rate", juce::dontSendNotification);
-    rateLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
-    rateLabel.attachToComponent (&rateSlider, true);
+        rateLabel.setText ("Rate", juce::dontSendNotification);
+        rateLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
+        rateLabel.attachToComponent (&rateSlider, true);
 
-    rateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (parameters, "lfo1Rate", rateSlider);
+        rateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (parameters, "lfo1Rate", rateSlider);
+    }
 
     setSize (300, 200);
 }
@@ -38,9 +42,10 @@ void LFOComponent::lfoDataChanged()
 
 juce::Rectangle<float> LFOComponent::getGraphBounds() const
 {
+    const float sliderSpace = hasRateSlider ? kSliderHeight : 0.0f;
     return { kMargin, kMargin,
         static_cast<float> (getWidth()) - 2.0f * kMargin,
-        static_cast<float> (getHeight()) - kSliderHeight - 2.0f * kMargin };
+        static_cast<float> (getHeight()) - sliderSpace - 2.0f * kMargin };
 }
 
 float LFOComponent::positionToX (float position) const
@@ -207,13 +212,16 @@ void LFOComponent::paint (juce::Graphics& g)
 
 void LFOComponent::resized()
 {
-    auto area = getLocalBounds();
+    if (hasRateSlider)
+    {
+        auto area = getLocalBounds();
 
-    // Bottom: rate slider
-    auto sliderArea = area.removeFromBottom (static_cast<int> (kSliderHeight));
-    // Leave space for the "Rate" label on the left
-    sliderArea.removeFromLeft (40);
-    rateSlider.setBounds (sliderArea);
+        // Bottom: rate slider
+        auto sliderArea = area.removeFromBottom (static_cast<int> (kSliderHeight));
+        // Leave space for the "Rate" label on the left
+        sliderArea.removeFromLeft (40);
+        rateSlider.setBounds (sliderArea);
+    }
 }
 
 // =====================================================================================

@@ -3,31 +3,29 @@
 PluginEditor::PluginEditor (PluginProcessor& p)
     : AudioProcessorEditor (&p),
       processorRef (p),
-      keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard),
-      matrixComponent (p.modTree),
-      waveformComponent (p.parameters),
-      detuneComponent (p.parameters),
-      subOscillatorComponent (p.parameters),
-      chorusComponent (p.parameters)
+      keyboardComponent (p.keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard)
 {
     processorRef.keyboardState.addListener (this);
 
+    // Create tab content components
+    mainTab = std::make_unique<MainTabContent> (p);
+    oscillatorTab = std::make_unique<OscillatorTabContent> (p);
+    modulationTab = std::make_unique<ModulationTabContent> (p);
+    effectsTab = std::make_unique<EffectsTabContent> (p);
+
+    // Add tabs
+    tabbedComponent.addTab ("Main", PRIMARY_COLOR, mainTab.get(), false);
+    tabbedComponent.addTab ("Oscillator", PRIMARY_COLOR, oscillatorTab.get(), false);
+    tabbedComponent.addTab ("Modulation", PRIMARY_COLOR, modulationTab.get(), false);
+    tabbedComponent.addTab ("Effects", PRIMARY_COLOR, effectsTab.get(), false);
+
+    // Style the tab bar
+    auto& tabBar = tabbedComponent.getTabbedButtonBar();
+    tabBar.setColour (juce::TabbedButtonBar::tabOutlineColourId, juce::Colours::transparentBlack);
+    tabBar.setColour (juce::TabbedButtonBar::tabTextColourId, TEXT_COLOR);
+
+    addAndMakeVisible (tabbedComponent);
     addAndMakeVisible (keyboardComponent);
-
-    addAndMakeVisible (matrixComponent);
-
-    addAndMakeVisible (volumeComponent);
-    addAndMakeVisible (chorusMixComponent);
-
-    addAndMakeVisible (ampADSRGraph);
-    addAndMakeVisible (oscilloscope);
-    addAndMakeVisible (filterDisplay);
-    addAndMakeVisible (lfoComponent);
-
-    addAndMakeVisible (waveformComponent);
-    addAndMakeVisible (detuneComponent);
-    addAndMakeVisible (subOscillatorComponent);
-    addAndMakeVisible (chorusComponent);
 
     setSize (windowWidth, windowHeight);
 }
@@ -40,9 +38,6 @@ PluginEditor::~PluginEditor()
 void PluginEditor::paint (juce::Graphics& g)
 {
     g.fillAll (PRIMARY_COLOR);
-
-    g.setColour (TEXT_COLOR);
-    g.setFont (16.0f);
 }
 
 void PluginEditor::resized()
@@ -51,32 +46,7 @@ void PluginEditor::resized()
     const juce::Rectangle<int> keyboardContainer = area.removeFromBottom (100);
     keyboardComponent.setBounds (keyboardContainer.reduced (10));
 
-    const int containerHeight = area.getHeight() / 8;
-
-    juce::Rectangle<int> matrixContainer = area.removeFromRight (300);
-    juce::Rectangle<int> dialContainerH = matrixContainer.removeFromBottom (containerHeight);
-    const int dialWidth = matrixContainer.getWidth() / 4;
-    volumeComponent.setBounds (dialContainerH.removeFromLeft (dialWidth).reduced (10));
-    chorusMixComponent.setBounds (dialContainerH.removeFromLeft (dialWidth).reduced (10));
-    matrixComponent.setBounds (matrixContainer.reduced (10));
-
-    juce::Rectangle<int> dialContainerV = area.removeFromLeft (containerHeight * 2);
-    waveformComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
-    detuneComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
-    subOscillatorComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
-    chorusComponent.setBounds (dialContainerV.removeFromTop (containerHeight * 2).reduced (10));
-
-    const juce::Rectangle<int> ampADSRContainer = area.removeFromTop (containerHeight * 2);
-    ampADSRGraph.setBounds (ampADSRContainer.reduced (10));
-
-    const juce::Rectangle<int> filterDisplayContainer = area.removeFromTop (containerHeight * 2);
-    filterDisplay.setBounds (filterDisplayContainer.reduced (10));
-
-    const juce::Rectangle<int> oscilloscopeContainer = area.removeFromTop (containerHeight * 2);
-    oscilloscope.setBounds (oscilloscopeContainer.reduced (10));
-
-    const juce::Rectangle<int> filterContainer = area.removeFromTop (containerHeight * 2);
-    lfoComponent.setBounds (filterContainer.reduced (10));
+    tabbedComponent.setBounds (area);
 }
 
 void PluginEditor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)

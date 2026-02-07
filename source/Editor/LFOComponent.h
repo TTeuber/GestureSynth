@@ -9,7 +9,7 @@
 class LFOComponent final : public juce::Component, public LFOData::Listener
 {
 public:
-    LFOComponent (std::shared_ptr<LFOData> lfoData, juce::AudioProcessorValueTreeState& parameters);
+    LFOComponent (std::shared_ptr<LFOData> lfoData, juce::AudioProcessorValueTreeState& parameters, bool showRateSlider = true);
     ~LFOComponent() override;
 
     void lfoDataChanged() override;
@@ -44,6 +44,7 @@ private:
     juce::Point<float> getCurveHandlePosition (size_t segmentIndex) const;
 
     std::shared_ptr<LFOData> lfoData;
+    const bool hasRateSlider;
 
     juce::Slider rateSlider;
     juce::Label rateLabel;
