@@ -8,5 +8,3 @@
 - buttons
   - sync
   - tooltip
-
-- make folders for dsp/ui

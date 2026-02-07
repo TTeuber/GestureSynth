@@ -232,7 +232,7 @@ phaseIncrement = frequency / oversampledSampleRate;
 
 ---
 
-### 9. LFOData Listener Thread Safety
+### 9. LFOData Listener Thread Safety***
 
 **Location:** `Modulation/LFOData.h:51-61`
 
@@ -258,15 +258,15 @@ Creates a new `std::vector` every audio block. Should be cached at initializatio
 
 ## Minor Issues
 
-### 12. Oscilloscope Update Rate
+### 12. Oscilloscope Update Rate***
 `startTimerHz(6)` is very slow. Should be 30-60 Hz for smooth display.
 
-### 13. Unused Code
+### 13. Unused Code***
 - `JuneChorus` declared but not used in voice
 - `AntiAliasOscillator.h` commented out
 - `juneOscillator2` appears unused in rendering
 
-### 14. No Denormal Protection in Voice
+### 14. No Denormal Protection in Voice***
 `juce::ScopedNoDenormals` used in processBlock but not in individual voice rendering.
 
 ---
