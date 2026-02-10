@@ -6,6 +6,8 @@
 #include "Synthesizer/MySynth.h"
 #include "Utility/Parameters.h"
 #include "Utility/PitchTracker.h"
+#include "Utility/TempoInfo.h"
+#include <array>
 #include <functional>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
@@ -67,7 +69,12 @@ public:
     MySynth& getSynth() { return synth; }
 
     std::shared_ptr<PitchTracker> pitchTracker = std::make_shared<PitchTracker>();
-    std::shared_ptr<LFOData> lfoData = std::make_shared<LFOData>();
+    std::array<std::shared_ptr<LFOData>, 4> lfoData = {
+        std::make_shared<LFOData>(),
+        std::make_shared<LFOData>(),
+        std::make_shared<LFOData>(),
+        std::make_shared<LFOData>()
+    };
 
 private:
     juce::MidiBuffer midiBuffer;

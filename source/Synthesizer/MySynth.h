@@ -2,14 +2,17 @@
 
 #include "../Modulation/LFOData.h"
 #include "../Utility/PitchTracker.h"
+#include "../Utility/TempoInfo.h"
+#include "../Utility/TempoSyncUtils.h"
 #include "MySynthVoice.h"
 
+#include <array>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 class MySynth final : public juce::Synthesiser
 {
 public:
-    explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::shared_ptr<LFOData> lfoData);
+    explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData);
     static void updateParameter (float& currentValue, float newValue, const std::function<void (float)>& setterFunction);
 
     float getVolume() const { return masterVolume; }
@@ -20,7 +23,7 @@ public:
 
     float getFilterResonance() const { return filterResonance; }
 
-    void updateParameters();
+    void updateParameters (const TempoInfo& tempoInfo);
     template <class Func>
     void applyToAllVoices (Func&& function);
 
@@ -52,7 +55,11 @@ private:
     float filterRelease = 0.0f;
     float filterReleaseCurve = 1.0f;
 
-    float lfo1Rate = 1.0f;
+    std::array<float, 4> lfoRates = { 1.0f, 1.0f, 1.0f, 1.0f };
+    std::array<bool, 4> lfoTempoSync = { false, false, false, false };
+    std::array<int, 4> lfoNoteDivision = { 6, 6, 6, 6 };
+    std::array<bool, 4> lfoBeatSync = { false, false, false, false };
+    float manualBpm = 120.0f;
 
     std::shared_ptr<MyADSR*> ampEnvPtr = std::make_shared<MyADSR*>();
     std::shared_ptr<MyADSR*> filterEnvPtr = std::make_shared<MyADSR*>();

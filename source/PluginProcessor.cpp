@@ -169,7 +169,21 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    synth.updateParameters();
+    TempoInfo tempoInfo;
+    if (auto* playHead = getPlayHead())
+        if (auto pos = playHead->getPosition())
+        {
+            if (auto bpm = pos->getBpm())
+            {
+                tempoInfo.bpm = *bpm;
+                tempoInfo.hostTempoAvailable = true;
+            }
+            if (auto ppq = pos->getPpqPosition())
+                tempoInfo.ppqPosition = *ppq;
+            tempoInfo.isPlaying = pos->getIsPlaying();
+        }
+
+    synth.updateParameters (tempoInfo);
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
 
     chorus.process (buffer);
@@ -204,13 +218,10 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // Calculate processing time
     lastProcessingTimeMs = juce::Time::getMillisecondCounterHiRes() - startTime;
 
-    // Detect potential overload and trigger debugger break
+    // Detect potential overload (log only — raise(SIGUSR1) crashes outside debugger)
     if (lastProcessingTimeMs > maxAllowedProcessingTimeMs)
     {
         DBG ("AUDIO OVERLOAD DETECTED: Processing took " + juce::String (lastProcessingTimeMs) + "ms, limit is " + juce::String (maxAllowedProcessingTimeMs) + "ms");
-
-        // This will trigger our signal the handler which will break into the debugger
-        raise (SIGUSR1);
     }
 }
 
@@ -260,7 +271,12 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 
     state.addChild (modTree.createCopy(), -1, nullptr);
 
-    state.addChild (lfoData->toValueTree(), -1, nullptr);
+    for (int i = 0; i < 4; ++i)
+    {
+        auto lfoTree = lfoData[i]->toValueTree();
+        lfoTree.setProperty ("lfoIndex", i, nullptr);
+        state.addChild (lfoTree, -1, nullptr);
+    }
 
     // Convert to XML and write to MemoryBlock
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
@@ -298,10 +314,24 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
         }
 
         // Restore LFO state
-        juce::ValueTree lfoState = state.getChildWithName ("LFOData");
-        if (lfoState.isValid())
+        bool foundIndexed = false;
+        for (int i = 0; i < state.getNumChildren(); ++i)
         {
-            lfoData->fromValueTree (lfoState);
+            auto child = state.getChild (i);
+            if (child.getType().toString() == "LFOData" && child.hasProperty ("lfoIndex"))
+            {
+                int idx = static_cast<int> (child.getProperty ("lfoIndex"));
+                if (idx >= 0 && idx < 4)
+                    lfoData[idx]->fromValueTree (child);
+                foundIndexed = true;
+            }
+        }
+        // Backward compat: old single-LFOData presets without lfoIndex
+        if (!foundIndexed)
+        {
+            juce::ValueTree lfoState = state.getChildWithName ("LFOData");
+            if (lfoState.isValid())
+                lfoData[0]->fromValueTree (lfoState);
         }
     }
 }

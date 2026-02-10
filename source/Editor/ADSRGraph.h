@@ -37,6 +37,15 @@ public:
 
     void setADSRPointer (std::shared_ptr<MyADSR*> adsr) { myADSR = std::move (adsr); }
 
+    void rebind (juce::StringRef newAttackParam,
+        juce::StringRef newAttackCurveParam,
+        juce::StringRef newDecayParam,
+        juce::StringRef newDecayCurveParam,
+        juce::StringRef newSustainParam,
+        juce::StringRef newReleaseParam,
+        juce::StringRef newReleaseCurveParam,
+        std::shared_ptr<MyADSR*> adsr);
+
 private:
     float getCurveY (float x) const;
 

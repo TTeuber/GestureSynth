@@ -49,9 +49,21 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
 
     // ================================================================================================================================================
     // LFO Parameters
-    auto lfo1Rate = make_unique<Parameter> (ParameterID ("lfo1Rate", 1), "LFO 1 Rate", Normalize (0.01f, 20.0f, 0.001f, 0.35f), 1.0f);
-    lfo1Rate->range.setSkewForCentre (2.0f);
-    layout.add (std::move (lfo1Rate));
+    for (int i = 1; i <= 4; i++)
+    {
+        auto s = std::to_string (i);
+        auto lfoRate = make_unique<Parameter> (ParameterID ("lfo" + s + "Rate", 1), "LFO " + s + " Rate", Normalize (0.01f, 20.0f, 0.001f, 0.35f), 1.0f);
+        lfoRate->range.setSkewForCentre (2.0f);
+        layout.add (std::move (lfoRate));
+
+        layout.add (make_unique<AudioParameterBool> (ParameterID ("lfo" + s + "TempoSync", 1), "LFO " + s + " Tempo Sync", false));
+        layout.add (make_unique<AudioParameterChoice> (ParameterID ("lfo" + s + "NoteDivision", 1), "LFO " + s + " Note Division",
+            juce::StringArray { "4/1", "2/1", "1/1", "1/2", "1/2T", "1/2D", "1/4", "1/4T", "1/4D", "1/8", "1/8T", "1/8D", "1/16", "1/16T", "1/16D", "1/32" }, 6));
+        layout.add (make_unique<AudioParameterBool> (ParameterID ("lfo" + s + "BeatSync", 1), "LFO " + s + " Beat Sync", false));
+    }
+
+    auto manualBpm = make_unique<Parameter> (ParameterID ("manualBpm", 1), "Manual BPM", Normalize (20.0f, 300.0f, 0.1f), 120.0f);
+    layout.add (std::move (manualBpm));
 
     // ================================================================================================================================================
     // Boolean Parameters
@@ -64,7 +76,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     // ================================================================================================================================================
     // Envelope Parameters
 
-    for (int i = 1; i < 2; i++)
+    for (int i = 1; i <= 4; i++)
     {
         layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Attack", 1), "Envelope " + std::to_string (i) + " Attack", Normalize (0.01f, 10.0f, 0.001f, 0.3f), 0.0f));
         layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "AttackCurve", 1), "Envelope " + std::to_string (i) + " Attack Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));

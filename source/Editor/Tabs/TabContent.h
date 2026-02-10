@@ -60,9 +60,18 @@ public:
     void paint (juce::Graphics& g) override;
 
 private:
+    void selectLfo (int index);
+    void selectEnv (int index);
+
+    PluginProcessor& processor;
     LFOComponent lfoComponent;
     ADSRGraph adsrGraph;
     MatrixComponent matrixComponent;
+
+    juce::TextButton lfoButtons[4];
+    juce::TextButton envButtons[4];
+    int activeLfoIndex = 0;
+    int activeEnvIndex = 0;
 };
 
 // =============================================================================

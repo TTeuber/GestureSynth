@@ -8,6 +8,7 @@
 #include "../Utility/MyParameter.h"
 #include "../Utility/PitchTracker.h"
 
+#include <array>
 #include <juce_dsp/juce_dsp.h>
 
 class MySynth;
@@ -21,7 +22,7 @@ public:
 class MySynthVoice final : public juce::SynthesiserVoice, public juce::ValueTree::Listener, juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<PitchTracker> pt, std::shared_ptr<LFOData> lfoData);
+    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData);
     void addNodeToMatrix (const juce::ValueTree& childNode);
 
     void parameterChanged (const juce::String& parameterID, float newValue) override;
@@ -62,7 +63,8 @@ public:
         filterResonance.setBaseValue (newFilterResonance);
         // osc.setFilterResonance (newFilterResonance);
     }
-    void setLFORate (float rate) { lfo1.setRate (rate); }
+    void setLFORate (int index, float rate) { lfos[index].setRate (rate); }
+    void setLFOPhase (int index, float phase) { lfos[index].setPhase (phase); }
 
     [[nodiscard]] int getWavelength() const
     {
@@ -79,7 +81,12 @@ private:
     JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth);
     JuneDCO juneOscillator2 = JuneDCO (parameters, pulseWidth);
 
-    MyLFO lfo1 { "lfo1", "LFO 1", 1.0f };
+    std::array<MyLFO, 4> lfos = {
+        MyLFO { "lfo1", "LFO 1", 1.0f },
+        MyLFO { "lfo2", "LFO 2", 1.0f },
+        MyLFO { "lfo3", "LFO 3", 1.0f },
+        MyLFO { "lfo4", "LFO 4", 1.0f }
+    };
 
     DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
 
@@ -99,6 +106,9 @@ private:
     bool filterEnabled = false;
 
     MyADSR adsr1 = MyADSR (parameters, 1);
+    MyADSR adsr2 = MyADSR (parameters, 2);
+    MyADSR adsr3 = MyADSR (parameters, 3);
+    MyADSR adsr4 = MyADSR (parameters, 4);
     std::shared_ptr<MyADSR*> env1ptr;
 
     std::shared_ptr<PitchTracker> pitchTracker;
@@ -156,11 +166,17 @@ private:
     double startTime = 0.0;
     int waveLength = 1024;
 
-    std::vector<MyADSR*> envs = { &adsr1 };
+    std::vector<MyADSR*> envs = { &adsr1, &adsr2, &adsr3, &adsr4 };
 
     std::map<juce::String, ModSource*> modSources = {
-        { lfo1.getID(), &lfo1 },
+        { lfos[0].getID(), &lfos[0] },
+        { lfos[1].getID(), &lfos[1] },
+        { lfos[2].getID(), &lfos[2] },
+        { lfos[3].getID(), &lfos[3] },
         { adsr1.getID(), &adsr1 },
+        { adsr2.getID(), &adsr2 },
+        { adsr3.getID(), &adsr3 },
+        { adsr4.getID(), &adsr4 },
     };
 
     std::map<juce::String, ModDestination*> modDestinations = {

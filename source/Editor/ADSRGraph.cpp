@@ -57,6 +57,60 @@ ADSRGraph::~ADSRGraph()
     parameters.removeParameterListener (releaseCurveId, this);
 }
 
+void ADSRGraph::rebind (
+    const juce::StringRef newAttackParam,
+    const juce::StringRef newAttackCurveParam,
+    const juce::StringRef newDecayParam,
+    const juce::StringRef newDecayCurveParam,
+    const juce::StringRef newSustainParam,
+    const juce::StringRef newReleaseParam,
+    const juce::StringRef newReleaseCurveParam,
+    std::shared_ptr<MyADSR*> adsr)
+{
+    // Remove old parameter listeners
+    parameters.removeParameterListener (attackId, this);
+    parameters.removeParameterListener (attackCurveId, this);
+    parameters.removeParameterListener (decayId, this);
+    parameters.removeParameterListener (decayCurveId, this);
+    parameters.removeParameterListener (sustainId, this);
+    parameters.removeParameterListener (releaseId, this);
+    parameters.removeParameterListener (releaseCurveId, this);
+
+    // Update stored IDs
+    attackId = newAttackParam;
+    attackCurveId = newAttackCurveParam;
+    decayId = newDecayParam;
+    decayCurveId = newDecayCurveParam;
+    sustainId = newSustainParam;
+    releaseId = newReleaseParam;
+    releaseCurveId = newReleaseCurveParam;
+
+    // Update ADSR pointer
+    myADSR = std::move (adsr);
+
+    // Add new parameter listeners
+    parameters.addParameterListener (attackId, this);
+    parameters.addParameterListener (attackCurveId, this);
+    parameters.addParameterListener (decayId, this);
+    parameters.addParameterListener (decayCurveId, this);
+    parameters.addParameterListener (sustainId, this);
+    parameters.addParameterListener (releaseId, this);
+    parameters.addParameterListener (releaseCurveId, this);
+
+    // Read current parameter values
+    attackTime = parameters.getRawParameterValue (attackId)->load();
+    attackCurve = parameters.getRawParameterValue (attackCurveId)->load();
+    decayTime = parameters.getRawParameterValue (decayId)->load();
+    decayCurve = parameters.getRawParameterValue (decayCurveId)->load();
+    sustainLevel = parameters.getRawParameterValue (sustainId)->load();
+    releaseTime = parameters.getRawParameterValue (releaseId)->load();
+    releaseCurve = parameters.getRawParameterValue (releaseCurveId)->load();
+
+    totalDuration = attackTime + decayTime + releaseTime;
+
+    repaint();
+}
+
 void ADSRGraph::parameterChanged (const juce::String& parameterID, float newValue)
 {
     if (parameterID == attackId)

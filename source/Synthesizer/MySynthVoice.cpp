@@ -5,14 +5,15 @@ MySynthVoice::MySynthVoice (
     juce::ValueTree& mt,
     std::shared_ptr<MyADSR*> ampEnvPtr,
     std::shared_ptr<PitchTracker> pt,
-    std::shared_ptr<LFOData> lfoData)
+    std::array<std::shared_ptr<LFOData>, 4>& lfoData)
     : parameters (p),
       modTree (mt),
       env1ptr (std::move (ampEnvPtr)),
       pitchTracker (std::move (pt))
 {
-    if (lfoData)
-        lfo1.setLFOData (lfoData);
+    for (int i = 0; i < 4; ++i)
+        if (lfoData[i])
+            lfos[i].setLFOData (lfoData[i]);
     modTree.addListener (this);
 
     parameters.addParameterListener ("filterOn", this);
@@ -63,6 +64,9 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     for (int sample = 0; sample < numSamples; ++sample)
     {
         const float targetEnvVal = adsr1.getNextValue();
+        adsr2.getNextValue();
+        adsr3.getNextValue();
+        adsr4.getNextValue();
 
         modMatrix.processSample();
 
@@ -163,6 +167,8 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
 
     juneOscillator.prepare (spec);
     filter.prepare (spec);
+    for (auto& lfo : lfos)
+        lfo.prepare (spec);
     modMatrix.prepare (spec);
     waveformBuffer.reset();
 }
