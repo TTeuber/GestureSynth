@@ -5,6 +5,7 @@
 #include "../Modulation/MyADSR.h"
 #include "../Modulation/MyLFO.h"
 #include "../Processor/JuneOscillator.h"
+#include "../Processor/Vibrato.h"
 #include "../Utility/MyParameter.h"
 #include "../Utility/PitchTracker.h"
 
@@ -66,6 +67,10 @@ public:
     void setLFORate (int index, float rate) { lfos[index].setRate (rate); }
     void setLFOPhase (int index, float phase) { lfos[index].setPhase (phase); }
 
+    void setVibratoRate (float rate) { vibrato.setRate (rate); }
+    void setVibratoDepth (float depth) { vibrato.setDepth (depth); }
+    void setVibratoEnabled (bool enabled) { vibrato.setEnabled (enabled); }
+
     [[nodiscard]] int getWavelength() const
     {
         return waveLength;
@@ -94,6 +99,7 @@ private:
 
     float frequency = 0.0f;
     float currentSampleRate = 48000.0f;
+    Vibrato vibrato;
 
     float currentEnvVal = 0.0f;
     float slewRate = 0.005f;

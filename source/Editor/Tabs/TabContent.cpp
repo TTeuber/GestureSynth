@@ -187,11 +187,13 @@ void ModulationTabContent::resized()
 EffectsTabContent::EffectsTabContent (PluginProcessor& p)
     : filterDisplay (p.parameters),
       chorusComponent (p.parameters),
+      vibratoComponent (p.parameters),
       volumeComponent (p.parameters.getParameter ("volume")),
       chorusMixComponent (p.parameters.getParameter ("chorusMix"))
 {
     addAndMakeVisible (filterDisplay);
     addAndMakeVisible (chorusComponent);
+    addAndMakeVisible (vibratoComponent);
     addAndMakeVisible (volumeComponent);
     addAndMakeVisible (chorusMixComponent);
 }
@@ -209,11 +211,14 @@ void EffectsTabContent::resized()
     auto topHalf = area.removeFromTop (area.getHeight() / 2);
     filterDisplay.setBounds (topHalf.reduced (5));
 
-    // Bottom half: chorus + dials
-    auto bottomLeft = area.removeFromLeft (area.getWidth() / 2);
-    chorusComponent.setBounds (bottomLeft.reduced (5));
+    // Bottom half: 3 columns — chorus | vibrato | volume+chorusMix
+    auto colWidth = area.getWidth() / 3;
+    auto chorusArea = area.removeFromLeft (colWidth);
+    auto vibratoArea = area.removeFromLeft (colWidth);
+    auto rightColumn = area;
 
-    // Right side: volume and chorus mix stacked
-    volumeComponent.setBounds (area.removeFromTop (area.getHeight() / 2).reduced (5));
-    chorusMixComponent.setBounds (area.reduced (5));
+    chorusComponent.setBounds (chorusArea.reduced (5));
+    vibratoComponent.setBounds (vibratoArea.reduced (5));
+    volumeComponent.setBounds (rightColumn.removeFromTop (rightColumn.getHeight() / 2).reduced (5));
+    chorusMixComponent.setBounds (rightColumn.reduced (5));
 }

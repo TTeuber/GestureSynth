@@ -48,6 +48,15 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (std::move (chorusRate));
 
     // ================================================================================================================================================
+    // Vibrato Parameters
+    auto vibratoRate = make_unique<Parameter> (ParameterID ("vibratoRate", 1), "Vibrato Rate",
+        Normalize (0.1f, 20.0f, 0.01f, 0.35f), 5.0f);
+    vibratoRate->range.setSkewForCentre (5.0f);
+    layout.add (std::move (vibratoRate));
+    layout.add (make_unique<Parameter> (ParameterID ("vibratoDepth", 1), "Vibrato Depth",
+        Normalize (0.0f, 2.0f, 0.001f), 0.0f));
+
+    // ================================================================================================================================================
     // LFO Parameters
     for (int i = 1; i <= 4; i++)
     {
@@ -72,6 +81,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (make_unique<AudioParameterBool> (ParameterID ("subOn", 1), "Sub On", true));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("filterOn", 1), "Filter On", true));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("chorusOn", 1), "Chorus On", true));
+    layout.add (make_unique<AudioParameterBool> (ParameterID ("vibratoOn", 1), "Vibrato On", false));
 
     // ================================================================================================================================================
     // Envelope Parameters

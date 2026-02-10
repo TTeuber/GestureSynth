@@ -61,6 +61,10 @@ private:
     std::array<bool, 4> lfoBeatSync = { false, false, false, false };
     float manualBpm = 120.0f;
 
+    float vibratoRate = 5.0f;
+    float vibratoDepth = 0.0f;
+    bool vibratoOn = false;
+
     std::shared_ptr<MyADSR*> ampEnvPtr = std::make_shared<MyADSR*>();
     std::shared_ptr<MyADSR*> filterEnvPtr = std::make_shared<MyADSR*>();
 };

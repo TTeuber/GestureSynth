@@ -88,6 +88,27 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
             }
         }
     }
+
+    const float newVibratoRate = *parameters.getRawParameterValue ("vibratoRate");
+    if (vibratoRate != newVibratoRate)
+    {
+        vibratoRate = newVibratoRate;
+        applyToAllVoices ([newVibratoRate] (MySynthVoice* voice) { voice->setVibratoRate (newVibratoRate); });
+    }
+
+    const float newVibratoDepth = *parameters.getRawParameterValue ("vibratoDepth");
+    if (vibratoDepth != newVibratoDepth)
+    {
+        vibratoDepth = newVibratoDepth;
+        applyToAllVoices ([newVibratoDepth] (MySynthVoice* voice) { voice->setVibratoDepth (newVibratoDepth); });
+    }
+
+    const bool newVibratoOn = *parameters.getRawParameterValue ("vibratoOn") > 0.5f;
+    if (vibratoOn != newVibratoOn)
+    {
+        vibratoOn = newVibratoOn;
+        applyToAllVoices ([newVibratoOn] (MySynthVoice* voice) { voice->setVibratoEnabled (newVibratoOn); });
+    }
 }
 
 template <typename Func>

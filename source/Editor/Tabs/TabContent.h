@@ -4,6 +4,7 @@
 #include "../../Theme.h"
 #include "../ADSRGraph.h"
 #include "../ChorusComponent.h"
+#include "../VibratoComponent.h"
 #include "../DetuneComponent.h"
 #include "../FilterDisplay.h"
 #include "../LFOComponent.h"
@@ -87,6 +88,7 @@ public:
 private:
     FilterDisplay filterDisplay;
     ChorusComponent chorusComponent;
+    VibratoComponent vibratoComponent;
     SingleParameterComponent volumeComponent;
     SingleParameterComponent chorusMixComponent;
 };

@@ -54,7 +54,9 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     juce::dsp::AudioBlock<float> block (tempBuffer);
     const juce::dsp::ProcessContextReplacing context (block);
 
+    juneOscillator.setFrequency (frequency * vibrato.getFrequencyMultiplier (numSamples));
     juneOscillator.processBlock (block);
+
     if (filterEnabled)
     {
         filter.setCutoffFrequency (filterCutoff.getCurrentValue());
@@ -169,6 +171,7 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     filter.prepare (spec);
     for (auto& lfo : lfos)
         lfo.prepare (spec);
+    vibrato.prepare (static_cast<float> (sampleRate));
     modMatrix.prepare (spec);
     waveformBuffer.reset();
 }
@@ -177,6 +180,7 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
 {
     frequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
     juneOscillator.setFrequency (frequency);
+    vibrato.reset();
     this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
     for (auto* env : envs)
         env->noteOn();
