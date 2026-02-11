@@ -191,4 +191,7 @@ private:
         { fineTuneParam.getID(), &fineTuneParam },
         { pulseWidth.getID(), &pulseWidth }
     };
+
+    // Cache of source/dest per slot for correct removal on property change
+    std::array<std::pair<juce::String, juce::String>, 12> slotCache;
 };

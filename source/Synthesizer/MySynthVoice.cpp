@@ -24,10 +24,16 @@ MySynthVoice::MySynthVoice (
     for (const auto& [_, d] : modDestinations)
         modMatrix.initDestination (d);
 
+    // Initialize slotCache from modTree
+    for (int i = 0; i < modTree.getNumChildren() && i < static_cast<int> (slotCache.size()); ++i)
+    {
+        auto child = modTree.getChild (i);
+        slotCache[i] = { child.getProperty ("source").toString(),
+                         child.getProperty ("destination").toString() };
+    }
+
     for (auto* env : envs)
         env->setSampleRate (currentSampleRate);
-
-    // lfo1.setFrequency (1.0f);
 }
 
 void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, const int startSample, const int numSamples)
@@ -93,8 +99,12 @@ int MySynthVoice::readWaveformData (float* dest, int maxSamples)
 
 void MySynthVoice::addNodeToMatrix (const juce::ValueTree& childNode)
 {
-    ModSource* source = modSources[childNode.getProperty ("source").toString()];
-    ModDestination* destination = modDestinations[childNode.getProperty ("destination").toString()];
+    auto srcIt = modSources.find (childNode.getProperty ("source").toString());
+    auto dstIt = modDestinations.find (childNode.getProperty ("destination").toString());
+    if (srcIt == modSources.end() || dstIt == modDestinations.end())
+        return;
+    auto* source = srcIt->second;
+    auto* destination = dstIt->second;
     if (source == nullptr || destination == nullptr)
         return;
     const float depth = childNode.getProperty ("depth");
@@ -125,31 +135,87 @@ void MySynthVoice::valueTreeChildAdded (juce::ValueTree& parentTree, juce::Value
 }
 void MySynthVoice::valueTreeChildRemoved (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved)
 {
-    ModSource* source = modSources[childWhichHasBeenRemoved.getProperty ("source").toString()];
-    ModDestination* destination = modDestinations[childWhichHasBeenRemoved.getProperty ("destination").toString()];
+    auto srcIt = modSources.find (childWhichHasBeenRemoved.getProperty ("source").toString());
+    auto dstIt = modDestinations.find (childWhichHasBeenRemoved.getProperty ("destination").toString());
+    if (srcIt == modSources.end() || dstIt == modDestinations.end())
+        return;
+    auto* source = srcIt->second;
+    auto* destination = dstIt->second;
     if (source == nullptr || destination == nullptr)
         return;
     modMatrix.queueRemoveModulation (source, destination);
 }
 void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
 {
-    const juce::StringRef sourceId = treeWhosePropertyHasChanged.getProperty ("source").toString();
-    const juce::StringRef destinationId = treeWhosePropertyHasChanged.getProperty ("destination").toString();
-    const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
-
-    auto* const source = modSources[sourceId];
-    auto* const destination = modDestinations[destinationId];
-    if (source == nullptr || destination == nullptr)
+    // Find which slot index this child belongs to
+    auto parent = treeWhosePropertyHasChanged.getParent();
+    if (!parent.isValid())
+        return;
+    const int slotIndex = parent.indexOf (treeWhosePropertyHasChanged);
+    if (slotIndex < 0 || slotIndex >= static_cast<int> (slotCache.size()))
         return;
 
     if (property.toString() == "depth")
     {
+        // Use cached source/dest (they haven't changed)
+        const auto& [cachedSrc, cachedDst] = slotCache[slotIndex];
+        auto srcIt = modSources.find (cachedSrc);
+        auto dstIt = modDestinations.find (cachedDst);
+        if (srcIt == modSources.end() || dstIt == modDestinations.end())
+            return;
+        auto* source = srcIt->second;
+        auto* destination = dstIt->second;
+        if (source == nullptr || destination == nullptr)
+            return;
+        const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
         modMatrix.queueUpdateModulation (source, destination, depth);
     }
     else if (property.toString() == "source" || property.toString() == "destination")
     {
+        // Remove OLD routing using cached values
+        const auto& [oldSrc, oldDst] = slotCache[slotIndex];
+        auto oldSrcIt = modSources.find (oldSrc);
+        auto oldDstIt = modDestinations.find (oldDst);
+        if (oldSrcIt != modSources.end() && oldDstIt != modDestinations.end()
+            && oldSrcIt->second != nullptr && oldDstIt->second != nullptr)
+        {
+            modMatrix.queueRemoveModulation (oldSrcIt->second, oldDstIt->second);
+        }
+
+        // Update cache with new values
+        const juce::String newSrc = treeWhosePropertyHasChanged.getProperty ("source").toString();
+        const juce::String newDst = treeWhosePropertyHasChanged.getProperty ("destination").toString();
+        slotCache[slotIndex] = { newSrc, newDst };
+
+        // Add NEW routing
+        auto newSrcIt = modSources.find (newSrc);
+        auto newDstIt = modDestinations.find (newDst);
+        if (newSrcIt == modSources.end() || newDstIt == modDestinations.end())
+            return;
+        auto* source = newSrcIt->second;
+        auto* destination = newDstIt->second;
+        if (source == nullptr || destination == nullptr)
+            return;
+        const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
+        const bool isBipolar = treeWhosePropertyHasChanged.getProperty ("isBipolar");
+        modMatrix.queueAddModulation (destination, source, depth, isBipolar);
+    }
+    else if (property.toString() == "isBipolar")
+    {
+        // Update cache source/dest haven't changed, but we need to re-add with new bipolar setting
+        const auto& [cachedSrc, cachedDst] = slotCache[slotIndex];
+        auto srcIt = modSources.find (cachedSrc);
+        auto dstIt = modDestinations.find (cachedDst);
+        if (srcIt == modSources.end() || dstIt == modDestinations.end())
+            return;
+        auto* source = srcIt->second;
+        auto* destination = dstIt->second;
+        if (source == nullptr || destination == nullptr)
+            return;
         modMatrix.queueRemoveModulation (source, destination);
-        modMatrix.queueAddModulation (destination, source, depth, false);
+        const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
+        const bool isBipolar = treeWhosePropertyHasChanged.getProperty ("isBipolar");
+        modMatrix.queueAddModulation (destination, source, depth, isBipolar);
     }
 }
 

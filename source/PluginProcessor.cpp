@@ -29,7 +29,7 @@ PluginProcessor::PluginProcessor()
 
     for (size_t i = 0; i < modList.size(); i++)
     {
-        juce::ValueTree childNode (juce::String ("modulation" + i));
+        juce::ValueTree childNode ("modulation" + juce::String (static_cast<int> (i)));
         childNode.setProperty ("source", std::get<0> (modList[i]), nullptr);
         childNode.setProperty ("depth", std::get<1> (modList[i]), nullptr);
         childNode.setProperty ("destination", std::get<2> (modList[i]), nullptr);
@@ -306,11 +306,29 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
             parameters.replaceState (paramState);
         }
 
-        // Restore custom state (look for the child with the custom identifier, e.g., "CustomState")
+        // Restore custom state — replace children in-place to preserve the
+        // SharedObject identity so that MySynthVoice listeners stay valid.
         juce::ValueTree customStateRestored = state.getChildWithName (modTree.getType());
         if (customStateRestored.isValid())
         {
-            modTree = customStateRestored.createCopy();
+            // Remove existing children
+            while (modTree.getNumChildren() > 0)
+                modTree.removeChild (0, nullptr);
+
+            // Re-add from restored state
+            for (int i = 0; i < customStateRestored.getNumChildren(); ++i)
+                modTree.appendChild (customStateRestored.getChild (i).createCopy(), nullptr);
+
+            // Backward compat: pad to 12 children if saved state had fewer
+            while (modTree.getNumChildren() < 12)
+            {
+                juce::ValueTree child ("modulation" + juce::String (modTree.getNumChildren()));
+                child.setProperty ("source", "None", nullptr);
+                child.setProperty ("depth", 0.0f, nullptr);
+                child.setProperty ("destination", "None", nullptr);
+                child.setProperty ("isBipolar", false, nullptr);
+                modTree.appendChild (child, nullptr);
+            }
         }
 
         // Restore LFO state

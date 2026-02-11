@@ -104,5 +104,5 @@ public:
 
 private:
     std::map<ModDestination*, std::vector<Modulation>> matrix = {};
-    LockFreeQueue<ModCommand, 16> commandQueue;
+    LockFreeQueue<ModCommand, 64> commandQueue;
 };

@@ -171,8 +171,8 @@ void ModulationTabContent::resized()
     for (int i = 0; i < 4; ++i)
         envButtons[i].setBounds (envButtonArea.removeFromLeft (envBtnWidth));
 
-    // Top half: LFO and ADSR side by side
-    auto topHalf = area.removeFromTop (area.getHeight() / 2);
+    // Top 40%: LFO and ADSR side by side
+    auto topHalf = area.removeFromTop (area.getHeight() * 2 / 5);
     lfoComponent.setBounds (topHalf.removeFromLeft (topHalf.getWidth() / 2).reduced (5));
     adsrGraph.setBounds (topHalf.reduced (5));
 
