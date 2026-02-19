@@ -13,6 +13,7 @@
 #include "../Oscilliscope.h"
 #include "../SubOscillatorComponent.h"
 #include "../Utility/SingleParameterComponent.h"
+#include "../VolumeComponent.h"
 
 // =============================================================================
 // Main Tab: Waveform, Filter Display, ADSR Graph, Oscilloscope, Volume
@@ -29,7 +30,7 @@ private:
     FilterDisplay filterDisplay;
     ADSRGraph adsrGraph;
     Oscilloscope oscilloscope;
-    SingleParameterComponent volumeComponent;
+    VolumeComponent volumeComponent;
     LFOComponent lfoComponent;
 };
 
@@ -89,6 +90,6 @@ private:
     FilterDisplay filterDisplay;
     ChorusComponent chorusComponent;
     VibratoComponent vibratoComponent;
-    SingleParameterComponent volumeComponent;
+    VolumeComponent volumeComponent;
     SingleParameterComponent chorusMixComponent;
 };
