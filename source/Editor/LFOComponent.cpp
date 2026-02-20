@@ -1,10 +1,31 @@
 #include "LFOComponent.h"
+#include <algorithm>
 
 LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorValueTreeState& parameters, bool showRateSlider, int lfoIdx)
     : lfoData (std::move (data)),
       apvts (parameters),
       hasRateSlider (showRateSlider),
-      lfoIndex (lfoIdx)
+      lfoIndex (lfoIdx),
+      sineButton (0, [this] { this->lfoData->setShape (LFOShape::Sine); this->lfoData->updateListeners(); }),
+      triangleButton (1, [this] { this->lfoData->setShape (LFOShape::Triangle); this->lfoData->updateListeners(); }),
+      sawButton (2, [this] { this->lfoData->setShape (LFOShape::RampDown); this->lfoData->updateListeners(); }),
+      squareButton (3, [this] { this->lfoData->setShape (LFOShape::Square); this->lfoData->updateListeners(); }),
+      flipHButton (4, [this] {
+          auto pts = this->lfoData->getPoints();
+          for (auto& p : pts)
+          {
+              p.position = 1.0f - p.position;
+              p.curve = -p.curve;
+          }
+          std::reverse (pts.begin(), pts.end());
+          this->lfoData->setPoints (pts);
+      }),
+      flipVButton (5, [this] {
+          auto pts = this->lfoData->getPoints();
+          for (auto& p : pts)
+              p.value = 1.0f - p.value;
+          this->lfoData->setPoints (pts);
+      })
 {
     lfoData->addListener (this);
 
@@ -69,6 +90,13 @@ LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorV
         const bool syncOn = *parameters.getRawParameterValue (paramId ("TempoSync", lfoIndex)) > 0.5f;
         updateSyncVisibility (syncOn);
     }
+
+    addAndMakeVisible (sineButton);
+    addAndMakeVisible (triangleButton);
+    addAndMakeVisible (sawButton);
+    addAndMakeVisible (squareButton);
+    addAndMakeVisible (flipHButton);
+    addAndMakeVisible (flipVButton);
 
     setSize (300, 200);
 }
@@ -149,8 +177,8 @@ void LFOComponent::updateSyncVisibility (bool tempoSyncOn)
 juce::Rectangle<float> LFOComponent::getGraphBounds() const
 {
     const float controlSpace = hasRateSlider ? kSliderHeight * 2.0f : 0.0f;
-    return { kMargin, kMargin,
-        static_cast<float> (getWidth()) - 2.0f * kMargin,
+    return { kMargin + kShapeStripWidth, kMargin,
+        static_cast<float> (getWidth()) - 2.0f * kMargin - kShapeStripWidth,
         static_cast<float> (getHeight()) - controlSpace - 2.0f * kMargin };
 }
 
@@ -318,6 +346,25 @@ void LFOComponent::paint (juce::Graphics& g)
 
 void LFOComponent::resized()
 {
+    // Layout shape preset + flip buttons vertically centered to the left of the graph
+    {
+        auto graphBounds = getGraphBounds();
+        const float gap = 4.0f;
+        const int numButtons = 6;
+        const float totalHeight = kShapeButtonSize * static_cast<float> (numButtons) + gap * static_cast<float> (numButtons - 1);
+        const float startY = graphBounds.getY() + (graphBounds.getHeight() - totalHeight) * 0.5f;
+        const float btnX = kMargin + (kShapeStripWidth - kShapeButtonSize) * 0.5f;
+
+        ShapePresetButton* buttons[] = { &sineButton, &triangleButton, &sawButton, &squareButton, &flipHButton, &flipVButton };
+        for (int i = 0; i < numButtons; ++i)
+        {
+            buttons[i]->setBounds (static_cast<int> (btnX),
+                static_cast<int> (startY + static_cast<float> (i) * (kShapeButtonSize + gap)),
+                static_cast<int> (kShapeButtonSize),
+                static_cast<int> (kShapeButtonSize));
+        }
+    }
+
     if (hasRateSlider)
     {
         auto area = getLocalBounds();

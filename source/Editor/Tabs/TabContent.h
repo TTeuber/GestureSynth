@@ -17,7 +17,7 @@
 #include "../VolumeComponent.h"
 
 // =============================================================================
-// Main Tab: Waveform, Filter Display, ADSR Graph, Oscilloscope, Volume
+// Main Tab: Waveform, Filter Display, Sub Osc, Detune, LFO, ADSR
 // =============================================================================
 class MainTabContent final : public juce::Component
 {
@@ -27,12 +27,21 @@ public:
     void paint (juce::Graphics& g) override;
 
 private:
+    void selectLfo (int index);
+    void selectEnv (int index);
+
+    PluginProcessor& processor;
     WaveformComponent waveformComponent;
     FilterDisplay filterDisplay;
-    ADSRGraph adsrGraph;
-    Oscilloscope oscilloscope;
-    VolumeComponent volumeComponent;
+    SubOscillatorComponent subOscillatorComponent;
+    DetuneComponent detuneComponent;
     LFOComponent lfoComponent;
+    ADSRGraph adsrGraph;
+
+    juce::TextButton lfoButtons[4];
+    juce::TextButton envButtons[4];
+    int activeLfoIndex = 0;
+    int activeEnvIndex = 0;
 };
 
 // =============================================================================
@@ -53,7 +62,7 @@ private:
 };
 
 // =============================================================================
-// Modulation Tab: LFO (with rate slider), ADSR Graph, Modulation Matrix
+// Modulation Tab: Modulation Matrix
 // =============================================================================
 class ModulationTabContent final : public juce::Component
 {
@@ -63,18 +72,7 @@ public:
     void paint (juce::Graphics& g) override;
 
 private:
-    void selectLfo (int index);
-    void selectEnv (int index);
-
-    PluginProcessor& processor;
-    LFOComponent lfoComponent;
-    ADSRGraph adsrGraph;
     MatrixComponent matrixComponent;
-
-    juce::TextButton lfoButtons[4];
-    juce::TextButton envButtons[4];
-    int activeLfoIndex = 0;
-    int activeEnvIndex = 0;
 };
 
 // =============================================================================

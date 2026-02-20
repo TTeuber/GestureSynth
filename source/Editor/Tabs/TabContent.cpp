@@ -5,42 +5,113 @@
 // =============================================================================
 
 MainTabContent::MainTabContent (PluginProcessor& p)
-    : waveformComponent (p.parameters),
+    : processor (p),
+      waveformComponent (p.parameters),
       filterDisplay (p.parameters),
-      adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr()),
-      oscilloscope (p),
-      volumeComponent (p.parameters.getParameter ("volume")),
-      lfoComponent (p.lfoData[0], p.parameters, false, 1)
+      subOscillatorComponent (p.parameters),
+      detuneComponent (p.parameters),
+      lfoComponent (p.lfoData[0], p.parameters, true, 1),
+      adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr())
 {
     addAndMakeVisible (waveformComponent);
     addAndMakeVisible (filterDisplay);
-    addAndMakeVisible (adsrGraph);
-    addAndMakeVisible (oscilloscope);
-    addAndMakeVisible (volumeComponent);
+    addAndMakeVisible (subOscillatorComponent);
+    addAndMakeVisible (detuneComponent);
     addAndMakeVisible (lfoComponent);
+    addAndMakeVisible (adsrGraph);
+
+    for (int i = 0; i < 4; ++i)
+    {
+        lfoButtons[i].setButtonText (juce::String (i + 1));
+        lfoButtons[i].setClickingTogglesState (true);
+        lfoButtons[i].setRadioGroupId (1001);
+        lfoButtons[i].setColour (juce::TextButton::buttonOnColourId, juce::Colours::orange);
+        lfoButtons[i].onClick = [this, i]() { selectLfo (i); };
+        addAndMakeVisible (lfoButtons[i]);
+
+        envButtons[i].setButtonText (juce::String (i + 1));
+        envButtons[i].setClickingTogglesState (true);
+        envButtons[i].setRadioGroupId (1002);
+        envButtons[i].setColour (juce::TextButton::buttonOnColourId, juce::Colours::orange);
+        envButtons[i].onClick = [this, i]() { selectEnv (i); };
+        addAndMakeVisible (envButtons[i]);
+    }
+
+    lfoButtons[0].setToggleState (true, juce::dontSendNotification);
+    envButtons[0].setToggleState (true, juce::dontSendNotification);
+}
+
+void MainTabContent::selectLfo (int index)
+{
+    activeLfoIndex = index;
+    lfoComponent.rebind (processor.lfoData[index], index + 1);
+}
+
+void MainTabContent::selectEnv (int index)
+{
+    activeEnvIndex = index;
+    auto s = std::to_string (index + 1);
+    auto adsrPtr = (index == 0) ? processor.getSynth().getAmpADSRPtr() : std::make_shared<MyADSR*> (nullptr);
+    adsrGraph.rebind (
+        "env" + s + "Attack",
+        "env" + s + "AttackCurve",
+        "env" + s + "Decay",
+        "env" + s + "DecayCurve",
+        "env" + s + "Sustain",
+        "env" + s + "Release",
+        "env" + s + "ReleaseCurve",
+        adsrPtr);
 }
 
 void MainTabContent::paint (juce::Graphics& g)
 {
     g.fillAll (PRIMARY_COLOR);
+
+    // Draw LFO / ENV labels in the button row
+    g.setColour (TEXT_COLOR);
+    g.setFont (14.0f);
+    auto w = getWidth();
+    auto row3Top = getHeight() * 2 / 3;
+    g.drawText ("LFO", 0, row3Top, 40, 30, juce::Justification::centred);
+    g.drawText ("ENV", w / 2, row3Top, 40, 30, juce::Justification::centred);
 }
 
 void MainTabContent::resized()
 {
     auto area = getLocalBounds();
+    auto rowHeight = area.getHeight() / 3;
 
-    // Left column: waveform + volume stacked
-    auto leftColumn = area.removeFromLeft (area.getWidth() / 5);
-    waveformComponent.setBounds (leftColumn.removeFromTop (leftColumn.getHeight() / 2).reduced (5));
-    volumeComponent.setBounds (leftColumn.reduced (5));
+    // Row 1: Waveform (left 50%) | Filter Display (right 50%)
+    auto row1 = area.removeFromTop (rowHeight);
+    waveformComponent.setBounds (row1.removeFromLeft (row1.getWidth() / 2).reduced (5));
+    filterDisplay.setBounds (row1.reduced (5));
 
-    // Right area: 2x2 grid
-    auto topHalf = area.removeFromTop (area.getHeight() / 2);
-    adsrGraph.setBounds (topHalf.removeFromLeft (topHalf.getWidth() / 2).reduced (5));
-    filterDisplay.setBounds (topHalf.reduced (5));
+    // Row 2: Sub Oscillator (left 50%) | Detune (right 50%)
+    auto row2 = area.removeFromTop (rowHeight);
+    subOscillatorComponent.setBounds (row2.removeFromLeft (row2.getWidth() / 2).reduced (5));
+    detuneComponent.setBounds (row2.reduced (5));
 
-    oscilloscope.setBounds (area.removeFromLeft (area.getWidth() / 2).reduced (5));
-    lfoComponent.setBounds (area.reduced (5));
+    // Row 3: 30px button strip at top, then LFO | ADSR below
+    auto row3 = area;
+    auto buttonRow = row3.removeFromTop (30);
+    auto lfoButtonArea = buttonRow.removeFromLeft (buttonRow.getWidth() / 2);
+    auto envButtonArea = buttonRow;
+
+    // LFO label + buttons
+    lfoButtonArea.removeFromLeft (40); // space for painted label
+    int lfoBtnWidth = juce::jmin (30, lfoButtonArea.getWidth() / 4);
+    for (int i = 0; i < 4; ++i)
+        lfoButtons[i].setBounds (lfoButtonArea.removeFromLeft (lfoBtnWidth));
+
+    // ENV label + buttons
+    envButtonArea.removeFromLeft (40); // space for painted label
+    int envBtnWidth = juce::jmin (30, envButtonArea.getWidth() / 4);
+    for (int i = 0; i < 4; ++i)
+        envButtons[i].setBounds (envButtonArea.removeFromLeft (envBtnWidth));
+
+    // LFO component | ADSR graph
+    lfoComponent.setBounds (row3.removeFromLeft (row3.getWidth() / 2).reduced (5));
+    adsrGraph.setBounds (row3.reduced (5));
 }
 
 // =============================================================================
@@ -84,100 +155,19 @@ void OscillatorTabContent::resized()
 // =============================================================================
 
 ModulationTabContent::ModulationTabContent (PluginProcessor& p)
-    : processor (p),
-      lfoComponent (p.lfoData[0], p.parameters, true, 1),
-      adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr()),
-      matrixComponent (p.modTree)
+    : matrixComponent (p.modTree)
 {
-    addAndMakeVisible (lfoComponent);
-    addAndMakeVisible (adsrGraph);
     addAndMakeVisible (matrixComponent);
-
-    for (int i = 0; i < 4; ++i)
-    {
-        lfoButtons[i].setButtonText (juce::String (i + 1));
-        lfoButtons[i].setClickingTogglesState (true);
-        lfoButtons[i].setRadioGroupId (1001);
-        lfoButtons[i].setColour (juce::TextButton::buttonOnColourId, juce::Colours::orange);
-        lfoButtons[i].onClick = [this, i]() { selectLfo (i); };
-        addAndMakeVisible (lfoButtons[i]);
-
-        envButtons[i].setButtonText (juce::String (i + 1));
-        envButtons[i].setClickingTogglesState (true);
-        envButtons[i].setRadioGroupId (1002);
-        envButtons[i].setColour (juce::TextButton::buttonOnColourId, juce::Colours::orange);
-        envButtons[i].onClick = [this, i]() { selectEnv (i); };
-        addAndMakeVisible (envButtons[i]);
-    }
-
-    lfoButtons[0].setToggleState (true, juce::dontSendNotification);
-    envButtons[0].setToggleState (true, juce::dontSendNotification);
-}
-
-void ModulationTabContent::selectLfo (int index)
-{
-    activeLfoIndex = index;
-    lfoComponent.rebind (processor.lfoData[index], index + 1);
-}
-
-void ModulationTabContent::selectEnv (int index)
-{
-    activeEnvIndex = index;
-    auto s = std::to_string (index + 1);
-    auto adsrPtr = (index == 0) ? processor.getSynth().getAmpADSRPtr() : std::make_shared<MyADSR*> (nullptr);
-    adsrGraph.rebind (
-        "env" + s + "Attack",
-        "env" + s + "AttackCurve",
-        "env" + s + "Decay",
-        "env" + s + "DecayCurve",
-        "env" + s + "Sustain",
-        "env" + s + "Release",
-        "env" + s + "ReleaseCurve",
-        adsrPtr);
 }
 
 void ModulationTabContent::paint (juce::Graphics& g)
 {
     g.fillAll (PRIMARY_COLOR);
-
-    // Draw LFO / ENV labels in the button row
-    g.setColour (TEXT_COLOR);
-    g.setFont (14.0f);
-    auto w = getWidth();
-    g.drawText ("LFO", 0, 0, 40, 30, juce::Justification::centred);
-    g.drawText ("ENV", w / 2, 0, 40, 30, juce::Justification::centred);
 }
 
 void ModulationTabContent::resized()
 {
-    auto area = getLocalBounds();
-
-    // Button row at the top (30px)
-    auto buttonRow = area.removeFromTop (30);
-    auto lfoButtonArea = buttonRow.removeFromLeft (buttonRow.getWidth() / 2);
-    auto envButtonArea = buttonRow;
-
-    // LFO label + buttons
-    auto lfoLabelArea = lfoButtonArea.removeFromLeft (40);
-    juce::ignoreUnused (lfoLabelArea); // painted in paint() if desired
-    int lfoBtnWidth = juce::jmin (30, lfoButtonArea.getWidth() / 4);
-    for (int i = 0; i < 4; ++i)
-        lfoButtons[i].setBounds (lfoButtonArea.removeFromLeft (lfoBtnWidth));
-
-    // ENV label + buttons
-    auto envLabelArea = envButtonArea.removeFromLeft (40);
-    juce::ignoreUnused (envLabelArea);
-    int envBtnWidth = juce::jmin (30, envButtonArea.getWidth() / 4);
-    for (int i = 0; i < 4; ++i)
-        envButtons[i].setBounds (envButtonArea.removeFromLeft (envBtnWidth));
-
-    // Top 40%: LFO and ADSR side by side
-    auto topHalf = area.removeFromTop (area.getHeight() * 2 / 5);
-    lfoComponent.setBounds (topHalf.removeFromLeft (topHalf.getWidth() / 2).reduced (5));
-    adsrGraph.setBounds (topHalf.reduced (5));
-
-    // Bottom half: Matrix
-    matrixComponent.setBounds (area.reduced (5));
+    matrixComponent.setBounds (getLocalBounds().reduced (5));
 }
 
 // =============================================================================
