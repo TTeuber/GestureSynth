@@ -86,7 +86,6 @@ private:
 
     DynamicParameter pulseWidth = DynamicParameter (parameters.getParameter ("pulseWidth"));
     JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth);
-    JuneDCO juneOscillator2 = JuneDCO (parameters, pulseWidth);
 
     std::array<MyLFO, 4> lfos = {
         MyLFO { "lfo1", "LFO 1", 1.0f },

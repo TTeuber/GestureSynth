@@ -181,20 +181,30 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     chorus.process (buffer);
 
-    // Find an active voice and copy its waveform data using the FIFO
+    // Soft-clip the output to tame peaks from polyphonic voice summing
+    // Uses Padé approximant of tanh: x*(27+x²)/(27+9x²), accurate to ~1% for |x|<3
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+    {
+        auto* samples = buffer.getWritePointer (ch);
+        for (int i = 0; i < buffer.getNumSamples(); ++i)
+        {
+            const float x = samples[i];
+            const float x2 = x * x;
+            samples[i] = juce::jlimit (-1.0f, 1.0f, x * (27.0f + x2) / (27.0f + 9.0f * x2));
+        }
+    }
+
+    // Oscilloscope waveform capture
     for (int i = 0; i < synth.getNumVoices(); ++i)
     {
         if (auto* voice = dynamic_cast<MySynthVoice*> (synth.getVoice (i)))
         {
             if (voice->isVoiceActive())
             {
-                // Read from voice's thread-safe FIFO into temp buffer
                 std::array<float, 1024> tempVoiceData {};
                 const int samplesRead = voice->readWaveformData (tempVoiceData.data(), 1024);
-
                 if (samplesRead > 0)
                 {
-                    // Write to processor's circular buffer for UI thread
                     int wp = waveWritePos.load (std::memory_order_relaxed);
                     for (int j = 0; j < samplesRead; ++j)
                     {
@@ -203,7 +213,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                     }
                     waveWritePos.store (wp, std::memory_order_release);
                 }
-                break; // Only capture from one active voice
+                break;
             }
         }
     }

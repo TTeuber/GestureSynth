@@ -251,6 +251,7 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
 
 void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
+    currentEnvVal = 0.0f;
     frequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
     juneOscillator.setFrequency (frequency);
     vibrato.reset();

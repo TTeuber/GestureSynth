@@ -397,15 +397,16 @@ private:
             return position; // Linear
 
         // Apply an exponential or logarithmic curve
-        float skew = std::powf (2.0f, std::abs (curve) * 5.0f);
+        const float exponent = std::abs (curve) * 5.0f;
+        const float skew = std::exp2f (exponent);
 
         if (curve > 0.0f)
         {
             // Exponential
-            return (std::powf (skew, position) - 1.0f) / (skew - 1.0f);
+            return (std::exp2f (exponent * position) - 1.0f) / (skew - 1.0f);
         }
         // Logarithmic
-        return 1.0f - (std::powf (skew, 1.0f - position) - 1.0f) / (skew - 1.0f);
+        return 1.0f - (std::exp2f (exponent * (1.0f - position)) - 1.0f) / (skew - 1.0f);
     }
 
     std::vector<LFOPoint> points; // Array of points defining the LFO shape
