@@ -12,6 +12,7 @@
 #include "../OscGraph.h"
 #include "../Oscilliscope.h"
 #include "../SubOscillatorComponent.h"
+#include "../ChorusMixComponent.h"
 #include "../Utility/SingleParameterComponent.h"
 #include "../VolumeComponent.h"
 
@@ -91,5 +92,5 @@ private:
     ChorusComponent chorusComponent;
     VibratoComponent vibratoComponent;
     VolumeComponent volumeComponent;
-    SingleParameterComponent chorusMixComponent;
+    ChorusMixComponent chorusMixComponent;
 };
