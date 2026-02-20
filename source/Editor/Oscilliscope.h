@@ -9,12 +9,15 @@
 #include "../Utility/PitchTracker.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
+#include <limits>
 
 class Oscilloscope final : public juce::Component, public juce::Timer
 {
 public:
     explicit Oscilloscope (PluginProcessor& p) : processor (p), pitchTracker (p.pitchTracker)
     {
+        subOnParam = dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("subOn"));
+        subLevelParam = p.parameters.getParameter ("subOsc");
         startTimerHz (30);
     }
 
@@ -53,7 +56,14 @@ public:
     void timerCallback() override
     {
         const double sampleRate = processor.getSampleRate();
-        const float freq = pitchTracker->frequency;
+        float freq = pitchTracker->frequency;
+
+        // When the sub oscillator is active, the composite waveform's
+        // fundamental period is the sub osc period (one octave lower = half freq)
+        const bool subActive = subOnParam != nullptr && subOnParam->get()
+            && subLevelParam != nullptr && subLevelParam->getValue() > 0.0f;
+        if (subActive)
+            freq *= 0.5f;
 
         if (sampleRate <= 0.0 || freq <= 0.0f)
         {
@@ -100,14 +110,50 @@ public:
 
         // Find rising zero-crossing in the search margin
         int triggerIdx = -1;
-        for (int i = 0; i < searchMargin; ++i)
+
+        if (subActive)
         {
-            const int idx = (searchStart + i) % PluginProcessor::kWaveBufferSize;
-            const int idxNext = (searchStart + i + 1) % PluginProcessor::kWaveBufferSize;
-            if (buf[static_cast<size_t> (idx)] <= 0.0f && buf[static_cast<size_t> (idxNext)] > 0.0f)
+            // With the sub oscillator active, there are two rising zero-crossings
+            // per sub period (one per main osc cycle). They differ in the sub osc
+            // phase, causing the display to flip between two views. Pick the
+            // crossing followed by the most positive energy to consistently lock
+            // onto the sub oscillator's positive half-cycle.
+            const int mainPeriodSamples = samplesPerPeriod / 2;
+            const int scoreLen = juce::jmax (1, mainPeriodSamples / 2);
+            float bestScore = -std::numeric_limits<float>::max();
+
+            for (int i = 0; i < searchMargin; ++i)
             {
-                triggerIdx = (searchStart + i + 1) % PluginProcessor::kWaveBufferSize;
-                break;
+                const int idx = (searchStart + i) % PluginProcessor::kWaveBufferSize;
+                const int idxNext = (searchStart + i + 1) % PluginProcessor::kWaveBufferSize;
+                if (buf[static_cast<size_t> (idx)] <= 0.0f && buf[static_cast<size_t> (idxNext)] > 0.0f)
+                {
+                    const int candidate = (searchStart + i + 1) % PluginProcessor::kWaveBufferSize;
+                    float score = 0.0f;
+                    for (int j = 0; j < scoreLen; ++j)
+                    {
+                        const int si = (candidate + j) % PluginProcessor::kWaveBufferSize;
+                        score += buf[static_cast<size_t> (si)];
+                    }
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        triggerIdx = candidate;
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (int i = 0; i < searchMargin; ++i)
+            {
+                const int idx = (searchStart + i) % PluginProcessor::kWaveBufferSize;
+                const int idxNext = (searchStart + i + 1) % PluginProcessor::kWaveBufferSize;
+                if (buf[static_cast<size_t> (idx)] <= 0.0f && buf[static_cast<size_t> (idxNext)] > 0.0f)
+                {
+                    triggerIdx = (searchStart + i + 1) % PluginProcessor::kWaveBufferSize;
+                    break;
+                }
             }
         }
 
@@ -129,6 +175,8 @@ public:
 private:
     PluginProcessor& processor;
     std::shared_ptr<PitchTracker> pitchTracker;
+    juce::AudioParameterBool* subOnParam = nullptr;
+    juce::RangedAudioParameter* subLevelParam = nullptr;
 
     std::array<float, PluginProcessor::kWaveBufferSize> displayBuffer {};
     int displaySamples = 0;
