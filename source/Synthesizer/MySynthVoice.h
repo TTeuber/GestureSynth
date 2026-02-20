@@ -48,6 +48,8 @@ public:
 
     std::shared_ptr<MyADSR*> getEnvPtr() { return env1ptr; }
 
+    float getOversamplingLatency() const { return juneOscillator.getLatencyInSamples(); }
+
     [[nodiscard]] float getVolume() const { return volume; }
     void setVolume (const float newVolume)
     {

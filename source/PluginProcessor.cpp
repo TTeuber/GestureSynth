@@ -1,14 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "Synthesizer/MySynthVoice.h"
-#include <csignal>
-
-// Signal handler for audio overloads
-void audioOverloadHandler (int signal)
-{
-    // This will cause your program to break into the debugger
-    raise (SIGTRAP);
-}
 
 //==============================================================================
 PluginProcessor::PluginProcessor()
@@ -24,9 +16,6 @@ PluginProcessor::PluginProcessor()
       lastProcessingTimeMs (0.0),
       maxAllowedProcessingTimeMs (0.0)
 {
-    // Set up signal handler for catching overloads
-    signal (SIGUSR1, audioOverloadHandler);
-
     for (size_t i = 0; i < modList.size(); i++)
     {
         juce::ValueTree childNode ("modulation" + juce::String (static_cast<int> (i)));
@@ -120,6 +109,10 @@ void PluginProcessor::prepareToPlay (const double sampleRate, const int samplesP
             voice->prepare (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
         }
     }
+
+    // Report oversampling latency to the host so it can compensate for audio/MIDI sync
+    if (auto* voice = dynamic_cast<MySynthVoice*> (synth.getVoice (0)))
+        setLatencySamples (static_cast<int> (voice->getOversamplingLatency()));
 
     // Calculate maximum allowed processing time (90% of the theoretical maximum)
     maxAllowedProcessingTimeMs = (samplesPerBlock / sampleRate) * 1000.0 * 0.9;

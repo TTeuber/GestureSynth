@@ -333,6 +333,8 @@ public:
         oversampling.processSamplesDown (buffer);
     }
 
+    float getLatencyInSamples() const { return oversampling.getLatencyInSamples(); }
+
 private:
     juce::AudioProcessorValueTreeState& parameters;
     float sampleRate = 44100.0;
@@ -360,10 +362,10 @@ private:
     SubWaveType subOscWaveform = SubWaveType::Square; // Default to square wave
     // size_t numSamples = 512;
     juce::dsp::Oversampling<float> oversampling = juce::dsp::Oversampling<float> (
-        2, // Stereo
-        2, // 2x oversampling
+        2,     // numChannels (stereo)
+        1,     // order: 2^1 = 2x oversampling
         juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR,
-        true, // High-quality upsampling
-        false // Normal-quality downsampling
+        true,  // isMaxQuality (high-quality filtering)
+        true   // useIntegerLatency (needed for host latency reporting)
     );
 };
