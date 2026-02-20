@@ -363,7 +363,7 @@ private:
     // size_t numSamples = 512;
     juce::dsp::Oversampling<float> oversampling = juce::dsp::Oversampling<float> (
         2,     // numChannels (stereo)
-        1,     // order: 2^1 = 2x oversampling
+        2,     // order: 2^2 = 4x oversampling
         juce::dsp::Oversampling<float>::filterHalfBandPolyphaseIIR,
         true,  // isMaxQuality (high-quality filtering)
         true   // useIntegerLatency (needed for host latency reporting)

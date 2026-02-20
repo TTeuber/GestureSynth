@@ -56,8 +56,9 @@ public:
 
     juce::ValueTree modTree { "modTree" };
 
-    juce::AbstractFifo waveFifo { 2048 };
-    std::vector<float> waveData = std::vector<float> (2048, 0.0f);
+    static constexpr int kWaveBufferSize = 4096;
+    std::array<float, kWaveBufferSize> waveData {};
+    std::atomic<int> waveWritePos { 0 };
 
     using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;
     ModList modList = {

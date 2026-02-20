@@ -194,14 +194,14 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
                 if (samplesRead > 0)
                 {
-                    // Write to processor's FIFO for UI thread
-                    const auto scope = waveFifo.write (samplesRead);
-                    if (scope.blockSize1 > 0)
-                        for (int j = 0; j < scope.blockSize1; ++j)
-                            waveData[static_cast<size_t> (scope.startIndex1 + j)] = tempVoiceData[j];
-                    if (scope.blockSize2 > 0)
-                        for (int j = 0; j < scope.blockSize2; ++j)
-                            waveData[static_cast<size_t> (scope.startIndex2 + j)] = tempVoiceData[scope.blockSize1 + j];
+                    // Write to processor's circular buffer for UI thread
+                    int wp = waveWritePos.load (std::memory_order_relaxed);
+                    for (int j = 0; j < samplesRead; ++j)
+                    {
+                        waveData[static_cast<size_t> (wp)] = tempVoiceData[static_cast<size_t> (j)];
+                        wp = (wp + 1) % kWaveBufferSize;
+                    }
+                    waveWritePos.store (wp, std::memory_order_release);
                 }
                 break; // Only capture from one active voice
             }
@@ -220,22 +220,14 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
 bool PluginProcessor::getWaveformData (float* dest, const int maxSamples)
 {
-    const int numReady = waveFifo.getNumReady();
-    if (numReady == 0)
-        return false;
+    const int wp = waveWritePos.load (std::memory_order_acquire);
+    const int numToRead = juce::jmin (maxSamples, kWaveBufferSize);
 
-    const int numToRead = juce::jmin (numReady, maxSamples);
-    const auto scope = waveFifo.read (numToRead);
-
-    if (scope.blockSize1 > 0)
+    // Read the most recent numToRead samples from the circular buffer
+    int readStart = (wp - numToRead + kWaveBufferSize) % kWaveBufferSize;
+    for (int i = 0; i < numToRead; ++i)
     {
-        for (int i = 0; i < scope.blockSize1; ++i)
-            dest[i] = waveData[static_cast<size_t> (scope.startIndex1 + i)];
-    }
-    if (scope.blockSize2 > 0)
-    {
-        for (int i = 0; i < scope.blockSize2; ++i)
-            dest[scope.blockSize1 + i] = waveData[static_cast<size_t> (scope.startIndex2 + i)];
+        dest[i] = waveData[static_cast<size_t> ((readStart + i) % kWaveBufferSize)];
     }
 
     // Zero out the rest if we didn't fill the buffer
