@@ -4,34 +4,32 @@
 
 #include "Modulation.h"
 
-void ModMatrix::addModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar)
+void ModMatrix::addModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar, int slotIndex)
 {
     if (destination == nullptr || source == nullptr)
         return;
 
     if (matrix.contains (destination))
-        matrix[destination].emplace_back (source, depth, isBipolar);
+        matrix[destination].emplace_back (source, depth, isBipolar, slotIndex);
     else
-        matrix.emplace (destination, std::vector<Modulation> { { source, depth, isBipolar } });
+        matrix.emplace (destination, std::vector<Modulation> { { source, depth, isBipolar, slotIndex } });
 }
-void ModMatrix::removeModulation (ModSource* source, ModDestination* destination)
+void ModMatrix::removeModulation (int slotIndex, ModDestination* destination)
 {
     if (matrix.contains (destination))
     {
         auto& mods = matrix[destination];
-        std::erase_if (mods, [&source] (const Modulation& mod) { return mod.source == source; });
-        if (mods.empty())
-            matrix.erase (destination);
+        std::erase_if (mods, [slotIndex] (const Modulation& mod) { return mod.slotIndex == slotIndex; });
     }
 }
-void ModMatrix::updateModulation (const ModSource* source, ModDestination* destination, float depth)
+void ModMatrix::updateModulation (int slotIndex, ModDestination* destination, float depth)
 {
     if (matrix.contains (destination))
     {
         auto& mods = matrix[destination];
         for (auto& mod : mods)
         {
-            if (mod.source == source)
+            if (mod.slotIndex == slotIndex)
             {
                 mod.depth = depth;
                 break;
@@ -40,21 +38,21 @@ void ModMatrix::updateModulation (const ModSource* source, ModDestination* desti
     }
 }
 
-void ModMatrix::queueAddModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar)
+void ModMatrix::queueAddModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar, int slotIndex)
 {
-    ModCommand cmd { ModCommandType::Add, source, destination, depth, isBipolar };
+    ModCommand cmd { ModCommandType::Add, source, destination, depth, isBipolar, slotIndex };
     commandQueue.push (cmd);
 }
 
-void ModMatrix::queueRemoveModulation (ModSource* source, ModDestination* destination)
+void ModMatrix::queueRemoveModulation (int slotIndex, ModDestination* destination)
 {
-    ModCommand cmd { ModCommandType::Remove, source, destination, 0.0f, false };
+    ModCommand cmd { ModCommandType::Remove, nullptr, destination, 0.0f, false, slotIndex };
     commandQueue.push (cmd);
 }
 
-void ModMatrix::queueUpdateModulation (ModSource* source, ModDestination* destination, float depth)
+void ModMatrix::queueUpdateModulation (int slotIndex, ModDestination* destination, float depth)
 {
-    ModCommand cmd { ModCommandType::Update, source, destination, depth, false };
+    ModCommand cmd { ModCommandType::Update, nullptr, destination, depth, false, slotIndex };
     commandQueue.push (cmd);
 }
 
@@ -66,13 +64,13 @@ void ModMatrix::processPendingCommands() noexcept
         switch (cmd.type)
         {
             case ModCommandType::Add:
-                addModulation (cmd.destination, cmd.source, cmd.depth, cmd.isBipolar);
+                addModulation (cmd.destination, cmd.source, cmd.depth, cmd.isBipolar, cmd.slotIndex);
                 break;
             case ModCommandType::Remove:
-                removeModulation (cmd.source, cmd.destination);
+                removeModulation (cmd.slotIndex, cmd.destination);
                 break;
             case ModCommandType::Update:
-                updateModulation (cmd.source, cmd.destination, cmd.depth);
+                updateModulation (cmd.slotIndex, cmd.destination, cmd.depth);
                 break;
         }
     }
@@ -97,7 +95,7 @@ void ModMatrix::processSample() const noexcept
             continue;
 
         float value = destination->getRawParameterValue();
-        for (const auto& [source, depth, isBipolar] : mods)
+        for (const auto& [source, depth, isBipolar, slotIdx] : mods)
         {
             if (source == nullptr)
                 continue;

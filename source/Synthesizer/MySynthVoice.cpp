@@ -109,7 +109,8 @@ void MySynthVoice::addNodeToMatrix (const juce::ValueTree& childNode)
         return;
     const float depth = childNode.getProperty ("depth");
     const bool isBipolar = childNode.getProperty ("isBipolar");
-    modMatrix.queueAddModulation (destination, source, depth, isBipolar);
+    const int slotIndex = childNode.getParent().indexOf (childNode);
+    modMatrix.queueAddModulation (destination, source, depth, isBipolar, slotIndex);
 }
 float MySynthVoice::frequencyToPhaseIncrement (const float frequency) const
 {
@@ -131,19 +132,25 @@ void MySynthVoice::parameterChanged (const juce::String& parameterID, float newV
 
 void MySynthVoice::valueTreeChildAdded (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenAdded)
 {
+    const int slotIndex = parentTree.indexOf (childWhichHasBeenAdded);
+    if (slotIndex >= 0 && slotIndex < static_cast<int> (slotCache.size()))
+    {
+        slotCache[slotIndex] = {
+            childWhichHasBeenAdded.getProperty ("source").toString(),
+            childWhichHasBeenAdded.getProperty ("destination").toString()
+        };
+    }
     addNodeToMatrix (childWhichHasBeenAdded);
 }
 void MySynthVoice::valueTreeChildRemoved (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved)
 {
-    auto srcIt = modSources.find (childWhichHasBeenRemoved.getProperty ("source").toString());
     auto dstIt = modDestinations.find (childWhichHasBeenRemoved.getProperty ("destination").toString());
-    if (srcIt == modSources.end() || dstIt == modDestinations.end())
+    if (dstIt == modDestinations.end())
         return;
-    auto* source = srcIt->second;
     auto* destination = dstIt->second;
-    if (source == nullptr || destination == nullptr)
+    if (destination == nullptr)
         return;
-    modMatrix.queueRemoveModulation (source, destination);
+    modMatrix.queueRemoveModulation (indexFromWhichChildWasRemoved, destination);
 }
 void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyHasChanged, const juce::Identifier& property)
 {
@@ -168,7 +175,7 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
         if (source == nullptr || destination == nullptr)
             return;
         const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
-        modMatrix.queueUpdateModulation (source, destination, depth);
+        modMatrix.queueUpdateModulation (slotIndex, destination, depth);
     }
     else if (property.toString() == "source" || property.toString() == "destination")
     {
@@ -179,7 +186,7 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
         if (oldSrcIt != modSources.end() && oldDstIt != modDestinations.end()
             && oldSrcIt->second != nullptr && oldDstIt->second != nullptr)
         {
-            modMatrix.queueRemoveModulation (oldSrcIt->second, oldDstIt->second);
+            modMatrix.queueRemoveModulation (slotIndex, oldDstIt->second);
         }
 
         // Update cache with new values
@@ -198,7 +205,7 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
             return;
         const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
         const bool isBipolar = treeWhosePropertyHasChanged.getProperty ("isBipolar");
-        modMatrix.queueAddModulation (destination, source, depth, isBipolar);
+        modMatrix.queueAddModulation (destination, source, depth, isBipolar, slotIndex);
     }
     else if (property.toString() == "isBipolar")
     {
@@ -212,10 +219,10 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
         auto* destination = dstIt->second;
         if (source == nullptr || destination == nullptr)
             return;
-        modMatrix.queueRemoveModulation (source, destination);
+        modMatrix.queueRemoveModulation (slotIndex, destination);
         const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
         const bool isBipolar = treeWhosePropertyHasChanged.getProperty ("isBipolar");
-        modMatrix.queueAddModulation (destination, source, depth, isBipolar);
+        modMatrix.queueAddModulation (destination, source, depth, isBipolar, slotIndex);
     }
 }
 

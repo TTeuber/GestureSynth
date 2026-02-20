@@ -53,6 +53,7 @@ struct Modulation
     ModSource* source;
     float depth;
     bool isBipolar;
+    int slotIndex;
 };
 
 enum class ModCommandType
@@ -69,6 +70,7 @@ struct ModCommand
     ModDestination* destination;
     float depth;
     bool isBipolar;
+    int slotIndex;
 };
 
 class ModMatrix
@@ -82,16 +84,16 @@ public:
             matrix.emplace (destination, std::vector<Modulation> {});
     }
 
-    void addModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar = false);
+    void addModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar, int slotIndex);
 
-    void removeModulation (ModSource* source, ModDestination* destination);
+    void removeModulation (int slotIndex, ModDestination* destination);
 
-    void updateModulation (const ModSource* source, ModDestination* destination, float depth);
+    void updateModulation (int slotIndex, ModDestination* destination, float depth);
 
     // Thread-safe queuing methods (call from UI thread)
-    void queueAddModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar = false);
-    void queueRemoveModulation (ModSource* source, ModDestination* destination);
-    void queueUpdateModulation (ModSource* source, ModDestination* destination, float depth);
+    void queueAddModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar, int slotIndex);
+    void queueRemoveModulation (int slotIndex, ModDestination* destination);
+    void queueUpdateModulation (int slotIndex, ModDestination* destination, float depth);
 
     // Process pending commands (call at start of audio block)
     void processPendingCommands() noexcept;
