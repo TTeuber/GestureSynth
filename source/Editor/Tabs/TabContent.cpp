@@ -11,6 +11,8 @@ MainTabContent::MainTabContent (PluginProcessor& p)
       hpfDisplay (p.parameters),
       subOscillatorComponent (p.parameters),
       detuneComponent (p.parameters),
+      chorusComponent (p.parameters),
+      vibratoComponent (p.parameters),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
       adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr())
 {
@@ -19,6 +21,8 @@ MainTabContent::MainTabContent (PluginProcessor& p)
     addAndMakeVisible (hpfDisplay);
     addAndMakeVisible (subOscillatorComponent);
     addAndMakeVisible (detuneComponent);
+    addAndMakeVisible (chorusComponent);
+    addAndMakeVisible (vibratoComponent);
     addAndMakeVisible (lfoComponent);
     addAndMakeVisible (adsrGraph);
 
@@ -83,14 +87,17 @@ void MainTabContent::resized()
     auto area = getLocalBounds();
     auto rowHeight = area.getHeight() / 3;
 
-    // Row 1: Waveform (left 50%) | Filter Display (right 50%)
+    // Row 1: FilterDisplay | ChorusComponent | VibratoComponent (3 equal columns)
     auto row1 = area.removeFromTop (rowHeight);
-    waveformComponent.setBounds (row1.removeFromLeft (row1.getWidth() / 2).reduced (5));
-    filterDisplay.setBounds (row1.reduced (5));
+    auto row1Width = row1.getWidth() / 3;
+    filterDisplay.setBounds (row1.removeFromLeft (row1Width).reduced (5));
+    chorusComponent.setBounds (row1.removeFromLeft (row1Width).reduced (5));
+    vibratoComponent.setBounds (row1.reduced (5));
 
-    // Row 2: Sub Oscillator (1/3) | Detune (1/3) | HPF (1/3)
+    // Row 2: Waveform | Sub Oscillator | Detune | HPF (4 equal columns)
     auto row2 = area.removeFromTop (rowHeight);
-    auto row2Width = row2.getWidth() / 3;
+    auto row2Width = row2.getWidth() / 4;
+    waveformComponent.setBounds (row2.removeFromLeft (row2Width).reduced (5));
     subOscillatorComponent.setBounds (row2.removeFromLeft (row2Width).reduced (5));
     detuneComponent.setBounds (row2.removeFromLeft (row2Width).reduced (5));
     hpfDisplay.setBounds (row2.reduced (5));

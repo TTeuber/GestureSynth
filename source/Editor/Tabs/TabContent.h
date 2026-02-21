@@ -18,7 +18,7 @@
 #include "../VolumeComponent.h"
 
 // =============================================================================
-// Main Tab: Waveform, Filter Display, Sub Osc, Detune, LFO, ADSR
+// Main Tab: Filter, Chorus, Vibrato, Waveform, Sub Osc, Detune, HPF, LFO, ADSR
 // =============================================================================
 class MainTabContent final : public juce::Component
 {
@@ -37,6 +37,8 @@ private:
     HPFDisplay hpfDisplay;
     SubOscillatorComponent subOscillatorComponent;
     DetuneComponent detuneComponent;
+    ChorusComponent chorusComponent;
+    VibratoComponent vibratoComponent;
     LFOComponent lfoComponent;
     ADSRGraph adsrGraph;
 
