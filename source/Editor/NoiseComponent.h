@@ -27,6 +27,26 @@ protected:
         constexpr int numVertices = 24;
         constexpr float jaggedAmount = 0.20f;
 
+        // Faint radial guide lines
+        const float outerRadius = dim * 0.40f;
+        g.setOpacity (0.15f);
+        for (int i = 0; i < numVertices / 2; ++i)
+        {
+            const float angle = juce::MathConstants<float>::twoPi * static_cast<float> (i) / static_cast<float> (numVertices / 2);
+            g.drawLine (cx, cy,
+                cx + std::cos (angle) * outerRadius,
+                cy + std::sin (angle) * outerRadius,
+                1.0f);
+        }
+
+        // Faint concentric guide circles
+        for (int c = 0; c < numCircles; ++c)
+        {
+            const float r = dim * (0.15f + 0.125f * static_cast<float> (c));
+            g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.0f);
+        }
+        g.setOpacity (1.0f);
+
         for (int c = 0; c < numCircles; ++c)
         {
             // Sequential fade-in matching VolumeComponent arc pattern
