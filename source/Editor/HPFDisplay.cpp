@@ -58,7 +58,7 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
     {
         isDragging = true;
         dragStartPosition = e.position;
-        dragStartCutoff = normalizedCutoff;
+        dragStartDisplayX = static_cast<float> (freqToDisplayX (cutoffFrequency));
     }
 }
 
@@ -75,11 +75,15 @@ void HPFDisplay::mouseDrag (const juce::MouseEvent& e)
         {
             constexpr float sensitivity = 0.1f;
             const float xOffset = (pos.x - dragStartPosition.x) * sensitivity;
-            newCutoff = juce::jlimit (0.0f, 1.0f, dragStartCutoff + xOffset / getWidth());
+            const float displayX = juce::jlimit (0.0f, 1.0f, dragStartDisplayX + xOffset / getWidth());
+            double freq = juce::jlimit (20.0, 3000.0, displayXToFreq (displayX));
+            newCutoff = static_cast<float> (cutoffParam->getNormalisableRange().convertTo0to1 (static_cast<float> (freq)));
         }
         else
         {
-            newCutoff = juce::jlimit (0.0f, 1.0f, pos.x / getWidth());
+            double freq = displayXToFreq (static_cast<double> (pos.x) / getWidth());
+            freq = juce::jlimit (20.0, 3000.0, freq);
+            newCutoff = static_cast<float> (cutoffParam->getNormalisableRange().convertTo0to1 (static_cast<float> (freq)));
         }
 
         if (cutoffParam)
@@ -131,15 +135,22 @@ void HPFDisplay::drawFrequencyPath (juce::Graphics& g) const
     juce::Path path;
     constexpr int step = 5;
 
-    for (int xPixel = 0; xPixel < getWidth(); xPixel += step)
+    // Start from below 20Hz (negative pixels) so the rolloff is always visible
+    const int startPixel = static_cast<int> (freqToDisplayX (kCurveStartFreq) * getWidth());
+    bool pathStarted = false;
+
+    for (int xPixel = startPixel; xPixel < getWidth(); xPixel += step)
     {
         const double x = static_cast<double> (xPixel) / getWidth();
-        const double freq = cutoffParam->convertFrom0to1 (static_cast<float> (x));
+        const double freq = displayXToFreq (x);
         const double dB = getHPGainDb (freq);
         const float yPixel = getHeight() / 2.0f - static_cast<float> (dB) * getHeight() / 50.0f;
 
-        if (xPixel == 0)
+        if (! pathStarted)
+        {
             path.startNewSubPath (static_cast<float> (xPixel), yPixel);
+            pathStarted = true;
+        }
         else
             path.lineTo (static_cast<float> (xPixel), yPixel);
     }
@@ -172,7 +183,7 @@ double HPFDisplay::getHPGainDb (double freq) const
 
 void HPFDisplay::updateControlPointPosition()
 {
-    controlPoint.x = normalizedCutoff * static_cast<float> (getWidth());
+    controlPoint.x = static_cast<float> (freqToDisplayX (cutoffFrequency)) * static_cast<float> (getWidth());
     // Place control point on the curve at the cutoff frequency
     const double dBAtCutoff = getHPGainDb (cutoffFrequency);
     controlPoint.y = getHeight() / 2.0f - static_cast<float> (dBAtCutoff) * getHeight() / 50.0f;
@@ -222,4 +233,16 @@ void HPFDisplay::drawParameterValues (juce::Graphics& g) const
         g.setColour (juce::Colours::lightgrey);
         g.drawText ("Hold Shift for fine control", 5, getHeight() - 40, getWidth() - 10, 20, juce::Justification::bottomLeft, true);
     }
+}
+
+double HPFDisplay::displayXToFreq (double x) const
+{
+    return kDisplayMinFreq * std::pow (kDisplayMaxFreq / kDisplayMinFreq, x);
+}
+
+double HPFDisplay::freqToDisplayX (double freq) const
+{
+    if (freq <= 0.0)
+        return 0.0;
+    return std::log (freq / kDisplayMinFreq) / std::log (kDisplayMaxFreq / kDisplayMinFreq);
 }

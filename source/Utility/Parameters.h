@@ -29,8 +29,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     filterResonance->range.setSkewForCentre (1.0f);
     layout.add (std::move (filterResonance));
 
-    auto hpfFrequency = make_unique<Parameter> (ParameterID ("hpfFrequency", 1), "HPF Frequency", Normalize (20.f, 20000.f, 0.01f, 0.25f), 20.0f);
-    hpfFrequency->range.setSkewForCentre (500.0f);
+    auto hpfFrequency = make_unique<Parameter> (ParameterID ("hpfFrequency", 1), "HPF Frequency", Normalize (20.f, 3000.f, 0.01f, 0.25f), 20.0f);
+    hpfFrequency->range.setSkewForCentre (300.0f);
     layout.add (std::move (hpfFrequency));
 
     // ================================================================================================================================================

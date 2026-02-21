@@ -47,7 +47,16 @@ private:
 
     // For fine control
     juce::Point<float> dragStartPosition;
-    float dragStartCutoff = 0.0f;
+    float dragStartDisplayX = 0.0f;
+
+    // Display frequency mapping (x=0 → 20Hz, x=1 → 3kHz)
+    static constexpr double kDisplayMinFreq = 20.0;
+    static constexpr double kDisplayMaxFreq = 3000.0;
+    // Curve starts drawing from here (maps to negative pixels) for visible rolloff
+    static constexpr double kCurveStartFreq = 5.0;
+
+    double displayXToFreq (double x) const;
+    double freqToDisplayX (double freq) const;
 
     //==============================================================================
     void parameterChanged (const juce::String& parameterID, float newValue) override;
