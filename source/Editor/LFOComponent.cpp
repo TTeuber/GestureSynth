@@ -352,7 +352,7 @@ void LFOComponent::resized()
         const float gap = 4.0f;
         const int numButtons = 6;
         const float totalHeight = kShapeButtonSize * static_cast<float> (numButtons) + gap * static_cast<float> (numButtons - 1);
-        const float startY = graphBounds.getY() + (graphBounds.getHeight() - totalHeight) * 0.5f;
+        const float startY = graphBounds.getY();
         const float btnX = kMargin + (kShapeStripWidth - kShapeButtonSize) * 0.5f;
 
         ShapePresetButton* buttons[] = { &sineButton, &triangleButton, &sawButton, &squareButton, &flipHButton, &flipVButton };
@@ -371,6 +371,7 @@ void LFOComponent::resized()
 
         // Bottom row 2: rate slider OR note division + beat lock
         auto row2 = area.removeFromBottom (static_cast<int> (kSliderHeight));
+        row2.removeFromLeft (static_cast<int> (kMargin + kShapeStripWidth));
 
         if (rateSlider.isVisible())
         {
@@ -387,6 +388,7 @@ void LFOComponent::resized()
 
         // Bottom row 1: sync toggle + BPM slider (when synced)
         auto row1 = area.removeFromBottom (static_cast<int> (kSliderHeight));
+        row1.removeFromLeft (static_cast<int> (kMargin + kShapeStripWidth));
         tempoSyncToggle.setBounds (row1.removeFromLeft (70));
 
         if (bpmSlider.isVisible())

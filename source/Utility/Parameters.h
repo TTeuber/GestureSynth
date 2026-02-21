@@ -29,6 +29,10 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     filterResonance->range.setSkewForCentre (1.0f);
     layout.add (std::move (filterResonance));
 
+    auto hpfFrequency = make_unique<Parameter> (ParameterID ("hpfFrequency", 1), "HPF Frequency", Normalize (20.f, 20000.f, 0.01f, 0.25f), 20.0f);
+    hpfFrequency->range.setSkewForCentre (500.0f);
+    layout.add (std::move (hpfFrequency));
+
     // ================================================================================================================================================
     // Oscillator Parameters
     layout.add (make_unique<Parameter> (ParameterID ("oscWaveform", 1), "Waveform", 0.0f, 1.0f, 0.5f));
@@ -80,6 +84,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (make_unique<AudioParameterBool> (ParameterID ("detuneOn", 1), "Detune On", true));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("subOn", 1), "Sub On", true));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("filterOn", 1), "Filter On", true));
+    layout.add (make_unique<AudioParameterBool> (ParameterID ("hpfOn", 1), "HPF On", true));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("chorusOn", 1), "Chorus On", true));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("vibratoOn", 1), "Vibrato On", false));
 

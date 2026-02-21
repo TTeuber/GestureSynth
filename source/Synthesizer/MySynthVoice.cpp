@@ -19,6 +19,9 @@ MySynthVoice::MySynthVoice (
     parameters.addParameterListener ("filterOn", this);
     filterEnabled = *parameters.getRawParameterValue ("filterOn") > 0.5f;
 
+    parameters.addParameterListener ("hpfOn", this);
+    hpfEnabled = *parameters.getRawParameterValue ("hpfOn") > 0.5f;
+
     // Initialize the mod destinations
     // Currently this is how the current value is updated when there are no mod sources
     for (const auto& [_, d] : modDestinations)
@@ -69,6 +72,13 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
         filter.setResonance (juce::jmax<float> (0.01, filterResonance.getCurrentValue()));
         filter.process (context);
     }
+
+    if (hpfEnabled)
+    {
+        hpFilter.setCutoffFrequency (hpfCutoff.getCurrentValue());
+        hpFilter.process (context);
+    }
+
     for (int sample = 0; sample < numSamples; ++sample)
     {
         const float targetEnvVal = adsr1.getNextValue();
@@ -127,6 +137,14 @@ void MySynthVoice::parameterChanged (const juce::String& parameterID, float newV
         // Reset filter state when re-enabled to prevent clicks/pops
         if (filterEnabled && !wasEnabled)
             filter.reset();
+    }
+    else if (parameterID == "hpfOn")
+    {
+        const bool wasEnabled = hpfEnabled;
+        hpfEnabled = newValue > 0.5f;
+
+        if (hpfEnabled && !wasEnabled)
+            hpFilter.reset();
     }
 }
 
@@ -242,6 +260,9 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
 
     juneOscillator.prepare (spec);
     filter.prepare (spec);
+    hpFilter.prepare (spec);
+    hpFilter.setType (juce::dsp::StateVariableTPTFilterType::highpass);
+    hpFilter.setResonance (1.0f / std::sqrt (2.0f));
     for (auto& lfo : lfos)
         lfo.prepare (spec);
     vibrato.prepare (static_cast<float> (sampleRate));

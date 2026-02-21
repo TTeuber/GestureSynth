@@ -97,6 +97,7 @@ private:
     DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
 
     juce::dsp::StateVariableTPTFilter<float> filter = juce::dsp::StateVariableTPTFilter<float>();
+    juce::dsp::StateVariableTPTFilter<float> hpFilter = juce::dsp::StateVariableTPTFilter<float>();
 
     float frequency = 0.0f;
     float currentSampleRate = 48000.0f;
@@ -111,6 +112,9 @@ private:
     DynamicParameter filterCutoff = DynamicParameter (parameters.getParameter ("filterFrequency"));
     DynamicParameter filterResonance = DynamicParameter (parameters.getParameter ("filterResonance"));
     bool filterEnabled = false;
+
+    DynamicParameter hpfCutoff = DynamicParameter (parameters.getParameter ("hpfFrequency"));
+    bool hpfEnabled = false;
 
     MyADSR adsr1 = MyADSR (parameters, 1);
     MyADSR adsr2 = MyADSR (parameters, 2);
@@ -189,6 +193,7 @@ private:
     std::map<juce::String, ModDestination*> modDestinations = {
         { filterCutoff.getID(), &filterCutoff },
         { filterResonance.getID(), &filterResonance },
+        { hpfCutoff.getID(), &hpfCutoff },
         { fineTuneParam.getID(), &fineTuneParam },
         { pulseWidth.getID(), &pulseWidth }
     };

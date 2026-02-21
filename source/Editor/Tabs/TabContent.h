@@ -7,6 +7,7 @@
 #include "../VibratoComponent.h"
 #include "../DetuneComponent.h"
 #include "../FilterDisplay.h"
+#include "../HPFDisplay.h"
 #include "../LFOComponent.h"
 #include "../MatrixComponent.h"
 #include "../OscGraph.h"
@@ -33,6 +34,7 @@ private:
     PluginProcessor& processor;
     WaveformComponent waveformComponent;
     FilterDisplay filterDisplay;
+    HPFDisplay hpfDisplay;
     SubOscillatorComponent subOscillatorComponent;
     DetuneComponent detuneComponent;
     LFOComponent lfoComponent;

@@ -8,6 +8,7 @@ MainTabContent::MainTabContent (PluginProcessor& p)
     : processor (p),
       waveformComponent (p.parameters),
       filterDisplay (p.parameters),
+      hpfDisplay (p.parameters),
       subOscillatorComponent (p.parameters),
       detuneComponent (p.parameters),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
@@ -15,6 +16,7 @@ MainTabContent::MainTabContent (PluginProcessor& p)
 {
     addAndMakeVisible (waveformComponent);
     addAndMakeVisible (filterDisplay);
+    addAndMakeVisible (hpfDisplay);
     addAndMakeVisible (subOscillatorComponent);
     addAndMakeVisible (detuneComponent);
     addAndMakeVisible (lfoComponent);
@@ -86,10 +88,12 @@ void MainTabContent::resized()
     waveformComponent.setBounds (row1.removeFromLeft (row1.getWidth() / 2).reduced (5));
     filterDisplay.setBounds (row1.reduced (5));
 
-    // Row 2: Sub Oscillator (left 50%) | Detune (right 50%)
+    // Row 2: Sub Oscillator (1/3) | Detune (1/3) | HPF (1/3)
     auto row2 = area.removeFromTop (rowHeight);
-    subOscillatorComponent.setBounds (row2.removeFromLeft (row2.getWidth() / 2).reduced (5));
-    detuneComponent.setBounds (row2.reduced (5));
+    auto row2Width = row2.getWidth() / 3;
+    subOscillatorComponent.setBounds (row2.removeFromLeft (row2Width).reduced (5));
+    detuneComponent.setBounds (row2.removeFromLeft (row2Width).reduced (5));
+    hpfDisplay.setBounds (row2.reduced (5));
 
     // Row 3: 30px button strip at top, then LFO | ADSR below
     auto row3 = area;

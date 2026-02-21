@@ -77,7 +77,7 @@ public:
     };
 
     static inline const juce::StringArray modSourceIDs  = { "None", "env1", "env2", "env3", "env4", "lfo1", "lfo2", "lfo3", "lfo4" };
-    static inline const juce::StringArray modDestIDs    = { "None", "filterFrequency", "filterResonance", "fineTune", "pulseWidth" };
+    static inline const juce::StringArray modDestIDs    = { "None", "filterFrequency", "filterResonance", "hpfFrequency", "fineTune", "pulseWidth" };
 
     MySynth& getSynth() { return synth; }
 
