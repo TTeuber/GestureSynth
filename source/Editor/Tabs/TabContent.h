@@ -14,6 +14,7 @@
 #include "../Oscilliscope.h"
 #include "../SubOscillatorComponent.h"
 #include "../ChorusMixComponent.h"
+#include "../NoiseComponent.h"
 #include "../Utility/SingleParameterComponent.h"
 #include "../VolumeComponent.h"
 
@@ -39,6 +40,9 @@ private:
     DetuneComponent detuneComponent;
     ChorusComponent chorusComponent;
     VibratoComponent vibratoComponent;
+    VolumeComponent volumeComponent;
+    NoiseComponent noiseComponent;
+    ChorusMixComponent chorusMixComponent;
     LFOComponent lfoComponent;
     ADSRGraph adsrGraph;
 
@@ -94,5 +98,6 @@ private:
     ChorusComponent chorusComponent;
     VibratoComponent vibratoComponent;
     VolumeComponent volumeComponent;
+    NoiseComponent noiseComponent;
     ChorusMixComponent chorusMixComponent;
 };

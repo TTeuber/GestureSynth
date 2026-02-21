@@ -13,6 +13,9 @@ MainTabContent::MainTabContent (PluginProcessor& p)
       detuneComponent (p.parameters),
       chorusComponent (p.parameters),
       vibratoComponent (p.parameters),
+      volumeComponent (p.parameters.getParameter ("volume")),
+      noiseComponent (p.parameters.getParameter ("noiseLevel")),
+      chorusMixComponent (p.parameters.getParameter ("chorusMix")),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
       adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr())
 {
@@ -23,6 +26,9 @@ MainTabContent::MainTabContent (PluginProcessor& p)
     addAndMakeVisible (detuneComponent);
     addAndMakeVisible (chorusComponent);
     addAndMakeVisible (vibratoComponent);
+    addAndMakeVisible (volumeComponent);
+    addAndMakeVisible (noiseComponent);
+    addAndMakeVisible (chorusMixComponent);
     addAndMakeVisible (lfoComponent);
     addAndMakeVisible (adsrGraph);
 
@@ -87,12 +93,17 @@ void MainTabContent::resized()
     auto area = getLocalBounds();
     auto rowHeight = area.getHeight() / 3;
 
-    // Row 1: FilterDisplay | ChorusComponent | VibratoComponent (3 equal columns)
+    // Row 1: FilterDisplay | ChorusComponent | VibratoComponent | Volume/ChorusMix (4 equal columns)
     auto row1 = area.removeFromTop (rowHeight);
-    auto row1Width = row1.getWidth() / 3;
+    auto row1Width = row1.getWidth() / 4;
     filterDisplay.setBounds (row1.removeFromLeft (row1Width).reduced (5));
     chorusComponent.setBounds (row1.removeFromLeft (row1Width).reduced (5));
-    vibratoComponent.setBounds (row1.reduced (5));
+    vibratoComponent.setBounds (row1.removeFromLeft (row1Width).reduced (5));
+    auto mixCol = row1;
+    auto topRow = mixCol.removeFromTop (mixCol.getHeight() / 2);
+    volumeComponent.setBounds (topRow.removeFromLeft (topRow.getWidth() / 2).reduced (5));
+    noiseComponent.setBounds (topRow.reduced (5));
+    chorusMixComponent.setBounds (mixCol.removeFromLeft (mixCol.getWidth() / 2).reduced (5));
 
     // Row 2: Waveform | Sub Oscillator | Detune | HPF (4 equal columns)
     auto row2 = area.removeFromTop (rowHeight);
@@ -190,12 +201,14 @@ EffectsTabContent::EffectsTabContent (PluginProcessor& p)
       chorusComponent (p.parameters),
       vibratoComponent (p.parameters),
       volumeComponent (p.parameters.getParameter ("volume")),
+      noiseComponent (p.parameters.getParameter ("noiseLevel")),
       chorusMixComponent (p.parameters.getParameter ("chorusMix"))
 {
     addAndMakeVisible (filterDisplay);
     addAndMakeVisible (chorusComponent);
     addAndMakeVisible (vibratoComponent);
     addAndMakeVisible (volumeComponent);
+    addAndMakeVisible (noiseComponent);
     addAndMakeVisible (chorusMixComponent);
 }
 
@@ -220,6 +233,8 @@ void EffectsTabContent::resized()
 
     chorusComponent.setBounds (chorusArea.reduced (5));
     vibratoComponent.setBounds (vibratoArea.reduced (5));
-    volumeComponent.setBounds (rightColumn.removeFromTop (rightColumn.getHeight() / 2).reduced (5));
-    chorusMixComponent.setBounds (rightColumn.reduced (5));
+    auto topRight = rightColumn.removeFromTop (rightColumn.getHeight() / 2);
+    volumeComponent.setBounds (topRight.removeFromLeft (topRight.getWidth() / 2).reduced (5));
+    noiseComponent.setBounds (topRight.reduced (5));
+    chorusMixComponent.setBounds (rightColumn.removeFromLeft (rightColumn.getWidth() / 2).reduced (5));
 }

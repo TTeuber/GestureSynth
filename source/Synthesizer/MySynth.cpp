@@ -32,6 +32,13 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
         applyToAllVoices ([newVolume] (MySynthVoice* voice) { voice->setVolume (newVolume); });
     }
 
+    const float newNoiseLevel = *parameters.getRawParameterValue ("noiseLevel");
+    if (noiseLevel != newNoiseLevel)
+    {
+        noiseLevel = newNoiseLevel;
+        applyToAllVoices ([newNoiseLevel] (MySynthVoice* voice) { voice->setNoiseLevel (newNoiseLevel); });
+    }
+
     const float newFilterCutoff = *parameters.getRawParameterValue ("filterFrequency");
     if (filterCutoff != newFilterCutoff)
     {

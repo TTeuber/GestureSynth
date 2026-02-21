@@ -66,6 +66,16 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     juneOscillator.setFrequency (frequency * vibrato.getFrequencyMultiplier (numSamples));
     juneOscillator.processBlock (block);
 
+    if (noiseLevel > 0.0f)
+    {
+        for (int sample = 0; sample < numSamples; ++sample)
+        {
+            const float noiseSample = noiseRandom.nextFloat() * 2.0f - 1.0f;
+            tempDataL[sample] += noiseSample * noiseLevel;
+            tempDataR[sample] += noiseSample * noiseLevel;
+        }
+    }
+
     if (filterEnabled)
     {
         filter.setCutoffFrequency (filterCutoff.getCurrentValue());

@@ -18,6 +18,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     // ================================================================================================================================================
     // Global Parameters
     layout.add (make_unique<Parameter> (ParameterID ("volume", 1), "Volume", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> (ParameterID ("noiseLevel", 1), "Noise", 0.0f, 1.0f, 0.0f));
 
     // ================================================================================================================================================
     // Filter Parameters

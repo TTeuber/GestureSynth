@@ -35,6 +35,7 @@ private:
     juce::ValueTree& modTree;
 
     float masterVolume = 0.0f;
+    float noiseLevel = 0.0f;
     float filterCutoff = 0.0f;
     float filterEnvelopeAmount = 0.0f;
     float filterResonance = 0.0f;

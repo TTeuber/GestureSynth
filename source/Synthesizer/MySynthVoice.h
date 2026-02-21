@@ -69,6 +69,8 @@ public:
     void setLFORate (int index, float rate) { lfos[index].setRate (rate); }
     void setLFOPhase (int index, float phase) { lfos[index].setPhase (phase); }
 
+    void setNoiseLevel (float level) { noiseLevel = level; }
+
     void setVibratoRate (float rate) { vibrato.setRate (rate); }
     void setVibratoDepth (float depth) { vibrato.setDepth (depth); }
     void setVibratoEnabled (bool enabled) { vibrato.setEnabled (enabled); }
@@ -107,6 +109,8 @@ private:
     float slewRate = 0.005f;
 
     float volume = 1.0f;
+    float noiseLevel = 0.0f;
+    juce::Random noiseRandom;
     float velocity = 0.0f;
 
     DynamicParameter filterCutoff = DynamicParameter (parameters.getParameter ("filterFrequency"));
