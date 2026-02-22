@@ -71,7 +71,7 @@ private:
     int lastMidiNote = -1;
     float lastNoteFrequency = 0.0f;
     std::vector<int> heldNotes;
-    MySynthVoice* legatoVoice = nullptr;
+    MySynthVoice* monoVoice = nullptr;
     bool monoMode = false;
     bool legatoMode = false;
 

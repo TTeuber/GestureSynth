@@ -6,6 +6,8 @@ MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, st
     for (int i = 0; i < 8; ++i)
         addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pt, lfoData));
 
+    monoVoice = dynamic_cast<MySynthVoice*> (voices.getUnchecked (0));
+
     clearSounds();
     addSound (new MySynthSound());
 }
@@ -140,55 +142,35 @@ void MySynth::applyToAllVoices (Func&& function)
 
 void MySynth::noteOn (int midiChannel, int midiNoteNumber, float velocity)
 {
+    const juce::ScopedLock sl (lock);
     const bool sameNote = (midiNoteNumber == lastMidiNote);
     const float fromFreq = lastNoteFrequency;
 
-    if (monoMode && legatoMode)
+    if (monoMode)
     {
-        // === Legato mode ===
-        if (!heldNotes.empty() && !sameNote)
+        // Kill ALL other voices immediately (cleanup from poly mode, prevents stacking)
+        for (int i = 0; i < voices.size(); ++i)
         {
-            // Find the voice playing the current note and glide it
-            for (int i = 0; i < voices.size(); ++i)
-            {
-                if (auto* v = dynamic_cast<MySynthVoice*> (voices.getUnchecked (i)))
-                {
-                    if (v->isVoiceActive() && v->getCurrentlyPlayingNote() == heldNotes.back())
-                    {
-                        v->glideToNote (midiNoteNumber, velocity);
-                        legatoVoice = v;
-                        break;
-                    }
-                }
-            }
-            lastMidiNote = midiNoteNumber;
-            lastNoteFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
-            heldNotes.push_back (midiNoteNumber);
-            return;
+            auto* v = voices.getUnchecked (i);
+            if (v != monoVoice && v->isVoiceActive())
+                stopVoice (v, 0.0f, false);
         }
 
-        // First note or same note — normal allocation
-        applyToAllVoices ([fromFreq, sameNote] (MySynthVoice* voice)
+        if (legatoMode && !heldNotes.empty() && !sameNote)
         {
-            voice->setPortamentoStart (fromFreq, sameNote);
-        });
-        Synthesiser::noteOn (midiChannel, midiNoteNumber, velocity);
-    }
-    else if (monoMode)
-    {
-        // === Mono mode ===
-        if (!heldNotes.empty())
-            Synthesiser::noteOff (midiChannel, heldNotes.back(), 0.0f, true);
-
-        applyToAllVoices ([fromFreq, sameNote] (MySynthVoice* voice)
+            // Legato: glide without envelope retrigger
+            monoVoice->glideToNote (midiNoteNumber, velocity);
+        }
+        else
         {
-            voice->setPortamentoStart (fromFreq, sameNote);
-        });
-        Synthesiser::noteOn (midiChannel, midiNoteNumber, velocity);
+            // Mono (or first note in legato, or same-note retrigger):
+            monoVoice->setPortamentoStart (fromFreq, sameNote);
+            startVoice (monoVoice, sounds[0], midiChannel, midiNoteNumber, velocity);
+        }
     }
     else
     {
-        // === Poly mode ===
+        // Poly mode — unchanged
         applyToAllVoices ([fromFreq, sameNote] (MySynthVoice* voice)
         {
             voice->setPortamentoStart (fromFreq, sameNote);
@@ -203,7 +185,8 @@ void MySynth::noteOn (int midiChannel, int midiNoteNumber, float velocity)
 
 void MySynth::noteOff (int midiChannel, int midiNoteNumber, float velocity, bool allowTailOff)
 {
-    // Remove the note from heldNotes
+    const juce::ScopedLock sl (lock);
+
     auto it = std::find (heldNotes.begin(), heldNotes.end(), midiNoteNumber);
     if (it != heldNotes.end())
         heldNotes.erase (it);
@@ -211,38 +194,33 @@ void MySynth::noteOff (int midiChannel, int midiNoteNumber, float velocity, bool
     if (monoMode && !heldNotes.empty())
     {
         const int returnNote = heldNotes.back();
-        const float returnFreq = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (returnNote));
+        const float releasedFreq = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
 
-        if (legatoMode && legatoVoice != nullptr)
+        if (legatoMode)
         {
-            // Legato: glide back without retrigger
-            legatoVoice->glideToNote (returnNote, velocity > 0.0f ? velocity : 0.8f);
+            // Legato: glide back to previous note, no retrigger
+            monoVoice->glideToNote (returnNote, velocity > 0.0f ? velocity : 0.8f);
         }
         else
         {
-            // Mono: release current, retrigger previous
-            Synthesiser::noteOff (midiChannel, midiNoteNumber, velocity, allowTailOff);
-            applyToAllVoices ([returnFreq] (MySynthVoice* voice)
-            {
-                voice->setPortamentoStart (returnFreq, false);
-            });
-            // Use the frequency of the note being released as portamento start
-            const float releasedFreq = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
-            applyToAllVoices ([releasedFreq] (MySynthVoice* voice)
-            {
-                voice->setPortamentoStart (releasedFreq, false);
-            });
-            Synthesiser::noteOn (midiChannel, returnNote, velocity > 0.0f ? velocity : 0.8f);
+            // Mono: retrigger with portamento from released note
+            monoVoice->setPortamentoStart (releasedFreq, false);
+            startVoice (monoVoice, sounds[0], midiChannel, returnNote, velocity > 0.0f ? velocity : 0.8f);
         }
 
         lastMidiNote = returnNote;
-        lastNoteFrequency = returnFreq;
+        lastNoteFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (returnNote));
         return;
     }
 
-    // Normal release
-    Synthesiser::noteOff (midiChannel, midiNoteNumber, velocity, allowTailOff);
-
-    if (heldNotes.empty())
-        legatoVoice = nullptr;
+    if (monoMode)
+    {
+        // All notes released in mono — release the mono voice with tail-off
+        stopVoice (monoVoice, velocity, allowTailOff);
+    }
+    else
+    {
+        // Poly mode — unchanged
+        Synthesiser::noteOff (midiChannel, midiNoteNumber, velocity, allowTailOff);
+    }
 }
