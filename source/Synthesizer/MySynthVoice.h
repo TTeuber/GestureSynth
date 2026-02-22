@@ -71,6 +71,8 @@ public:
 
     void setNoiseLevel (float level) { noiseLevel = level; }
 
+    void setPortamentoTime (float timeMs) { portamentoTimeMs = timeMs; }
+
     void setVibratoRate (float rate) { vibrato.setRate (rate); }
     void setVibratoDepth (float depth) { vibrato.setDepth (depth); }
     void setVibratoEnabled (bool enabled) { vibrato.setEnabled (enabled); }
@@ -102,6 +104,8 @@ private:
     juce::dsp::StateVariableTPTFilter<float> hpFilter = juce::dsp::StateVariableTPTFilter<float>();
 
     float frequency = 0.0f;
+    float targetFrequency = 0.0f;
+    float portamentoTimeMs = 0.0f;
     float currentSampleRate = 48000.0f;
     Vibrato vibrato;
 

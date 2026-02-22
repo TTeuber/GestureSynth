@@ -63,6 +63,22 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     juce::dsp::AudioBlock<float> block (tempBuffer);
     const juce::dsp::ProcessContextReplacing context (block);
 
+    if (frequency != targetFrequency && portamentoTimeMs > 0.0f)
+    {
+        float portSamples = portamentoTimeMs * currentSampleRate / 1000.0f;
+        float alpha = 1.0f - std::exp (-static_cast<float> (numSamples) / (portSamples * 0.2f));
+        float logFreq = std::log2 (frequency);
+        float logTarget = std::log2 (targetFrequency);
+        logFreq += (logTarget - logFreq) * alpha;
+        frequency = std::pow (2.0f, logFreq);
+        if (std::abs (logFreq - logTarget) < 0.001f)
+            frequency = targetFrequency;
+        pitchTracker->updateFrequency (frequency);
+        waveLength = static_cast<int> (std::ceil (2 * currentSampleRate / frequency));
+        while (waveLength > WaveformBuffer::kBufferSize)
+            waveLength /= 2;
+    }
+
     juneOscillator.setFrequency (frequency * vibrato.getFrequencyMultiplier (numSamples));
     juneOscillator.processBlock (block);
 
@@ -283,7 +299,17 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
 void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
     currentEnvVal = 0.0f;
-    frequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
+    targetFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
+
+    if (portamentoTimeMs > 0.0f && frequency > 0.0f)
+    {
+        // Keep current frequency; it will glide toward targetFrequency in renderNextBlock
+    }
+    else
+    {
+        frequency = targetFrequency;
+    }
+
     juneOscillator.setFrequency (frequency);
     vibrato.reset();
     this->velocity = juce::jlimit (0.0f, 1.0f, velocity);

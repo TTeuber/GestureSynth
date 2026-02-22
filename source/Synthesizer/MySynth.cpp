@@ -96,6 +96,13 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
         }
     }
 
+    const float newPortamentoTime = *parameters.getRawParameterValue ("portamentoTime");
+    if (portamentoTime != newPortamentoTime)
+    {
+        portamentoTime = newPortamentoTime;
+        applyToAllVoices ([newPortamentoTime] (MySynthVoice* voice) { voice->setPortamentoTime (newPortamentoTime); });
+    }
+
     const float newVibratoRate = *parameters.getRawParameterValue ("vibratoRate");
     if (vibratoRate != newVibratoRate)
     {

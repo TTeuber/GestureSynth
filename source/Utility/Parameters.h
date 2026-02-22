@@ -90,6 +90,12 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (make_unique<AudioParameterBool> (ParameterID ("vibratoOn", 1), "Vibrato On", false));
 
     // ================================================================================================================================================
+    // Portamento Parameters
+    auto portamentoTime = make_unique<Parameter> (ParameterID ("portamentoTime", 1), "Portamento", Normalize (0.0f, 5000.0f, 0.1f), 0.0f);
+    portamentoTime->range.setSkewForCentre (500.0f);
+    layout.add (std::move (portamentoTime));
+
+    // ================================================================================================================================================
     // Envelope Parameters
 
     for (int i = 1; i <= 4; i++)

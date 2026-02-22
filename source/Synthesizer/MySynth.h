@@ -62,6 +62,8 @@ private:
     std::array<bool, 4> lfoBeatSync = { false, false, false, false };
     float manualBpm = 120.0f;
 
+    float portamentoTime = 0.0f;
+
     float vibratoRate = 5.0f;
     float vibratoDepth = 0.0f;
     bool vibratoOn = false;

@@ -15,6 +15,7 @@
 #include "../SubOscillatorComponent.h"
 #include "../ChorusMixComponent.h"
 #include "../NoiseComponent.h"
+#include "../PortamentoComponent.h"
 #include "../Utility/SingleParameterComponent.h"
 #include "../VolumeComponent.h"
 
@@ -43,6 +44,7 @@ private:
     VolumeComponent volumeComponent;
     NoiseComponent noiseComponent;
     ChorusMixComponent chorusMixComponent;
+    PortamentoComponent portamentoComponent;
     LFOComponent lfoComponent;
     ADSRGraph adsrGraph;
 
@@ -100,4 +102,5 @@ private:
     VolumeComponent volumeComponent;
     NoiseComponent noiseComponent;
     ChorusMixComponent chorusMixComponent;
+    PortamentoComponent portamentoComponent;
 };

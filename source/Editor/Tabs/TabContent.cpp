@@ -16,6 +16,7 @@ MainTabContent::MainTabContent (PluginProcessor& p)
       volumeComponent (p.parameters.getParameter ("volume")),
       noiseComponent (p.parameters.getParameter ("noiseLevel")),
       chorusMixComponent (p.parameters.getParameter ("chorusMix")),
+      portamentoComponent (p.parameters.getParameter ("portamentoTime")),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
       adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr())
 {
@@ -29,6 +30,7 @@ MainTabContent::MainTabContent (PluginProcessor& p)
     addAndMakeVisible (volumeComponent);
     addAndMakeVisible (noiseComponent);
     addAndMakeVisible (chorusMixComponent);
+    addAndMakeVisible (portamentoComponent);
     addAndMakeVisible (lfoComponent);
     addAndMakeVisible (adsrGraph);
 
@@ -104,6 +106,7 @@ void MainTabContent::resized()
     volumeComponent.setBounds (topRow.removeFromLeft (topRow.getWidth() / 2).reduced (5));
     noiseComponent.setBounds (topRow.reduced (5));
     chorusMixComponent.setBounds (mixCol.removeFromLeft (mixCol.getWidth() / 2).reduced (5));
+    portamentoComponent.setBounds (mixCol.reduced (5));
 
     // Row 2: Waveform | Sub Oscillator | Detune | HPF (4 equal columns)
     auto row2 = area.removeFromTop (rowHeight);
@@ -202,7 +205,8 @@ EffectsTabContent::EffectsTabContent (PluginProcessor& p)
       vibratoComponent (p.parameters),
       volumeComponent (p.parameters.getParameter ("volume")),
       noiseComponent (p.parameters.getParameter ("noiseLevel")),
-      chorusMixComponent (p.parameters.getParameter ("chorusMix"))
+      chorusMixComponent (p.parameters.getParameter ("chorusMix")),
+      portamentoComponent (p.parameters.getParameter ("portamentoTime"))
 {
     addAndMakeVisible (filterDisplay);
     addAndMakeVisible (chorusComponent);
@@ -210,6 +214,7 @@ EffectsTabContent::EffectsTabContent (PluginProcessor& p)
     addAndMakeVisible (volumeComponent);
     addAndMakeVisible (noiseComponent);
     addAndMakeVisible (chorusMixComponent);
+    addAndMakeVisible (portamentoComponent);
 }
 
 void EffectsTabContent::paint (juce::Graphics& g)
@@ -237,4 +242,5 @@ void EffectsTabContent::resized()
     volumeComponent.setBounds (topRight.removeFromLeft (topRight.getWidth() / 2).reduced (5));
     noiseComponent.setBounds (topRight.reduced (5));
     chorusMixComponent.setBounds (rightColumn.removeFromLeft (rightColumn.getWidth() / 2).reduced (5));
+    portamentoComponent.setBounds (rightColumn.reduced (5));
 }
