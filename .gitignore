@@ -30,3 +30,4 @@ cmake-build-relwithdebinfo
 packaging/Output/*
 
 TODO.md
+docs/*.md
