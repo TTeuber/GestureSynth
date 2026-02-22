@@ -103,6 +103,9 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
         applyToAllVoices ([newPortamentoTime] (MySynthVoice* voice) { voice->setPortamentoTime (newPortamentoTime); });
     }
 
+    monoMode = *parameters.getRawParameterValue ("monoOn") > 0.5f;
+    legatoMode = *parameters.getRawParameterValue ("legatoOn") > 0.5f;
+
     const float newVibratoRate = *parameters.getRawParameterValue ("vibratoRate");
     if (vibratoRate != newVibratoRate)
     {
@@ -133,4 +136,113 @@ void MySynth::applyToAllVoices (Func&& function)
         if (auto* voice = dynamic_cast<MySynthVoice*> (voices.getUnchecked (i)))
             function (voice);
     }
+}
+
+void MySynth::noteOn (int midiChannel, int midiNoteNumber, float velocity)
+{
+    const bool sameNote = (midiNoteNumber == lastMidiNote);
+    const float fromFreq = lastNoteFrequency;
+
+    if (monoMode && legatoMode)
+    {
+        // === Legato mode ===
+        if (!heldNotes.empty() && !sameNote)
+        {
+            // Find the voice playing the current note and glide it
+            for (int i = 0; i < voices.size(); ++i)
+            {
+                if (auto* v = dynamic_cast<MySynthVoice*> (voices.getUnchecked (i)))
+                {
+                    if (v->isVoiceActive() && v->getCurrentlyPlayingNote() == heldNotes.back())
+                    {
+                        v->glideToNote (midiNoteNumber, velocity);
+                        legatoVoice = v;
+                        break;
+                    }
+                }
+            }
+            lastMidiNote = midiNoteNumber;
+            lastNoteFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
+            heldNotes.push_back (midiNoteNumber);
+            return;
+        }
+
+        // First note or same note — normal allocation
+        applyToAllVoices ([fromFreq, sameNote] (MySynthVoice* voice)
+        {
+            voice->setPortamentoStart (fromFreq, sameNote);
+        });
+        Synthesiser::noteOn (midiChannel, midiNoteNumber, velocity);
+    }
+    else if (monoMode)
+    {
+        // === Mono mode ===
+        if (!heldNotes.empty())
+            Synthesiser::noteOff (midiChannel, heldNotes.back(), 0.0f, true);
+
+        applyToAllVoices ([fromFreq, sameNote] (MySynthVoice* voice)
+        {
+            voice->setPortamentoStart (fromFreq, sameNote);
+        });
+        Synthesiser::noteOn (midiChannel, midiNoteNumber, velocity);
+    }
+    else
+    {
+        // === Poly mode ===
+        applyToAllVoices ([fromFreq, sameNote] (MySynthVoice* voice)
+        {
+            voice->setPortamentoStart (fromFreq, sameNote);
+        });
+        Synthesiser::noteOn (midiChannel, midiNoteNumber, velocity);
+    }
+
+    lastMidiNote = midiNoteNumber;
+    lastNoteFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
+    heldNotes.push_back (midiNoteNumber);
+}
+
+void MySynth::noteOff (int midiChannel, int midiNoteNumber, float velocity, bool allowTailOff)
+{
+    // Remove the note from heldNotes
+    auto it = std::find (heldNotes.begin(), heldNotes.end(), midiNoteNumber);
+    if (it != heldNotes.end())
+        heldNotes.erase (it);
+
+    if (monoMode && !heldNotes.empty())
+    {
+        const int returnNote = heldNotes.back();
+        const float returnFreq = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (returnNote));
+
+        if (legatoMode && legatoVoice != nullptr)
+        {
+            // Legato: glide back without retrigger
+            legatoVoice->glideToNote (returnNote, velocity > 0.0f ? velocity : 0.8f);
+        }
+        else
+        {
+            // Mono: release current, retrigger previous
+            Synthesiser::noteOff (midiChannel, midiNoteNumber, velocity, allowTailOff);
+            applyToAllVoices ([returnFreq] (MySynthVoice* voice)
+            {
+                voice->setPortamentoStart (returnFreq, false);
+            });
+            // Use the frequency of the note being released as portamento start
+            const float releasedFreq = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
+            applyToAllVoices ([releasedFreq] (MySynthVoice* voice)
+            {
+                voice->setPortamentoStart (releasedFreq, false);
+            });
+            Synthesiser::noteOn (midiChannel, returnNote, velocity > 0.0f ? velocity : 0.8f);
+        }
+
+        lastMidiNote = returnNote;
+        lastNoteFrequency = returnFreq;
+        return;
+    }
+
+    // Normal release
+    Synthesiser::noteOff (midiChannel, midiNoteNumber, velocity, allowTailOff);
+
+    if (heldNotes.empty())
+        legatoVoice = nullptr;
 }

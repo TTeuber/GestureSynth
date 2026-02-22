@@ -244,3 +244,39 @@ void EffectsTabContent::resized()
     chorusMixComponent.setBounds (rightColumn.removeFromLeft (rightColumn.getWidth() / 2).reduced (5));
     portamentoComponent.setBounds (rightColumn.reduced (5));
 }
+
+// =============================================================================
+// ExperimentTabContent
+// =============================================================================
+
+ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
+{
+    monoToggle.setColour (juce::ToggleButton::textColourId, TEXT_COLOR);
+    monoToggle.setColour (juce::ToggleButton::tickColourId, TEXT_COLOR);
+    addAndMakeVisible (monoToggle);
+    monoAttachment = std::make_unique<ButtonAttachment> (p.parameters, "monoOn", monoToggle);
+
+    legatoToggle.setColour (juce::ToggleButton::textColourId, TEXT_COLOR);
+    legatoToggle.setColour (juce::ToggleButton::tickColourId, TEXT_COLOR);
+    addAndMakeVisible (legatoToggle);
+    legatoAttachment = std::make_unique<ButtonAttachment> (p.parameters, "legatoOn", legatoToggle);
+}
+
+void ExperimentTabContent::paint (juce::Graphics& g)
+{
+    g.fillAll (PRIMARY_COLOR);
+
+    g.setColour (TEXT_COLOR);
+    g.setFont (18.0f);
+    g.drawText ("Voice Mode", getLocalBounds().removeFromTop (40), juce::Justification::centred);
+}
+
+void ExperimentTabContent::resized()
+{
+    auto area = getLocalBounds();
+    area.removeFromTop (50);
+
+    auto toggleArea = area.removeFromTop (60).withSizeKeepingCentre (200, 60);
+    monoToggle.setBounds (toggleArea.removeFromTop (30));
+    legatoToggle.setBounds (toggleArea.removeFromTop (30));
+}

@@ -7,6 +7,7 @@
 #include "MySynthVoice.h"
 
 #include <array>
+#include <vector>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 class MySynth final : public juce::Synthesiser
@@ -14,6 +15,9 @@ class MySynth final : public juce::Synthesiser
 public:
     explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData);
     static void updateParameter (float& currentValue, float newValue, const std::function<void (float)>& setterFunction);
+
+    void noteOn (int midiChannel, int midiNoteNumber, float velocity) override;
+    void noteOff (int midiChannel, int midiNoteNumber, float velocity, bool allowTailOff) override;
 
     float getVolume() const { return masterVolume; }
 
@@ -63,6 +67,13 @@ private:
     float manualBpm = 120.0f;
 
     float portamentoTime = 0.0f;
+
+    int lastMidiNote = -1;
+    float lastNoteFrequency = 0.0f;
+    std::vector<int> heldNotes;
+    MySynthVoice* legatoVoice = nullptr;
+    bool monoMode = false;
+    bool legatoMode = false;
 
     float vibratoRate = 5.0f;
     float vibratoDepth = 0.0f;

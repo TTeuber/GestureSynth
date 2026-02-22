@@ -104,3 +104,22 @@ private:
     ChorusMixComponent chorusMixComponent;
     PortamentoComponent portamentoComponent;
 };
+
+// =============================================================================
+// Experiment Tab: Mono/Legato toggles
+// =============================================================================
+class ExperimentTabContent final : public juce::Component
+{
+public:
+    explicit ExperimentTabContent (PluginProcessor& p);
+    void resized() override;
+    void paint (juce::Graphics& g) override;
+
+private:
+    juce::ToggleButton monoToggle { "Mono" };
+    juce::ToggleButton legatoToggle { "Legato" };
+
+    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
+    std::unique_ptr<ButtonAttachment> monoAttachment;
+    std::unique_ptr<ButtonAttachment> legatoAttachment;
+};

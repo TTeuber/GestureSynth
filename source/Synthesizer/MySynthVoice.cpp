@@ -301,9 +301,9 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
     currentEnvVal = 0.0f;
     targetFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
 
-    if (portamentoTimeMs > 0.0f && frequency > 0.0f)
+    if (portamentoTimeMs > 0.0f && portamentoFromFrequency > 0.0f && !skipPortamento)
     {
-        // Keep current frequency; it will glide toward targetFrequency in renderNextBlock
+        frequency = portamentoFromFrequency; // Glide from last played note
     }
     else
     {
@@ -334,4 +334,16 @@ void MySynthVoice::stopNote (float velocity, const bool allowTailOff)
             env->reset();
         clearCurrentNote();
     }
+}
+
+void MySynthVoice::glideToNote (int midiNoteNumber, float vel)
+{
+    targetFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
+    // frequency stays as-is — voice glides from current position
+    // Do NOT retrigger envelopes or reset vibrato
+    velocity = juce::jlimit (0.0f, 1.0f, vel);
+    pitchTracker->updateFrequency (targetFrequency);
+    waveLength = static_cast<int> (std::ceil (2 * currentSampleRate / targetFrequency));
+    while (waveLength > WaveformBuffer::kBufferSize)
+        waveLength /= 2;
 }

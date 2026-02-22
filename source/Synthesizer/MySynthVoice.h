@@ -73,6 +73,14 @@ public:
 
     void setPortamentoTime (float timeMs) { portamentoTimeMs = timeMs; }
 
+    void setPortamentoStart (float freq, bool skip)
+    {
+        portamentoFromFrequency = freq;
+        skipPortamento = skip;
+    }
+
+    void glideToNote (int midiNoteNumber, float vel);
+
     void setVibratoRate (float rate) { vibrato.setRate (rate); }
     void setVibratoDepth (float depth) { vibrato.setDepth (depth); }
     void setVibratoEnabled (bool enabled) { vibrato.setEnabled (enabled); }
@@ -106,6 +114,8 @@ private:
     float frequency = 0.0f;
     float targetFrequency = 0.0f;
     float portamentoTimeMs = 0.0f;
+    float portamentoFromFrequency = 0.0f;
+    bool skipPortamento = false;
     float currentSampleRate = 48000.0f;
     Vibrato vibrato;
 

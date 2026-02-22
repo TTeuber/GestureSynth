@@ -96,6 +96,11 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (std::move (portamentoTime));
 
     // ================================================================================================================================================
+    // Voice Mode Parameters
+    layout.add (make_unique<AudioParameterBool> (ParameterID ("monoOn", 1), "Mono Mode", false));
+    layout.add (make_unique<AudioParameterBool> (ParameterID ("legatoOn", 1), "Legato", false));
+
+    // ================================================================================================================================================
     // Envelope Parameters
 
     for (int i = 1; i <= 4; i++)

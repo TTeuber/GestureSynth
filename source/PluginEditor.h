@@ -31,6 +31,7 @@ private:
     std::unique_ptr<OscillatorTabContent> oscillatorTab;
     std::unique_ptr<ModulationTabContent> modulationTab;
     std::unique_ptr<EffectsTabContent> effectsTab;
+    std::unique_ptr<ExperimentTabContent> experimentTab;
 
     juce::TabbedComponent tabbedComponent { juce::TabbedButtonBar::TabsAtTop };
 

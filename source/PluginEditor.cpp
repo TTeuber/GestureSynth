@@ -12,12 +12,14 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     oscillatorTab = std::make_unique<OscillatorTabContent> (p);
     modulationTab = std::make_unique<ModulationTabContent> (p);
     effectsTab = std::make_unique<EffectsTabContent> (p);
+    experimentTab = std::make_unique<ExperimentTabContent> (p);
 
     // Add tabs
     tabbedComponent.addTab ("Main", PRIMARY_COLOR, mainTab.get(), false);
     tabbedComponent.addTab ("Oscillator", PRIMARY_COLOR, oscillatorTab.get(), false);
     tabbedComponent.addTab ("Modulation", PRIMARY_COLOR, modulationTab.get(), false);
     tabbedComponent.addTab ("Effects", PRIMARY_COLOR, effectsTab.get(), false);
+    tabbedComponent.addTab ("Experiment", PRIMARY_COLOR, experimentTab.get(), false);
 
     // Style the tab bar
     auto& tabBar = tabbedComponent.getTabbedButtonBar();
