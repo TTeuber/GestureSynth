@@ -28,6 +28,7 @@ PluginProcessor::PluginProcessor()
     }
 
     synth.setSourceOutputArray (modSourceOutputs.data());
+    synth.setDestOutputArray (modDestOutputs.data());
 }
 
 PluginProcessor::~PluginProcessor() = default;

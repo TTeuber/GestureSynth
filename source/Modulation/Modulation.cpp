@@ -111,6 +111,10 @@ void ModMatrix::processSample() const noexcept
         }
 
         value = juce::jlimit (0.0f, 1.0f, value);
+
+        if (destOutputs != nullptr && destination->getOutputIndex() >= 0)
+            destOutputs[destination->getOutputIndex()].store (value, std::memory_order_relaxed);
+
         destination->setCurrentValue (destination->getRange().convertFrom0to1 (value));
     }
 }

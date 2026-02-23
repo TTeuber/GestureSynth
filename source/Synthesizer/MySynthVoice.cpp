@@ -27,6 +27,13 @@ MySynthVoice::MySynthVoice (
     for (const auto& [_, d] : modDestinations)
         modMatrix.initDestination (d);
 
+    // Assign output indices so the mod matrix can publish normalized modulated values
+    filterCutoff.setOutputIndex (0);
+    filterResonance.setOutputIndex (1);
+    hpfCutoff.setOutputIndex (2);
+    fineTuneParam.setOutputIndex (3);
+    pulseWidth.setOutputIndex (4);
+
     // Initialize slotCache from modTree
     for (int i = 0; i < modTree.getNumChildren() && i < static_cast<int> (slotCache.size()); ++i)
     {

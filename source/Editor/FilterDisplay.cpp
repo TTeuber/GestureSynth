@@ -5,8 +5,11 @@
 #include "FilterDisplay.h"
 FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
     juce::UndoManager* undoManager,
-    std::atomic<int>* gestureCount)
-    : apvts (apvts), undoManager (undoManager), gestureCount (gestureCount)
+    std::atomic<int>* gestureCount,
+    std::atomic<float>* modCutoffOutput,
+    std::atomic<float>* modResonanceOutput)
+    : apvts (apvts), undoManager (undoManager), gestureCount (gestureCount),
+      modCutoffOutput (modCutoffOutput), modResonanceOutput (modResonanceOutput)
 {
     // Add listeners to the parameters
     this->apvts.addParameterListener ("filterFrequency", this);
@@ -24,10 +27,14 @@ FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
     // Get initial parameter values
     updateParameterValues();
 
+    if (modCutoffOutput != nullptr || modResonanceOutput != nullptr)
+        startTimerHz (30);
+
     setSize (300, 200);
 }
 FilterDisplay::~FilterDisplay()
 {
+    stopTimer();
     // Remove listeners
     apvts.removeParameterListener ("filterFrequency", this);
     apvts.removeParameterListener ("filterResonance", this);
@@ -44,6 +51,9 @@ void FilterDisplay::paint (juce::Graphics& g)
 
     // Draw parameter values
     drawParameterValues (g);
+
+    // Draw the modulated ghost curve behind the main curve
+    drawModulatedFrequencyPath (g);
 
     // Draw the filter response curve
     drawFrequencyPath (g);
@@ -320,4 +330,56 @@ void FilterDisplay::drawParameterValues (juce::Graphics& g) const
         g.setColour (juce::Colours::lightgrey);
         g.drawText ("Hold Shift for fine control", 5, getHeight() - 40, getWidth() - 10, 20, juce::Justification::bottomLeft, true);
     }
+}
+
+void FilterDisplay::timerCallback()
+{
+    if (modCutoffOutput != nullptr)
+        modulatedNormCutoff = modCutoffOutput->load (std::memory_order_relaxed);
+    if (modResonanceOutput != nullptr)
+        modulatedNormResonance = modResonanceOutput->load (std::memory_order_relaxed);
+
+    repaint();
+}
+
+void FilterDisplay::drawModulatedFrequencyPath (juce::Graphics& g) const
+{
+    if (modCutoffOutput == nullptr && modResonanceOutput == nullptr)
+        return;
+
+    // Skip if modulated values are close to the base values
+    if (std::abs (modulatedNormCutoff - normalizedCutoff) < 0.001f
+        && std::abs (modulatedNormResonance - normalizedResonance) < 0.001f)
+        return;
+
+    if (cutoffParam == nullptr || resonanceParam == nullptr)
+        return;
+
+    // Convert normalized modulated values to actual frequency/resonance
+    const float modCutoffFreq = cutoffParam->getNormalisableRange().convertFrom0to1 (modulatedNormCutoff);
+    const float modRes = resonanceParam->getNormalisableRange().convertFrom0to1 (modulatedNormResonance);
+
+    if (modCutoffFreq <= 0.0f || modRes <= 0.0f)
+        return;
+
+    juce::Path path;
+    constexpr int step = 5;
+
+    for (int xPixel = 0; xPixel < getWidth(); xPixel += step)
+    {
+        const double x = static_cast<double> (xPixel) / getWidth();
+        const double freq = cutoffParam->convertFrom0to1 (static_cast<float> (x));
+
+        // Same math as getYCoordinate but with modulated cutoff/resonance
+        const double dB = computeSecondOrderStage (freq, modCutoffFreq, modRes);
+        const float yPixel = getHeight() / 2.0f - static_cast<float> (dB) * getHeight() / 50.0f;
+
+        if (xPixel == 0)
+            path.startNewSubPath (static_cast<float> (xPixel), yPixel);
+        else
+            path.lineTo (static_cast<float> (xPixel), yPixel);
+    }
+
+    g.setColour (TEXT_COLOR.withAlpha (0.25f));
+    g.strokePath (path, juce::PathStrokeType (1.5f));
 }

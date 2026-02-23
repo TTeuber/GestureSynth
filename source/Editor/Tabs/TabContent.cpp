@@ -7,7 +7,7 @@
 MainTabContent::MainTabContent (PluginProcessor& p)
     : processor (p),
       waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
-      filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount),
+      filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[0], &p.modDestOutputs[1]),
       hpfDisplay (p.parameters, &p.undoManager, &p.activeGestureCount),
       subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
       detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
@@ -200,7 +200,7 @@ void ModulationTabContent::resized()
 // =============================================================================
 
 EffectsTabContent::EffectsTabContent (PluginProcessor& p)
-    : filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount),
+    : filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[0], &p.modDestOutputs[1]),
       chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
       vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
       volumeComponent (p.parameters.getParameter ("volume"), &p.undoManager, &p.activeGestureCount),

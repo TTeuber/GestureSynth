@@ -64,6 +64,9 @@ public:
 
     std::array<std::atomic<float>, 12> modSourceOutputs {};
 
+    static constexpr int kNumModDests = 5;
+    std::array<std::atomic<float>, kNumModDests> modDestOutputs {};
+
     using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;
     ModList modList = {
         { "env1", 0.0f, "filterFrequency", false },

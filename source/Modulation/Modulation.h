@@ -43,9 +43,13 @@ public:
     [[nodiscard]] virtual juce::String getID() const noexcept { return id; }
     [[nodiscard]] virtual juce::StringRef getName() const noexcept { return name; }
 
+    void setOutputIndex (int idx) { outputIndex = idx; }
+    [[nodiscard]] int getOutputIndex() const { return outputIndex; }
+
 private:
     juce::String id;
     juce::String name;
+    int outputIndex = -1;
 };
 
 struct Modulation
@@ -79,6 +83,7 @@ public:
     ModMatrix() = default;
 
     void setSourceOutputArray (std::atomic<float>* arr) { sourceOutputs = arr; }
+    void setDestOutputArray (std::atomic<float>* arr) { destOutputs = arr; }
 
     void initDestination (ModDestination* destination)
     {
@@ -110,4 +115,5 @@ private:
     std::map<ModDestination*, std::vector<Modulation>> matrix = {};
     LockFreeQueue<ModCommand, 64> commandQueue;
     std::atomic<float>* sourceOutputs = nullptr;
+    std::atomic<float>* destOutputs = nullptr;
 };

@@ -10,12 +10,15 @@
 
 //==============================================================================
 class FilterDisplay final : public juce::Component,
-                            juce::AudioProcessorValueTreeState::Listener
+                            juce::AudioProcessorValueTreeState::Listener,
+                            private juce::Timer
 {
 public:
     explicit FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
         juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr);
+        std::atomic<int>* gestureCount = nullptr,
+        std::atomic<float>* modCutoffOutput = nullptr,
+        std::atomic<float>* modResonanceOutput = nullptr);
 
     ~FilterDisplay() override;
 
@@ -82,6 +85,15 @@ private:
 
     juce::UndoManager* undoManager = nullptr;
     std::atomic<int>* gestureCount = nullptr;
+
+    // Modulation ghost curve
+    std::atomic<float>* modCutoffOutput = nullptr;
+    std::atomic<float>* modResonanceOutput = nullptr;
+    float modulatedNormCutoff = 0.5f;
+    float modulatedNormResonance = 0.5f;
+
+    void timerCallback() override;
+    void drawModulatedFrequencyPath (juce::Graphics& g) const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FilterDisplay)
 };
