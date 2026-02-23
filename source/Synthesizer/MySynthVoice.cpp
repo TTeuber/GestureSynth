@@ -142,6 +142,9 @@ int MySynthVoice::readWaveformData (float* dest, int maxSamples)
 
 void MySynthVoice::addNodeToMatrix (const juce::ValueTree& childNode)
 {
+    if (static_cast<bool> (childNode.getProperty ("bypassed")))
+        return;
+
     auto srcIt = modSources.find (childNode.getProperty ("source").toString());
     auto dstIt = modDestinations.find (childNode.getProperty ("destination").toString());
     if (srcIt == modSources.end() || dstIt == modDestinations.end())
@@ -274,6 +277,22 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
         const float depth = treeWhosePropertyHasChanged.getProperty ("depth");
         const bool isBipolar = treeWhosePropertyHasChanged.getProperty ("isBipolar");
         modMatrix.queueAddModulation (destination, source, depth, isBipolar, slotIndex);
+    }
+    else if (property.toString() == "bypassed")
+    {
+        const auto& [cachedSrc, cachedDst] = slotCache[slotIndex];
+        auto dstIt = modDestinations.find (cachedDst);
+        if (dstIt == modDestinations.end() || dstIt->second == nullptr)
+            return;
+
+        if (static_cast<bool> (treeWhosePropertyHasChanged.getProperty ("bypassed")))
+        {
+            modMatrix.queueRemoveModulation (slotIndex, dstIt->second);
+        }
+        else
+        {
+            addNodeToMatrix (treeWhosePropertyHasChanged);
+        }
     }
 }
 

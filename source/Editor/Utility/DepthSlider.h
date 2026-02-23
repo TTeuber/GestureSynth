@@ -19,13 +19,27 @@ public:
 
         // Fill bar from center
         const float centerX = bounds.getCentreX();
-        const float fillLeft = value < 0.0f ? centerX + value * (bounds.getWidth() * 0.5f) : centerX;
-        const float fillWidth = std::abs (value) * (bounds.getWidth() * 0.5f);
+        const float halfWidth = bounds.getWidth() * 0.5f;
+        const float fillLeft = value < 0.0f ? centerX + value * halfWidth : centerX;
+        const float fillWidth = std::abs (value) * halfWidth;
 
         if (std::abs (value) > 0.001f)
         {
             g.setColour (TEXT_COLOR.withAlpha (0.45f));
             g.fillRoundedRectangle (fillLeft, bounds.getY(), fillWidth, bounds.getHeight(), cornerSize);
+        }
+
+        // Source indicator line
+        if (std::abs (value) > 0.001f && sourceValue > 0.001f)
+        {
+            float modAmount = bipolar
+                ? (sourceValue * 2.0f - 1.0f) * value
+                : sourceValue * value;
+            float lineX = centerX + modAmount * halfWidth;
+            lineX = juce::jlimit (bounds.getX(), bounds.getRight(), lineX);
+
+            g.setColour (juce::Colours::white);
+            g.drawVerticalLine (static_cast<int> (lineX), bounds.getY() + 1.0f, bounds.getBottom() - 1.0f);
         }
 
         // Center line marker
@@ -44,7 +58,7 @@ public:
             setValue (0.0f);
             return;
         }
-        mouseDownY = e.y;
+        mouseDownX = e.x;
         initialValue = value;
         isDragging = true;
     }
@@ -55,7 +69,7 @@ public:
             return;
 
         const float sensitivity = e.mods.isShiftDown() ? 600.0f : 150.0f;
-        const float delta = (mouseDownY - e.y) / sensitivity;
+        const float delta = (e.x - mouseDownX) / sensitivity;
         setValue (juce::jlimit (-1.0f, 1.0f, initialValue + delta));
     }
 
@@ -82,11 +96,29 @@ public:
             onValueChange();
     }
 
+    void setSourceValue (float v)
+    {
+        if (std::abs (v - sourceValue) < 0.0001f)
+            return;
+        sourceValue = v;
+        repaint();
+    }
+
+    void setBipolar (bool b)
+    {
+        if (bipolar == b)
+            return;
+        bipolar = b;
+        repaint();
+    }
+
     std::function<void()> onValueChange;
 
 private:
     float value = 0.0f;
+    float sourceValue = 0.0f;
+    bool bipolar = false;
     bool isDragging = false;
-    int mouseDownY = 0;
+    int mouseDownX = 0;
     float initialValue = 0.0f;
 };

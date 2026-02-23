@@ -180,7 +180,7 @@ void OscillatorTabContent::resized()
 // =============================================================================
 
 ModulationTabContent::ModulationTabContent (PluginProcessor& p)
-    : matrixComponent (p.modTree)
+    : matrixComponent (p.modTree, p.modSourceOutputs.data())
 {
     addAndMakeVisible (matrixComponent);
 }

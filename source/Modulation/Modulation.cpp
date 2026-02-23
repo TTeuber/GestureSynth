@@ -100,10 +100,14 @@ void ModMatrix::processSample() const noexcept
             if (source == nullptr)
                 continue;
 
+            float rawSourceVal = source->getNextValue();
+            if (sourceOutputs != nullptr)
+                sourceOutputs[slotIdx].store (rawSourceVal, std::memory_order_relaxed);
+
             if (isBipolar)
-                value += (source->getNextValue() * 2.0f - 1.0f) * depth;
+                value += (rawSourceVal * 2.0f - 1.0f) * depth;
             else
-                value += source->getNextValue() * depth;
+                value += rawSourceVal * depth;
         }
 
         value = juce::jlimit (0.0f, 1.0f, value);

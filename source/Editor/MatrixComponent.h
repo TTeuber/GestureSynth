@@ -5,10 +5,11 @@
 #include "Utility/DepthSlider.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
-class MatrixComponent final : public juce::Component, public juce::ValueTree::Listener
+class MatrixComponent final : public juce::Component, public juce::ValueTree::Listener, public juce::Timer
 {
 public:
-    explicit MatrixComponent (juce::ValueTree& mt) : modTree (mt)
+    explicit MatrixComponent (juce::ValueTree& mt, std::atomic<float>* srcOutputs = nullptr)
+        : modTree (mt), sourceOutputs (srcOutputs)
     {
         modTree.addListener (this);
 
@@ -30,6 +31,7 @@ public:
 
             // Depth slider
             row.depthSlider.setValue (static_cast<float> (child.getProperty ("depth")));
+            row.depthSlider.setBipolar (static_cast<bool> (child.getProperty ("isBipolar")));
             addAndMakeVisible (row.depthSlider);
 
             // Bipolar button
@@ -47,6 +49,15 @@ public:
             row.destBox.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
             addAndMakeVisible (row.destBox);
 
+            // Bypass button
+            row.bypassButton.setBypassed (static_cast<bool> (child.getProperty ("bypassed")));
+            row.bypassButton.setTooltip ("Bypass modulation");
+            addAndMakeVisible (row.bypassButton);
+
+            // Clear button
+            row.clearButton.setTooltip ("Clear modulation");
+            addAndMakeVisible (row.clearButton);
+
             // Wire callbacks
             row.sourceBox.onChange = [this, i]()
             {
@@ -63,6 +74,7 @@ public:
             {
                 auto& btn = rows[i].bipolarButton;
                 btn.setBipolar (!btn.isBipolar());
+                rows[i].depthSlider.setBipolar (btn.isBipolar());
                 modTree.getChild (i).setProperty ("isBipolar", btn.isBipolar(), nullptr);
             };
 
@@ -71,12 +83,42 @@ public:
                 auto selectedDest = PluginProcessor::modDestIDs[rows[i].destBox.getSelectedId() - 1];
                 modTree.getChild (i).setProperty ("destination", selectedDest, nullptr);
             };
+
+            row.bypassButton.onClick = [this, i]()
+            {
+                auto child = modTree.getChild (i);
+                bool current = static_cast<bool> (child.getProperty ("bypassed"));
+                child.setProperty ("bypassed", !current, nullptr);
+            };
+
+            row.clearButton.onClick = [this, i]()
+            {
+                auto child = modTree.getChild (i);
+                child.setProperty ("source", "None", nullptr);
+                child.setProperty ("destination", "None", nullptr);
+                child.setProperty ("depth", 0.0f, nullptr);
+                child.setProperty ("isBipolar", false, nullptr);
+                child.setProperty ("bypassed", false, nullptr);
+            };
         }
+
+        if (sourceOutputs != nullptr)
+            startTimerHz (30);
     }
 
     ~MatrixComponent() override
     {
+        stopTimer();
         modTree.removeListener (this);
+    }
+
+    void timerCallback() override
+    {
+        if (sourceOutputs == nullptr)
+            return;
+
+        for (int i = 0; i < 12; ++i)
+            rows[i].depthSlider.setSourceValue (sourceOutputs[i].load (std::memory_order_relaxed));
     }
 
     void paint (juce::Graphics& g) override
@@ -108,10 +150,13 @@ public:
             const int srcWidth = rowArea.getWidth() / 4;
             const int dstWidth = rowArea.getWidth() / 4;
             const int btnSize = 24;
+            const int vPad = (rowArea.getHeight() - btnSize) / 2;
 
             row.sourceBox.setBounds (rowArea.removeFromLeft (srcWidth));
+            row.clearButton.setBounds (rowArea.removeFromRight (btnSize).reduced (0, vPad));
+            row.bypassButton.setBounds (rowArea.removeFromRight (btnSize).reduced (0, vPad));
             row.destBox.setBounds (rowArea.removeFromRight (dstWidth));
-            row.bipolarButton.setBounds (rowArea.removeFromRight (btnSize).reduced (0, (rowArea.getHeight() - btnSize) / 2));
+            row.bipolarButton.setBounds (rowArea.removeFromRight (btnSize).reduced (0, vPad));
             row.depthSlider.setBounds (rowArea);
         }
     }
@@ -149,8 +194,14 @@ public:
         }
         else if (property.toString() == "isBipolar")
         {
-            row.bipolarButton.setBipolar (
-                static_cast<bool> (treeWhosePropertyHasChanged.getProperty ("isBipolar")));
+            bool bp = static_cast<bool> (treeWhosePropertyHasChanged.getProperty ("isBipolar"));
+            row.bipolarButton.setBipolar (bp);
+            row.depthSlider.setBipolar (bp);
+        }
+        else if (property.toString() == "bypassed")
+        {
+            row.bypassButton.setBypassed (
+                static_cast<bool> (treeWhosePropertyHasChanged.getProperty ("bypassed")));
         }
     }
 
@@ -159,6 +210,8 @@ public:
 
 private:
     juce::ValueTree& modTree;
+    std::atomic<float>* sourceOutputs = nullptr;
+    juce::TooltipWindow tooltipWindow { this, 500 };
 
     // ---------------------------------------------------------------------------------
     // Bipolar toggle button — draws <--> (bipolar) or --> (unipolar)
@@ -230,12 +283,97 @@ private:
         bool bipolar = false;
     };
 
+    // ---------------------------------------------------------------------------------
+    // Bypass button — circle with diagonal line (prohibition icon)
+    // ---------------------------------------------------------------------------------
+    class BypassButton : public juce::Component, public juce::SettableTooltipClient
+    {
+    public:
+        BypassButton() { setRepaintsOnMouseActivity (true); }
+
+        void paint (juce::Graphics& g) override
+        {
+            const auto bounds = getLocalBounds().toFloat();
+
+            auto bg = isMouseOver() ? SECONDARY_COLOR.brighter (0.15f) : SECONDARY_COLOR;
+            g.setColour (bg);
+            g.fillRoundedRectangle (bounds, 4.0f);
+
+            const auto inner = bounds.reduced (5.0f);
+            const float cx = inner.getCentreX();
+            const float cy = inner.getCentreY();
+            const float r = juce::jmin (inner.getWidth(), inner.getHeight()) * 0.4f;
+
+            const float alpha = bypassed ? 1.0f : 0.3f;
+            g.setColour (TEXT_COLOR.withAlpha (alpha));
+
+            // Circle
+            g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.5f);
+
+            // Diagonal line
+            const float offset = r * 0.707f; // cos(45)
+            g.drawLine (cx - offset, cy - offset, cx + offset, cy + offset, 1.5f);
+        }
+
+        void mouseUp (const juce::MouseEvent& e) override
+        {
+            if (getLocalBounds().contains (e.x, e.y) && onClick)
+                onClick();
+        }
+
+        bool isBypassed() const { return bypassed; }
+        void setBypassed (bool b) { bypassed = b; repaint(); }
+
+        std::function<void()> onClick;
+
+    private:
+        bool bypassed = false;
+    };
+
+    // ---------------------------------------------------------------------------------
+    // Clear button — X icon
+    // ---------------------------------------------------------------------------------
+    class ClearButton : public juce::Component, public juce::SettableTooltipClient
+    {
+    public:
+        ClearButton() { setRepaintsOnMouseActivity (true); }
+
+        void paint (juce::Graphics& g) override
+        {
+            const auto bounds = getLocalBounds().toFloat();
+
+            auto bg = isMouseOver() ? SECONDARY_COLOR.brighter (0.15f) : SECONDARY_COLOR;
+            g.setColour (bg);
+            g.fillRoundedRectangle (bounds, 4.0f);
+
+            const auto inner = bounds.reduced (6.0f);
+            const float alpha = isMouseOver() ? 0.7f : 0.3f;
+            g.setColour (TEXT_COLOR.withAlpha (alpha));
+
+            // X icon
+            g.drawLine (inner.getX(), inner.getY(),
+                        inner.getRight(), inner.getBottom(), 1.5f);
+            g.drawLine (inner.getRight(), inner.getY(),
+                        inner.getX(), inner.getBottom(), 1.5f);
+        }
+
+        void mouseUp (const juce::MouseEvent& e) override
+        {
+            if (getLocalBounds().contains (e.x, e.y) && onClick)
+                onClick();
+        }
+
+        std::function<void()> onClick;
+    };
+
     struct SlotRow
     {
         juce::ComboBox sourceBox;
         DepthSlider    depthSlider;
         BipolarButton  bipolarButton;
         juce::ComboBox destBox;
+        BypassButton   bypassButton;
+        ClearButton    clearButton;
     };
     std::array<SlotRow, 12> rows;
 };

@@ -31,6 +31,8 @@ public:
     template <class Func>
     void applyToAllVoices (Func&& function);
 
+    void setSourceOutputArray (std::atomic<float>* arr);
+
     std::shared_ptr<MyADSR*> getAmpADSRPtr() { return ampEnvPtr; }
     std::shared_ptr<MyADSR*> getFilterADSRPtr() { return filterEnvPtr; }
 

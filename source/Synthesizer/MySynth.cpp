@@ -140,6 +140,11 @@ void MySynth::applyToAllVoices (Func&& function)
     }
 }
 
+void MySynth::setSourceOutputArray (std::atomic<float>* arr)
+{
+    applyToAllVoices ([arr] (MySynthVoice* v) { v->setSourceOutputArray (arr); });
+}
+
 void MySynth::noteOn (int midiChannel, int midiNoteNumber, float velocity)
 {
     const juce::ScopedLock sl (lock);

@@ -78,6 +78,8 @@ class ModMatrix
 public:
     ModMatrix() = default;
 
+    void setSourceOutputArray (std::atomic<float>* arr) { sourceOutputs = arr; }
+
     void initDestination (ModDestination* destination)
     {
         if (!matrix.contains (destination))
@@ -107,4 +109,5 @@ public:
 private:
     std::map<ModDestination*, std::vector<Modulation>> matrix = {};
     LockFreeQueue<ModCommand, 64> commandQueue;
+    std::atomic<float>* sourceOutputs = nullptr;
 };

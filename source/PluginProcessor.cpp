@@ -23,8 +23,11 @@ PluginProcessor::PluginProcessor()
         childNode.setProperty ("depth", std::get<1> (modList[i]), nullptr);
         childNode.setProperty ("destination", std::get<2> (modList[i]), nullptr);
         childNode.setProperty ("isBipolar", std::get<3> (modList[i]), nullptr);
+        childNode.setProperty ("bypassed", false, nullptr);
         modTree.appendChild (childNode, nullptr);
     }
+
+    synth.setSourceOutputArray (modSourceOutputs.data());
 }
 
 PluginProcessor::~PluginProcessor() = default;
@@ -322,6 +325,7 @@ void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
                 child.setProperty ("depth", 0.0f, nullptr);
                 child.setProperty ("destination", "None", nullptr);
                 child.setProperty ("isBipolar", false, nullptr);
+                child.setProperty ("bypassed", false, nullptr);
                 modTree.appendChild (child, nullptr);
             }
         }
