@@ -34,6 +34,8 @@ public:
     void setSourceOutputArray (std::atomic<float>* arr);
     void setDestOutputArray (std::atomic<float>* arr);
 
+    void resetOutputsIfIdle();
+
     std::shared_ptr<MyADSR*> getAmpADSRPtr() { return ampEnvPtr; }
     std::shared_ptr<MyADSR*> getFilterADSRPtr() { return filterEnvPtr; }
 

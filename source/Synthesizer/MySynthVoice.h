@@ -84,6 +84,8 @@ public:
     void setSourceOutputArray (std::atomic<float>* arr) { modMatrix.setSourceOutputArray (arr); }
     void setDestOutputArray (std::atomic<float>* arr) { modMatrix.setDestOutputArray (arr); }
 
+    void resetModOutputs() { modMatrix.resetOutputs(); }
+
     void setVibratoRate (float rate) { vibrato.setRate (rate); }
     void setVibratoDepth (float depth) { vibrato.setDepth (depth); }
     void setVibratoEnabled (bool enabled) { vibrato.setEnabled (enabled); }

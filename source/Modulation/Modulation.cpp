@@ -119,6 +119,30 @@ void ModMatrix::processSample() const noexcept
     }
 }
 
+void ModMatrix::resetOutputs() const noexcept
+{
+    // Reset dest outputs to un-modulated base values
+    if (destOutputs != nullptr)
+    {
+        for (const auto& [destination, mods] : matrix)
+        {
+            if (destination != nullptr && destination->getOutputIndex() >= 0)
+                destOutputs[destination->getOutputIndex()].store (
+                    destination->getRawParameterValue(), std::memory_order_relaxed);
+        }
+    }
+
+    // Reset source outputs to 0 (hides DepthSlider indicator lines)
+    if (sourceOutputs != nullptr)
+    {
+        for (const auto& [destination, mods] : matrix)
+        {
+            for (const auto& [source, depth, isBipolar, slotIdx] : mods)
+                sourceOutputs[slotIdx].store (0.0f, std::memory_order_relaxed);
+        }
+    }
+}
+
 void ModMatrix::debug()
 {
     for (const auto& [destination, mods] : matrix)

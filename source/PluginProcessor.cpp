@@ -182,6 +182,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     synth.updateParameters (tempoInfo);
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
+    synth.resetOutputsIfIdle();
 
     chorus.process (buffer);
 

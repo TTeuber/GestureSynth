@@ -334,10 +334,18 @@ void FilterDisplay::drawParameterValues (juce::Graphics& g) const
 
 void FilterDisplay::timerCallback()
 {
+    constexpr float alpha = 0.3f;
+
     if (modCutoffOutput != nullptr)
-        modulatedNormCutoff = modCutoffOutput->load (std::memory_order_relaxed);
+    {
+        float target = modCutoffOutput->load (std::memory_order_relaxed);
+        modulatedNormCutoff += alpha * (target - modulatedNormCutoff);
+    }
     if (modResonanceOutput != nullptr)
-        modulatedNormResonance = modResonanceOutput->load (std::memory_order_relaxed);
+    {
+        float target = modResonanceOutput->load (std::memory_order_relaxed);
+        modulatedNormResonance += alpha * (target - modulatedNormResonance);
+    }
 
     repaint();
 }

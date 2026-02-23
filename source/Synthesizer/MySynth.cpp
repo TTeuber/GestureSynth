@@ -150,6 +150,17 @@ void MySynth::setDestOutputArray (std::atomic<float>* arr)
     applyToAllVoices ([arr] (MySynthVoice* v) { v->setDestOutputArray (arr); });
 }
 
+void MySynth::resetOutputsIfIdle()
+{
+    for (int i = 0; i < voices.size(); ++i)
+    {
+        if (voices.getUnchecked (i)->isVoiceActive())
+            return;
+    }
+    if (auto* voice = dynamic_cast<MySynthVoice*> (voices.getUnchecked (0)))
+        voice->resetModOutputs();
+}
+
 void MySynth::noteOn (int midiChannel, int midiNoteNumber, float velocity)
 {
     const juce::ScopedLock sl (lock);

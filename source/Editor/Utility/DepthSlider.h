@@ -98,9 +98,11 @@ public:
 
     void setSourceValue (float v)
     {
-        if (std::abs (v - sourceValue) < 0.0001f)
+        constexpr float alpha = 0.25f;
+        float smoothed = sourceValue + alpha * (v - sourceValue);
+        if (std::abs (smoothed - sourceValue) < 0.0001f)
             return;
-        sourceValue = v;
+        sourceValue = smoothed;
         repaint();
     }
 

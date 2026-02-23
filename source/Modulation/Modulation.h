@@ -109,6 +109,8 @@ public:
 
     void processSample() const noexcept;
 
+    void resetOutputs() const noexcept;
+
     void debug();
 
 private:

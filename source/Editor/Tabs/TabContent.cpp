@@ -6,7 +6,7 @@
 
 MainTabContent::MainTabContent (PluginProcessor& p)
     : processor (p),
-      waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[4]),
       filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[0], &p.modDestOutputs[1]),
       hpfDisplay (p.parameters, &p.undoManager, &p.activeGestureCount),
       subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
@@ -144,7 +144,7 @@ void MainTabContent::resized()
 // =============================================================================
 
 OscillatorTabContent::OscillatorTabContent (PluginProcessor& p)
-    : waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+    : waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[4]),
       detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
       subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
       oscilloscope (p)
