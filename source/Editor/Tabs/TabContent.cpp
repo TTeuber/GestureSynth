@@ -95,25 +95,25 @@ void MainTabContent::resized()
     auto area = getLocalBounds();
     auto rowHeight = area.getHeight() / 3;
 
-    // Row 1: FilterDisplay | ChorusComponent | VibratoComponent | Volume/ChorusMix (4 equal columns)
+    auto squareCol = rowHeight;
+
+    // Row 1: 2x2 grid | Chorus | Vibrato | FilterDisplay (fills remaining)
     auto row1 = area.removeFromTop (rowHeight);
-    auto row1Width = row1.getWidth() / 4;
-    filterDisplay.setBounds (row1.removeFromLeft (row1Width).reduced (5));
-    chorusComponent.setBounds (row1.removeFromLeft (row1Width).reduced (5));
-    vibratoComponent.setBounds (row1.removeFromLeft (row1Width).reduced (5));
-    auto mixCol = row1;
+    auto mixCol = row1.removeFromLeft (squareCol);
     auto topRow = mixCol.removeFromTop (mixCol.getHeight() / 2);
     volumeComponent.setBounds (topRow.removeFromLeft (topRow.getWidth() / 2).reduced (5));
     noiseComponent.setBounds (topRow.reduced (5));
     chorusMixComponent.setBounds (mixCol.removeFromLeft (mixCol.getWidth() / 2).reduced (5));
     portamentoComponent.setBounds (mixCol.reduced (5));
+    chorusComponent.setBounds (row1.removeFromLeft (squareCol).reduced (5));
+    vibratoComponent.setBounds (row1.removeFromLeft (squareCol).reduced (5));
+    filterDisplay.setBounds (row1.reduced (5));
 
-    // Row 2: Waveform | Sub Oscillator | Detune | HPF (4 equal columns)
+    // Row 2: SubOsc | Waveform | Detune | HPF (fills remaining)
     auto row2 = area.removeFromTop (rowHeight);
-    auto row2Width = row2.getWidth() / 4;
-    waveformComponent.setBounds (row2.removeFromLeft (row2Width).reduced (5));
-    subOscillatorComponent.setBounds (row2.removeFromLeft (row2Width).reduced (5));
-    detuneComponent.setBounds (row2.removeFromLeft (row2Width).reduced (5));
+    subOscillatorComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
+    waveformComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
+    detuneComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
     hpfDisplay.setBounds (row2.reduced (5));
 
     // Row 3: 30px button strip at top, then LFO | ADSR below
