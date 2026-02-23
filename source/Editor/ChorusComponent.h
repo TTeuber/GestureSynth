@@ -17,11 +17,15 @@ public:
         // Constructor implementation
     }
 
-    explicit ChorusComponent (const juce::AudioProcessorValueTreeState& apvts)
+    explicit ChorusComponent (const juce::AudioProcessorValueTreeState& apvts,
+        juce::UndoManager* undoManager = nullptr,
+        std::atomic<int>* gestureCount = nullptr)
         : DualParameterComponent (
               apvts.getParameter ("chorusDepth"),
               apvts.getParameter ("chorusRate"),
-              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("chorusOn")))
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("chorusOn")),
+              undoManager,
+              gestureCount)
     {
     }
 

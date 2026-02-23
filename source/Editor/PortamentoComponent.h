@@ -9,8 +9,10 @@
 class PortamentoComponent final : public SingleParameterComponent
 {
 public:
-    explicit PortamentoComponent (juce::RangedAudioParameter* portamentoParam)
-        : SingleParameterComponent (portamentoParam)
+    explicit PortamentoComponent (juce::RangedAudioParameter* portamentoParam,
+        juce::UndoManager* undoManager = nullptr,
+        std::atomic<int>* gestureCount = nullptr)
+        : SingleParameterComponent (portamentoParam, nullptr, undoManager, gestureCount)
     {
     }
 

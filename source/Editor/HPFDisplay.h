@@ -13,7 +13,9 @@ class HPFDisplay final : public juce::Component,
                          juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    explicit HPFDisplay (juce::AudioProcessorValueTreeState& apvts);
+    explicit HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
+        juce::UndoManager* undoManager = nullptr,
+        std::atomic<int>* gestureCount = nullptr);
 
     ~HPFDisplay() override;
 
@@ -75,6 +77,9 @@ private:
     void drawControlPoint (juce::Graphics& g) const;
 
     void drawParameterValues (juce::Graphics& g) const;
+
+    juce::UndoManager* undoManager = nullptr;
+    std::atomic<int>* gestureCount = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HPFDisplay)
 };

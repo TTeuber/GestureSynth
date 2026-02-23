@@ -16,10 +16,14 @@ class DualParameterComponent : public juce::Component,
 public:
     DualParameterComponent (juce::RangedAudioParameter* param1,
         juce::RangedAudioParameter* param2,
-        juce::AudioParameterBool* activeParam = nullptr)
+        juce::AudioParameterBool* activeParam = nullptr,
+        juce::UndoManager* undoManager = nullptr,
+        std::atomic<int>* gestureCount = nullptr)
         : param1 (param1),
           param2 (param2),
-          activeParam (activeParam)
+          activeParam (activeParam),
+          undoManager (undoManager),
+          gestureCount (gestureCount)
     {
         // Register as a listener for both parameters
         param1->addListener (this);
@@ -126,8 +130,11 @@ public:
             const juce::Rectangle<int> toggleRect (10, 10, 12, 12);
             if (toggleRect.contains (e.getPosition()) || e.mods.isRightButtonDown())
             {
-                // Toggle the active state
+                if (undoManager != nullptr)
+                    undoManager->beginNewTransaction();
+                activeParam->beginChangeGesture();
                 activeParam->setValueNotifyingHost (isActive ? 0.0f : 1.0f);
+                activeParam->endChangeGesture();
                 return;
             }
         }
@@ -141,6 +148,13 @@ public:
         mouseDownY = e.y;
         initialParam1Value = param1Value;
         initialParam2Value = param2Value;
+
+        if (undoManager != nullptr)
+            undoManager->beginNewTransaction();
+        param1->beginChangeGesture();
+        param2->beginChangeGesture();
+        if (gestureCount != nullptr)
+            ++(*gestureCount);
 
         isDragging = true;
     }
@@ -167,6 +181,13 @@ public:
 
     void mouseUp (const juce::MouseEvent&) override
     {
+        if (isDragging)
+        {
+            param1->endChangeGesture();
+            param2->endChangeGesture();
+            if (gestureCount != nullptr)
+                --(*gestureCount);
+        }
         isDragging = false;
     }
 
@@ -184,6 +205,9 @@ protected:
     float param2Value = 0.0f;
 
     float padding = 0.4f; // Padding for drawing
+
+    juce::UndoManager* undoManager = nullptr;
+    std::atomic<int>* gestureCount = nullptr;
 
     // Virtual method to be implemented by derived classes
     virtual void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const = 0;

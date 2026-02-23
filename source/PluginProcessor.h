@@ -53,6 +53,7 @@ public:
 
     juce::MidiKeyboardState keyboardState;
     juce::UndoManager undoManager;
+    std::atomic<int> activeGestureCount {0};
     juce::AudioProcessorValueTreeState parameters { *this, &undoManager, "parameters", createLayout() };
 
     juce::ValueTree modTree { "modTree" };

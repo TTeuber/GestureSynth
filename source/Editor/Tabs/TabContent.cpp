@@ -6,19 +6,19 @@
 
 MainTabContent::MainTabContent (PluginProcessor& p)
     : processor (p),
-      waveformComponent (p.parameters),
-      filterDisplay (p.parameters),
-      hpfDisplay (p.parameters),
-      subOscillatorComponent (p.parameters),
-      detuneComponent (p.parameters),
-      chorusComponent (p.parameters),
-      vibratoComponent (p.parameters),
-      volumeComponent (p.parameters.getParameter ("volume")),
-      noiseComponent (p.parameters.getParameter ("noiseLevel")),
-      chorusMixComponent (p.parameters.getParameter ("chorusMix")),
-      portamentoComponent (p.parameters.getParameter ("portamentoTime")),
+      waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount),
+      hpfDisplay (p.parameters, &p.undoManager, &p.activeGestureCount),
+      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      volumeComponent (p.parameters.getParameter ("volume"), &p.undoManager, &p.activeGestureCount),
+      noiseComponent (p.parameters.getParameter ("noiseLevel"), &p.undoManager, &p.activeGestureCount),
+      chorusMixComponent (p.parameters.getParameter ("chorusMix"), &p.undoManager, &p.activeGestureCount),
+      portamentoComponent (p.parameters.getParameter ("portamentoTime"), &p.undoManager, &p.activeGestureCount),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
-      adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr())
+      adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount)
 {
     addAndMakeVisible (waveformComponent);
     addAndMakeVisible (filterDisplay);
@@ -144,9 +144,9 @@ void MainTabContent::resized()
 // =============================================================================
 
 OscillatorTabContent::OscillatorTabContent (PluginProcessor& p)
-    : waveformComponent (p.parameters),
-      detuneComponent (p.parameters),
-      subOscillatorComponent (p.parameters),
+    : waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
       oscilloscope (p)
 {
     addAndMakeVisible (waveformComponent);
@@ -200,13 +200,13 @@ void ModulationTabContent::resized()
 // =============================================================================
 
 EffectsTabContent::EffectsTabContent (PluginProcessor& p)
-    : filterDisplay (p.parameters),
-      chorusComponent (p.parameters),
-      vibratoComponent (p.parameters),
-      volumeComponent (p.parameters.getParameter ("volume")),
-      noiseComponent (p.parameters.getParameter ("noiseLevel")),
-      chorusMixComponent (p.parameters.getParameter ("chorusMix")),
-      portamentoComponent (p.parameters.getParameter ("portamentoTime"))
+    : filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount),
+      chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      volumeComponent (p.parameters.getParameter ("volume"), &p.undoManager, &p.activeGestureCount),
+      noiseComponent (p.parameters.getParameter ("noiseLevel"), &p.undoManager, &p.activeGestureCount),
+      chorusMixComponent (p.parameters.getParameter ("chorusMix"), &p.undoManager, &p.activeGestureCount),
+      portamentoComponent (p.parameters.getParameter ("portamentoTime"), &p.undoManager, &p.activeGestureCount)
 {
     addAndMakeVisible (filterDisplay);
     addAndMakeVisible (chorusComponent);

@@ -11,7 +11,9 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
     const juce::StringRef sustainParam,
     const juce::StringRef releaseParam,
     const juce::StringRef releaseCurveParam,
-    std::shared_ptr<MyADSR*> adsr)
+    std::shared_ptr<MyADSR*> adsr,
+    juce::UndoManager* undoManager,
+    std::atomic<int>* gestureCount)
     : parameters(p),
     attackId(attackParam),
     attackCurveId (attackCurveParam),
@@ -20,7 +22,9 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
     sustainId(sustainParam),
     releaseId(releaseParam),
     releaseCurveId (releaseCurveParam),
-    myADSR(std::move(adsr))
+    myADSR(std::move(adsr)),
+    undoManager(undoManager),
+    gestureCount(gestureCount)
 // clang-format on
 {
     parameters.addParameterListener (attackId, this);
@@ -311,11 +315,51 @@ void ADSRGraph::mouseDown (const juce::MouseEvent& event)
         selectedPoint = ReleaseCurve;
     else
         selectedPoint = None;
+
+    if (selectedPoint != None)
+    {
+        if (undoManager != nullptr)
+            undoManager->beginNewTransaction();
+        beginGesturesForSelectedPoint();
+        if (gestureCount != nullptr)
+            ++(*gestureCount);
+    }
 }
 
 void ADSRGraph::mouseUp (const juce::MouseEvent& event)
 {
+    if (!activeGestureParams.empty())
+    {
+        for (auto* p : activeGestureParams)
+            p->endChangeGesture();
+        activeGestureParams.clear();
+        if (gestureCount != nullptr)
+            --(*gestureCount);
+    }
     selectedPoint = None;
+}
+
+void ADSRGraph::beginGesturesForSelectedPoint()
+{
+    activeGestureParams.clear();
+    auto addParam = [this] (const juce::String& id) {
+        if (auto* p = parameters.getParameter (id))
+        {
+            p->beginChangeGesture();
+            activeGestureParams.push_back (p);
+        }
+    };
+
+    switch (selectedPoint)
+    {
+        case Attack:       addParam (attackId); break;
+        case AttackCurve:  addParam (attackCurveId); break;
+        case Decay:        addParam (decayId); addParam (sustainId); break;
+        case DecayCurve:   addParam (decayCurveId); break;
+        case Release:      addParam (releaseId); break;
+        case ReleaseCurve: addParam (releaseCurveId); break;
+        default: break;
+    }
 }
 
 void ADSRGraph::mouseDrag (const juce::MouseEvent& event)

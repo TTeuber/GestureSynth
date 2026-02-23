@@ -19,11 +19,15 @@ public:
     {
     }
 
-    WaveformComponent (juce::AudioProcessorValueTreeState& apvts)
+    WaveformComponent (juce::AudioProcessorValueTreeState& apvts,
+        juce::UndoManager* undoManager = nullptr,
+        std::atomic<int>* gestureCount = nullptr)
         : DualParameterComponent (
               apvts.getParameter ("oscWaveform"),
               apvts.getParameter ("pulseWidth"),
-              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("oscOn")))
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("oscOn")),
+              undoManager,
+              gestureCount)
     {
     }
 

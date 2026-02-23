@@ -4,7 +4,10 @@
 
 #include "HPFDisplay.h"
 
-HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts) : apvts (apvts)
+HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
+    juce::UndoManager* undoManager,
+    std::atomic<int>* gestureCount)
+    : apvts (apvts), undoManager (undoManager), gestureCount (gestureCount)
 {
     this->apvts.addParameterListener ("hpfFrequency", this);
     this->apvts.addParameterListener ("hpfOn", this);
@@ -47,6 +50,8 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
         auto* hpfOnParam = apvts.getParameter ("hpfOn");
         if (hpfOnParam != nullptr)
         {
+            if (undoManager != nullptr)
+                undoManager->beginNewTransaction();
             hpfOnParam->beginChangeGesture();
             hpfOnParam->setValueNotifyingHost (!hpfEnabled);
             hpfOnParam->endChangeGesture();
@@ -59,6 +64,13 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
         isDragging = true;
         dragStartPosition = e.position;
         dragStartDisplayX = static_cast<float> (freqToDisplayX (cutoffFrequency));
+
+        if (undoManager != nullptr)
+            undoManager->beginNewTransaction();
+        if (cutoffParam)
+            cutoffParam->beginChangeGesture();
+        if (gestureCount != nullptr)
+            ++(*gestureCount);
     }
 }
 
@@ -96,6 +108,13 @@ void HPFDisplay::mouseDrag (const juce::MouseEvent& e)
 void HPFDisplay::mouseUp (const juce::MouseEvent& e)
 {
     juce::ignoreUnused (e);
+    if (isDragging)
+    {
+        if (cutoffParam)
+            cutoffParam->endChangeGesture();
+        if (gestureCount != nullptr)
+            --(*gestureCount);
+    }
     isDragging = false;
 }
 

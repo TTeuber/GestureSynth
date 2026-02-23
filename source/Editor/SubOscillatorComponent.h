@@ -17,11 +17,15 @@ public:
         jassert (subOscParam->getName (15).contains ("Sub") && subOscWaveParam->getName (15).contains ("Wave"));
     }
 
-    SubOscillatorComponent (juce::AudioProcessorValueTreeState& apvts)
+    SubOscillatorComponent (juce::AudioProcessorValueTreeState& apvts,
+        juce::UndoManager* undoManager = nullptr,
+        std::atomic<int>* gestureCount = nullptr)
         : DualParameterComponent (
               apvts.getParameter ("subOsc"),
               apvts.getParameter ("subOscWave"),
-              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("subOn")))
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("subOn")),
+              undoManager,
+              gestureCount)
     {
     }
 

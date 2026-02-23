@@ -19,7 +19,9 @@ public:
         juce::StringRef sustainParam,
         juce::StringRef releaseParam,
         juce::StringRef releaseCurveParam,
-        std::shared_ptr<MyADSR*> adsr);
+        std::shared_ptr<MyADSR*> adsr,
+        juce::UndoManager* undoManager = nullptr,
+        std::atomic<int>* gestureCount = nullptr);
     ~ADSRGraph() override;
     void timerCallback() override;
     void parameterChanged (const juce::String& parameterID, float newValue) override;
@@ -112,4 +114,10 @@ private:
     float totalDuration = 1.0f;
 
     std::shared_ptr<MyADSR*> myADSR;
+
+    juce::UndoManager* undoManager = nullptr;
+    std::atomic<int>* gestureCount = nullptr;
+    std::vector<juce::RangedAudioParameter*> activeGestureParams;
+
+    void beginGesturesForSelectedPoint();
 };

@@ -72,7 +72,8 @@ bool PluginEditor::keyPressed (const juce::KeyPress& key)
 
 void PluginEditor::timerCallback()
 {
-    processorRef.undoManager.beginNewTransaction();
+    if (processorRef.activeGestureCount == 0)
+        processorRef.undoManager.beginNewTransaction();
 }
 
 void PluginEditor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)

@@ -3,7 +3,10 @@
 //
 
 #include "FilterDisplay.h"
-FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts) : apvts (apvts)
+FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
+    juce::UndoManager* undoManager,
+    std::atomic<int>* gestureCount)
+    : apvts (apvts), undoManager (undoManager), gestureCount (gestureCount)
 {
     // Add listeners to the parameters
     this->apvts.addParameterListener ("filterFrequency", this);
@@ -55,11 +58,11 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
 {
     if (e.mods.isRightButtonDown())
     {
-        // Get the current parameter
         auto* filterOnParam = apvts.getParameter ("filterOn");
         if (filterOnParam != nullptr)
         {
-            // Toggle the parameter and notify the host
+            if (undoManager != nullptr)
+                undoManager->beginNewTransaction();
             filterOnParam->beginChangeGesture();
             filterOnParam->setValueNotifyingHost (!filterEnabled);
             filterOnParam->endChangeGesture();
@@ -71,11 +74,18 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
     if (isMouseOverControlPoint (e.getPosition()))
     {
         isDragging = true;
-        // Store the original mouse position for fine control
         dragStartPosition = e.position;
-        // Store original parameter values for fine control
         dragStartCutoff = normalizedCutoff;
         dragStartResonance = normalizedResonance;
+
+        if (undoManager != nullptr)
+            undoManager->beginNewTransaction();
+        if (cutoffParam)
+            cutoffParam->beginChangeGesture();
+        if (resonanceParam)
+            resonanceParam->beginChangeGesture();
+        if (gestureCount != nullptr)
+            ++(*gestureCount);
     }
 }
 void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
@@ -110,13 +120,8 @@ void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
 
         if (cutoffParam && resonanceParam)
         {
-            // cutoffParam->beginChangeGesture();
             cutoffParam->setValueNotifyingHost (newCutoff);
-            // cutoffParam->endChangeGesture();
-
-            // resonanceParam->beginChangeGesture();
             resonanceParam->setValueNotifyingHost (newResonance);
-            // resonanceParam->endChangeGesture();
         }
 
         // Update the display
@@ -125,6 +130,15 @@ void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
 }
 void FilterDisplay::mouseUp (const juce::MouseEvent& e)
 {
+    if (isDragging)
+    {
+        if (cutoffParam)
+            cutoffParam->endChangeGesture();
+        if (resonanceParam)
+            resonanceParam->endChangeGesture();
+        if (gestureCount != nullptr)
+            --(*gestureCount);
+    }
     isDragging = false;
 }
 

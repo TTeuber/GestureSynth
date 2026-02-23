@@ -16,11 +16,15 @@ public:
     {
     }
 
-    explicit VibratoComponent (const juce::AudioProcessorValueTreeState& apvts)
+    explicit VibratoComponent (const juce::AudioProcessorValueTreeState& apvts,
+        juce::UndoManager* undoManager = nullptr,
+        std::atomic<int>* gestureCount = nullptr)
         : DualParameterComponent (
               apvts.getParameter ("vibratoDepth"),
               apvts.getParameter ("vibratoRate"),
-              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("vibratoOn")))
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("vibratoOn")),
+              undoManager,
+              gestureCount)
     {
     }
 
