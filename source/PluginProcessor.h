@@ -52,7 +52,8 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     juce::MidiKeyboardState keyboardState;
-    juce::AudioProcessorValueTreeState parameters { *this, nullptr, "parameters", createLayout() };
+    juce::UndoManager undoManager;
+    juce::AudioProcessorValueTreeState parameters { *this, &undoManager, "parameters", createLayout() };
 
     juce::ValueTree modTree { "modTree" };
 

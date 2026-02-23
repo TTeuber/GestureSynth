@@ -29,11 +29,15 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     addAndMakeVisible (tabbedComponent);
     addAndMakeVisible (keyboardComponent);
 
+    setWantsKeyboardFocus (true);
+    startTimer (500);
+
     setSize (windowWidth, windowHeight);
 }
 
 PluginEditor::~PluginEditor()
 {
+    stopTimer();
     processorRef.keyboardState.removeListener (this);
 }
 
@@ -49,6 +53,26 @@ void PluginEditor::resized()
     keyboardComponent.setBounds (keyboardContainer.reduced (10));
 
     tabbedComponent.setBounds (area);
+}
+
+bool PluginEditor::keyPressed (const juce::KeyPress& key)
+{
+    if (key == juce::KeyPress ('z', juce::ModifierKeys::commandModifier, 0))
+    {
+        processorRef.undoManager.undo();
+        return true;
+    }
+    if (key == juce::KeyPress ('z', juce::ModifierKeys::commandModifier | juce::ModifierKeys::shiftModifier, 0))
+    {
+        processorRef.undoManager.redo();
+        return true;
+    }
+    return false;
+}
+
+void PluginEditor::timerCallback()
+{
+    processorRef.undoManager.beginNewTransaction();
 }
 
 void PluginEditor::handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity)

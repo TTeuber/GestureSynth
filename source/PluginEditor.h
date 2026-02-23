@@ -9,7 +9,7 @@
 #define WIDTH 1100
 
 //==============================================================================
-class PluginEditor final : public juce::AudioProcessorEditor, public juce::MidiKeyboardStateListener
+class PluginEditor final : public juce::AudioProcessorEditor, public juce::MidiKeyboardStateListener, private juce::Timer
 {
 public:
     explicit PluginEditor (PluginProcessor&);
@@ -34,6 +34,9 @@ private:
     std::unique_ptr<ExperimentTabContent> experimentTab;
 
     juce::TabbedComponent tabbedComponent { juce::TabbedButtonBar::TabsAtTop };
+
+    bool keyPressed (const juce::KeyPress& key) override;
+    void timerCallback() override;
 
     void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
     void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/) override;
