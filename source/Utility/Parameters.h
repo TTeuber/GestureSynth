@@ -41,7 +41,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (make_unique<Parameter> (ParameterID ("oscDetune", 1), "Detune", 0.0f, 1.0f, 0.0f));
     layout.add (make_unique<Parameter> (ParameterID ("oscWidth", 1), "Width", 0.0f, 1.0f, 1.0f));
     layout.add (make_unique<Parameter> (ParameterID ("subOsc", 1), "Sub Level", 0.0f, 1.0f, 0.0f));
-    layout.add (make_unique<Parameter> (ParameterID ("subOscWave", 1), "Sub Wave", Normalize (1, 4, 1), 1.0f));
+    layout.add (make_unique<Parameter> (ParameterID ("subOscWave", 2), "Sub Wave", 0.0f, 1.0f, 0.0f));
     layout.add (make_unique<Parameter> (ParameterID ("fineTune", 1), "Fine Tune", -0.5f, 0.5f, 0.0f));
 
     // ================================================================================================================================================

@@ -36,103 +36,83 @@ public:
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
-        // Get the current wave type (1-4)
-        int waveType = static_cast<int> (std::round (param2Value * 3.0f)) + 1; // Map 0-1 to 1-4
+        drawMorphedWaveform (g, bounds, param1Value, param2Value);
+    }
 
-        // Get the current amplitude (0-1)
-        float amplitude = param1Value;
-
-        // Set up the path
-        juce::Path wavePath;
-
-        // Start at left side, middle height
-        float centerY = bounds.getCentreY();
-        wavePath.startNewSubPath (bounds.getX(), centerY);
-
-        // Draw the waveform
-        drawWaveform (wavePath, bounds, waveType, amplitude, centerY);
-
-        // Draw the path
-        // g.setColour (TEXT_COLOR);
-        g.strokePath (wavePath, juce::PathStrokeType (2.0f));
+    void drawVisualizationWithValues (juce::Graphics& g,
+        const juce::Rectangle<int>& bounds, float p1, float p2) const override
+    {
+        drawMorphedWaveform (g, bounds, p1, p2);
     }
 
     juce::String getParam2Text() const override
     {
-        const float wave = param2->convertFrom0to1 (param2Value);
-        if (wave == 1)
-            return "Wave: Sine";
-        if (wave == 2)
-            return "Wave: Triangle";
-        if (wave == 3)
-            return "Wave: Square";
-        if (wave == 4)
+        const float v = param2Value;
+        const float scaled = v * 3.0f;
+        const int seg = juce::jmin (2, static_cast<int> (scaled));
+        const float blend = scaled - static_cast<float> (seg);
+
+        static const char* names[] = { "Sine", "Triangle", "Square", "Saw" };
+
+        // At cardinal points, show just the wave name
+        if (blend < 0.01f)
+            return juce::String ("Wave: ") + names[seg];
+        if (seg == 2 && blend > 0.99f)
             return "Wave: Saw";
 
-        return "Error";
-    };
+        // Between cardinal points, show blend ratio
+        int pctA = juce::roundToInt ((1.0f - blend) * 100.0f);
+        int pctB = 100 - pctA;
+        return juce::String (names[seg]) + " " + juce::String (pctA) + "/" + juce::String (pctB) + " " + names[seg + 1];
+    }
 
 private:
-    static void drawWaveform (juce::Path& path, const juce::Rectangle<int>& bounds, int waveType, float amplitude, float centerY)
+    // Returns waveform sample at position t (0-1) for a given wave index
+    // 0=Sine, 1=Triangle, 2=Square, 3=Saw (down ramp)
+    static float getWaveformSample (int waveIndex, float t)
     {
-        const float width = bounds.getWidth();
-        const float maxHeight = bounds.getHeight() / 2.0f * amplitude;
-
-        switch (waveType)
+        switch (waveIndex)
         {
-            case 1: // Sine
-                for (int x = 0; x <= width; x += 2)
-                {
-                    float normalizedX = static_cast<float> (x) / width;
-                    float y = centerY - maxHeight * std::sin (normalizedX * juce::MathConstants<float>::twoPi);
-                    path.lineTo (bounds.getX() + x, y);
-                }
-                break;
-
-            case 2: // Triangle
-            {
-                // First quarter (rising)
-                path.lineTo (bounds.getX() + width * 0.25f, centerY - maxHeight);
-
-                // Second and third quarter (falling)
-                path.lineTo (bounds.getX() + width * 0.75f, centerY + maxHeight);
-
-                // Fourth quarter (rising back to center)
-                path.lineTo (bounds.getX() + width, centerY);
-            }
-            break;
-
-            case 3: // Square
-            {
-                // First half (high)
-                path.lineTo (bounds.getX(), centerY - maxHeight);
-                path.lineTo (bounds.getX() + width * 0.5f, centerY - maxHeight);
-
-                // Second half (low)
-                path.lineTo (bounds.getX() + width * 0.5f, centerY + maxHeight);
-                path.lineTo (bounds.getX() + width, centerY + maxHeight);
-                path.lineTo (bounds.getX() + width, centerY);
-            }
-            break;
-
-            case 4: // Saw
-            {
-                // Rising edge
-                path.lineTo (bounds.getX(), centerY + maxHeight);
-
-                // Falling edge (diagonal line from top to bottom)
-                path.lineTo (bounds.getX() + width, centerY - maxHeight);
-
-                // Back to center
-                path.lineTo (bounds.getX() + width, centerY);
-            }
-            break;
-
+            case 0: // Sine
+                return std::sin (t * juce::MathConstants<float>::twoPi);
+            case 1: // Triangle
+                return 2.0f * std::abs (2.0f * t - 1.0f) - 1.0f;
+            case 2: // Square
+                return (t < 0.5f) ? 1.0f : -1.0f;
+            case 3: // Saw (down ramp)
+                return 1.0f - 2.0f * t;
             default:
-            {
-                jassertfalse;
-                break;
-            }
+                return 0.0f;
         }
+    }
+
+    static void drawMorphedWaveform (juce::Graphics& g, const juce::Rectangle<int>& bounds,
+        float amplitude, float waveParam)
+    {
+        const float width = static_cast<float> (bounds.getWidth());
+        const float maxHeight = bounds.getHeight() / 2.0f * amplitude;
+        const float centerY = static_cast<float> (bounds.getCentreY());
+        const int numPoints = 128;
+
+        const float scaled = waveParam * 3.0f;
+        const int seg = juce::jmin (2, static_cast<int> (scaled));
+        const float blend = scaled - static_cast<float> (seg);
+
+        juce::Path wavePath;
+        wavePath.startNewSubPath (static_cast<float> (bounds.getX()), centerY);
+
+        for (int i = 0; i <= numPoints; ++i)
+        {
+            const float t = static_cast<float> (i) / static_cast<float> (numPoints);
+            const float sA = getWaveformSample (seg, t);
+            const float sB = getWaveformSample (seg + 1, t);
+            const float sample = sA + blend * (sB - sA);
+
+            const float x = static_cast<float> (bounds.getX()) + t * width;
+            const float y = centerY - maxHeight * sample;
+            wavePath.lineTo (x, y);
+        }
+
+        g.strokePath (wavePath, juce::PathStrokeType (2.0f));
     }
 };

@@ -9,14 +9,6 @@
 class JuneDCO final : public juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    // Define enum for waveform types
-    enum class SubWaveType {
-        Sine = 1,
-        Triangle = 2,
-        Square = 3,
-        Saw = 4
-    };
-
     JuneDCO (juce::AudioProcessorValueTreeState& p, DynamicParameter& pw, DynamicParameter& wf)
         : parameters (p), pulseWidth (pw), waveformMix (wf)
     {
@@ -64,9 +56,7 @@ public:
         }
         else if (parameterID == "subOscWave")
         {
-            // Handle sub-oscillator waveform change
-            int waveformValue = static_cast<int> (newValue);
-            subOscWaveform = static_cast<SubWaveType> (waveformValue);
+            subOscWaveformValue = newValue;
         }
         else if (parameterID == "oscOn")
         {
@@ -223,39 +213,50 @@ public:
         // Process sub oscillator if enabled
         if (subOscillatorEnabled)
         {
-            // Generate different waveforms based on subOscWaveform value
-            switch (subOscWaveform)
+            // Waveform generators with PolyBLEP where needed
+            auto genSine = [&]()
             {
-                case SubWaveType::Sine:
-                    // Sine wave: sin(2*PI*phase)
-                    subOutput = std::sin (2.0f * juce::MathConstants<float>::pi * subPhase);
-                    break;
+                return std::sin (2.0f * juce::MathConstants<float>::pi * subPhase);
+            };
 
-                case SubWaveType::Triangle:
-                    // Triangle wave: 2.0 * |2.0 * phase - 1.0| - 1.0
-                    subOutput = 2.0f * std::abs (2.0f * subPhase - 1.0f) - 1.0f;
-                    break;
+            auto genTriangle = [&]()
+            {
+                return 2.0f * std::abs (2.0f * subPhase - 1.0f) - 1.0f;
+            };
 
-                case SubWaveType::Square:
-                    // Square wave (original implementation)
-                    subOutput = (subPhase < 0.5) ? 1.0 : -1.0;
+            auto genSquare = [&]()
+            {
+                float sq = (subPhase < 0.5f) ? 1.0f : -1.0f;
+                if (subPhase < subPhaseIncrement)
+                    sq += polyBlep (subPhase, subPhaseIncrement);
+                if (subPhase > 0.5f && subPhase < 0.5f + subPhaseIncrement)
+                    sq -= polyBlep (subPhase - 0.5f, subPhaseIncrement);
+                return sq;
+            };
 
-                    // Apply PolyBLEP correction for sub-oscillator
-                    if (subPhase < subPhaseIncrement)
-                        subOutput += polyBlep (subPhase, subPhaseIncrement);
-                    if (subPhase > 0.5 && subPhase < 0.5 + subPhaseIncrement)
-                        subOutput -= polyBlep (subPhase - 0.5, subPhaseIncrement);
-                    break;
+            auto genSaw = [&]()
+            {
+                // Down ramp: 1 - 2*phase
+                float saw = 1.0f - 2.0f * subPhase;
+                if (previousSubPhase > subPhase)
+                    saw += polyBlep (subPhase, subPhaseIncrement);
+                return saw;
+            };
 
-                case SubWaveType::Saw:
-                    // Sawtooth wave: 2.0 * phase - 1.0
-                    subOutput = 2.0f * subPhase - 1.0f;
+            // Segment mapping: 0.0=Sine, 1/3=Triangle, 2/3=Square, 1.0=Saw
+            const float scaled = subOscWaveformValue * 3.0f;
+            const int seg = juce::jmin (2, static_cast<int> (scaled));
+            const float blend = scaled - static_cast<float> (seg);
 
-                    // Apply PolyBLEP correction at discontinuity
-                    if (previousSubPhase > subPhase)
-                        subOutput -= polyBlep (subPhase, subPhaseIncrement);
-                    break;
+            float waveA, waveB;
+            switch (seg)
+            {
+                case 0: waveA = genSine(); waveB = genTriangle(); break;
+                case 1: waveA = genTriangle(); waveB = genSquare(); break;
+                case 2: waveA = genSquare(); waveB = genSaw(); break;
+                default: waveA = genSine(); waveB = genSine(); break;
             }
+            subOutput = waveA + blend * (waveB - waveA);
         }
 
         // Mix waveforms
@@ -345,7 +346,7 @@ private:
     bool oscillatorEnabled = true; // Default to on
     bool subOscillatorEnabled = true; // Default to on
     bool detuneEnabled = true; // Default to on
-    SubWaveType subOscWaveform = SubWaveType::Square; // Default to square wave
+    float subOscWaveformValue = 0.0f; // Continuous: 0=Sine, 1/3=Tri, 2/3=Sq, 1=Saw
     // size_t numSamples = 512;
     juce::dsp::Oversampling<float> oversampling = juce::dsp::Oversampling<float> (
         2,     // numChannels (stereo)
