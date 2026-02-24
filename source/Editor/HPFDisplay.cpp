@@ -348,8 +348,6 @@ void HPFDisplay::drawModModeOverlay (juce::Graphics& g) const
     auto sourceID = modModeState->getTargetSourceID();
     float depth = modModeState->getDepth (sourceID, "hpfFrequency");
 
-    if (std::abs (depth) < 0.001f)
-        return;
 
     bool bipolar = modModeState->isBipolar (sourceID, "hpfFrequency");
 

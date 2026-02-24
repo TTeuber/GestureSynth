@@ -185,23 +185,7 @@ public:
             if (!isActive)
                 return;
 
-            auto sourceID = modModeState->getTargetSourceID();
-
-            // Try to get or create slots for each dest
-            if (param1DestID.isNotEmpty())
-            {
-                int slot = modModeState->getOrCreateSlot (sourceID, param1DestID);
-                if (slot < 0)
-                    return; // no free slots
-                modDragInitialDepth1 = modModeState->getDepth (sourceID, param1DestID);
-            }
-            if (param2DestID.isNotEmpty())
-            {
-                int slot = modModeState->getOrCreateSlot (sourceID, param2DestID);
-                if (slot < 0)
-                    return;
-                modDragInitialDepth2 = modModeState->getDepth (sourceID, param2DestID);
-            }
+            modDragSourceID = modModeState->getTargetSourceID();
 
             mouseDownX = e.x;
             mouseDownY = e.y;
@@ -237,7 +221,7 @@ public:
     {
         if (isModDragging && modModeState != nullptr)
         {
-            auto sourceID = modModeState->getTargetSourceID();
+            const auto& sourceID = modDragSourceID;
             const auto bounds = getLocalBounds();
             const int absX = std::abs (e.x - mouseDownX);
             const int absY = std::abs (e.y - mouseDownY);
@@ -249,16 +233,24 @@ public:
             if (!wasModParam1Engaged && param1DestID.isNotEmpty()
                 && absY >= (wasModEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
             {
-                modParam1Engaged = true;
-                modParam1RefY = e.y;
-                modDragInitialDepth1 = modModeState->getDepth (sourceID, param1DestID);
+                int slot = modModeState->getOrCreateSlot (sourceID, param1DestID);
+                if (slot >= 0)
+                {
+                    modParam1Engaged = true;
+                    modParam1RefY = e.y;
+                    modDragInitialDepth1 = modModeState->getDepth (sourceID, param1DestID);
+                }
             }
             if (!wasModParam2Engaged && param2DestID.isNotEmpty()
                 && absX >= (wasModEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
             {
-                modParam2Engaged = true;
-                modParam2RefX = e.x;
-                modDragInitialDepth2 = modModeState->getDepth (sourceID, param2DestID);
+                int slot = modModeState->getOrCreateSlot (sourceID, param2DestID);
+                if (slot >= 0)
+                {
+                    modParam2Engaged = true;
+                    modParam2RefX = e.x;
+                    modDragInitialDepth2 = modModeState->getDepth (sourceID, param2DestID);
+                }
             }
 
             if (modParam1Engaged && param1DestID.isNotEmpty())
@@ -429,8 +421,6 @@ private:
         float depth1 = param1DestID.isNotEmpty() ? modModeState->getDepth (sourceID, param1DestID) : 0.0f;
         float depth2 = param2DestID.isNotEmpty() ? modModeState->getDepth (sourceID, param2DestID) : 0.0f;
 
-        if (std::abs (depth1) < 0.001f && std::abs (depth2) < 0.001f)
-            return;
 
         bool bipolar1 = param1DestID.isNotEmpty() && modModeState->isBipolar (sourceID, param1DestID);
         bool bipolar2 = param2DestID.isNotEmpty() && modModeState->isBipolar (sourceID, param2DestID);
@@ -456,6 +446,7 @@ private:
     // Mouse drag tracking
     bool isDragging = false;
     bool isModDragging = false;
+    juce::String modDragSourceID;
     int mouseDownX = 0;
     int mouseDownY = 0;
     float initialParam1Value = 0.0f;

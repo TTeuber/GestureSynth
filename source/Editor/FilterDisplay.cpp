@@ -474,8 +474,6 @@ void FilterDisplay::drawModModeOverlay (juce::Graphics& g) const
     float cutoffDepth = modModeState->getDepth (sourceID, "filterFrequency");
     float resDepth = modModeState->getDepth (sourceID, "filterResonance");
 
-    if (std::abs (cutoffDepth) < 0.001f && std::abs (resDepth) < 0.001f)
-        return;
 
     bool bipolarCutoff = modModeState->isBipolar (sourceID, "filterFrequency");
     bool bipolarRes = modModeState->isBipolar (sourceID, "filterResonance");
