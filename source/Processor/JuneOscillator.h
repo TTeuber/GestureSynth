@@ -9,13 +9,11 @@
 class JuneDCO final : public juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    JuneDCO (juce::AudioProcessorValueTreeState& p, DynamicParameter& pw, DynamicParameter& wf)
-        : parameters (p), pulseWidth (pw), waveformMix (wf)
+    JuneDCO (juce::AudioProcessorValueTreeState& p, DynamicParameter& pw, DynamicParameter& wf,
+        DynamicParameter& dt, DynamicParameter& ow, DynamicParameter& so, DynamicParameter& sw)
+        : parameters (p), pulseWidth (pw), waveformMix (wf),
+          detuneParam (dt), widthParam (ow), subOscParam (so), subOscWaveParam (sw)
     {
-        parameters.addParameterListener ("oscDetune", this);
-        parameters.addParameterListener ("oscWidth", this);
-        parameters.addParameterListener ("subOsc", this);
-        parameters.addParameterListener ("subOscWave", this);
         parameters.addParameterListener ("oscOn", this);
         parameters.addParameterListener ("subOn", this);
         parameters.addParameterListener ("detuneOn", this);
@@ -24,10 +22,6 @@ public:
     }
     ~JuneDCO() override
     {
-        parameters.removeParameterListener ("oscDetune", this);
-        parameters.removeParameterListener ("oscWidth", this);
-        parameters.removeParameterListener ("subOsc", this);
-        parameters.removeParameterListener ("subOscWave", this);
         parameters.removeParameterListener ("oscOn", this);
         parameters.removeParameterListener ("subOn", this);
         parameters.removeParameterListener ("detuneOn", this);
@@ -35,30 +29,7 @@ public:
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
     {
-        if (parameterID == "oscDetune")
-        {
-            // Handle detune change if needed
-            detune = newValue;
-            frequencyL = frequency * std::pow (2, detune * detuneAmount / 12.0f);
-            frequencyR = frequency * std::pow (2, -(detune * detuneAmount) / 12.0f);
-            const float oversampledSampleRate = sampleRate * static_cast<float> (oversampling.getOversamplingFactor());
-            phaseIncrementL = frequencyL / oversampledSampleRate;
-            phaseIncrementR = frequencyR / oversampledSampleRate;
-        }
-        else if (parameterID == "oscWidth")
-        {
-            stereoWidth = newValue;
-        }
-        else if (parameterID == "subOsc")
-        {
-            // Handle sub-oscillator level change if needed
-            subLevel = newValue;
-        }
-        else if (parameterID == "subOscWave")
-        {
-            subOscWaveformValue = newValue;
-        }
-        else if (parameterID == "oscOn")
+        if (parameterID == "oscOn")
         {
             oscillatorEnabled = newValue > 0.5f;
         }
@@ -95,8 +66,9 @@ public:
     void setFrequency (const float freq)
     {
         frequency = freq;
-        frequencyL = frequency * std::pow (2, detune * detuneAmount / 12.0f);
-        frequencyR = frequency * std::pow (2, -(detune * detuneAmount) / 12.0f);
+        const float currentDetune = detuneParam.getCurrentValue();
+        frequencyL = frequency * std::pow (2, currentDetune * detuneAmount / 12.0f);
+        frequencyR = frequency * std::pow (2, -(currentDetune * detuneAmount) / 12.0f);
         const float oversampledSampleRate = sampleRate * static_cast<float> (oversampling.getOversamplingFactor());
         phaseIncrement = frequency / oversampledSampleRate;
         phaseIncrementL = frequencyL / oversampledSampleRate;
@@ -244,7 +216,7 @@ public:
             };
 
             // Segment mapping: 0.0=Sine, 1/3=Triangle, 2/3=Square, 1.0=Saw
-            const float scaled = subOscWaveformValue * 3.0f;
+            const float scaled = subOscWaveParam.getCurrentValue() * 3.0f;
             const int seg = juce::jmin (2, static_cast<int> (scaled));
             const float blend = scaled - static_cast<float> (seg);
 
@@ -265,24 +237,27 @@ public:
         const float livePulseLevel = currentWaveformMix;
         float outputL, outputR;
 
+        const float currentSubLevel = subOscParam.getCurrentValue();
+        const float currentStereoWidth = widthParam.getCurrentValue();
+
         if (detuneEnabled)
         {
             // Mix stereo signals
-            float leftSignal = sawOutputL * liveSawLevel + pulseOutputL * livePulseLevel + subOutput * subLevel;
-            float rightSignal = sawOutputR * liveSawLevel + pulseOutputR * livePulseLevel + subOutput * subLevel;
+            float leftSignal = sawOutputL * liveSawLevel + pulseOutputL * livePulseLevel + subOutput * currentSubLevel;
+            float rightSignal = sawOutputR * liveSawLevel + pulseOutputR * livePulseLevel + subOutput * currentSubLevel;
 
             // Apply stereo width
             // When stereoWidth is 0, both channels should be the same (mono)
             // When stereoWidth is 1, channels are fully separated
             float monoSignal = (leftSignal + rightSignal) * 0.5f;
 
-            outputL = monoSignal * (1.0f - stereoWidth) + leftSignal * stereoWidth;
-            outputR = monoSignal * (1.0f - stereoWidth) + rightSignal * stereoWidth;
+            outputL = monoSignal * (1.0f - currentStereoWidth) + leftSignal * currentStereoWidth;
+            outputR = monoSignal * (1.0f - currentStereoWidth) + rightSignal * currentStereoWidth;
         }
         else
         {
             // Mix mono signal
-            float monoOut = sawOutput * liveSawLevel + pulseOutput * livePulseLevel + subOutput * subLevel;
+            float monoOut = sawOutput * liveSawLevel + pulseOutput * livePulseLevel + subOutput * currentSubLevel;
             outputL = monoOut;
             outputR = monoOut;
         }
@@ -292,7 +267,7 @@ public:
         if (oscillatorEnabled)
             activeMixSum += liveSawLevel + livePulseLevel;
         if (subOscillatorEnabled)
-            activeMixSum += subLevel;
+            activeMixSum += currentSubLevel;
 
         if (activeMixSum > 0.0f)
         {
@@ -339,14 +314,14 @@ private:
     float subPhaseIncrement = 0.0;
     DynamicParameter& pulseWidth;
     DynamicParameter& waveformMix;
-    float subLevel = 0.0f;
-    float detune = 0.0f;
+    DynamicParameter& detuneParam;
+    DynamicParameter& widthParam;
+    DynamicParameter& subOscParam;
+    DynamicParameter& subOscWaveParam;
     float detuneAmount = 0.25f;
-    float stereoWidth = 1.0f;
     bool oscillatorEnabled = true; // Default to on
     bool subOscillatorEnabled = true; // Default to on
     bool detuneEnabled = true; // Default to on
-    float subOscWaveformValue = 0.0f; // Continuous: 0=Sine, 1/3=Tri, 2/3=Sq, 1=Saw
     // size_t numSamples = 512;
     juce::dsp::Oversampling<float> oversampling = juce::dsp::Oversampling<float> (
         2,     // numChannels (stereo)

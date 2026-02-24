@@ -6,7 +6,7 @@
 
 #include "Utility/DualParameterComponent.h"
 
-class VibratoComponent final : public DualParameterComponent
+class VibratoComponent final : public DualParameterComponent, private juce::Timer
 {
 public:
     VibratoComponent (juce::RangedAudioParameter* depthParam,
@@ -16,32 +16,82 @@ public:
     {
     }
 
-    explicit VibratoComponent (const juce::AudioProcessorValueTreeState& apvts,
+    VibratoComponent (const juce::AudioProcessorValueTreeState& apvts,
         juce::UndoManager* undoManager = nullptr,
         std::atomic<int>* gestureCount = nullptr,
-        ModulationModeState* modModeState = nullptr)
+        std::atomic<float>* modDepthOutput = nullptr,
+        std::atomic<float>* modRateOutput = nullptr,
+        ModulationModeState* modModeState = nullptr,
+        const juce::String& param1DestID = {},
+        const juce::String& param2DestID = {})
         : DualParameterComponent (
               apvts.getParameter ("vibratoDepth"),
               apvts.getParameter ("vibratoRate"),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("vibratoOn")),
               undoManager,
               gestureCount,
-              modModeState)
+              modModeState,
+              param1DestID,
+              param2DestID),
+          modDepthOutput (modDepthOutput),
+          modRateOutput (modRateOutput)
     {
+        if (modDepthOutput != nullptr || modRateOutput != nullptr)
+            startTimerHz (30);
     }
 
-    ~VibratoComponent() override = default;
+    ~VibratoComponent() override { stopTimer(); }
 
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
-        g.setColour (TEXT_COLOR);
         g.setOpacity (isActive ? 1.0f : 0.5f);
 
-        constexpr float strokeThickness = 1.5f;
+        // Draw ghost path at modulated values (behind main)
+        if ((modDepthOutput != nullptr || modRateOutput != nullptr)
+            && (std::abs (modulatedDepth - param1Value) > 0.001f
+                || std::abs (modulatedRate - param2Value) > 0.001f))
+        {
+            g.setColour (TEXT_COLOR.withAlpha (0.25f));
+            drawVibratoPath (g, bounds, modulatedDepth, modulatedRate);
+        }
 
-        const float depth = param1Value;
-        const float rate = param2Value;
+        g.setColour (TEXT_COLOR);
+        drawVibratoPath (g, bounds, param1Value, param2Value);
+    }
+
+    void drawVisualizationWithValues (juce::Graphics& g,
+        const juce::Rectangle<int>& bounds, float p1, float p2) const override
+    {
+        drawVibratoPath (g, bounds, p1, p2);
+    }
+
+private:
+    std::atomic<float>* modDepthOutput = nullptr;
+    std::atomic<float>* modRateOutput = nullptr;
+    float modulatedDepth = 0.0f;
+    float modulatedRate = 0.0f;
+
+    void timerCallback() override
+    {
+        constexpr float alpha = 0.3f;
+        if (modDepthOutput != nullptr)
+        {
+            float target = modDepthOutput->load (std::memory_order_relaxed);
+            modulatedDepth += alpha * (target - modulatedDepth);
+        }
+        if (modRateOutput != nullptr)
+        {
+            float target = modRateOutput->load (std::memory_order_relaxed);
+            modulatedRate += alpha * (target - modulatedRate);
+        }
+        repaint();
+    }
+
+    static void drawVibratoPath (juce::Graphics& g, const juce::Rectangle<int>& bounds,
+        float depth, float rate)
+    {
+        constexpr float strokeThickness = 1.5f;
 
         const float rateFactor = 0.25f + rate * 0.5f;
         const float normFactor = 0.75f / (1.0f + depth);
@@ -66,6 +116,7 @@ protected:
         g.strokePath (path, juce::PathStrokeType (strokeThickness));
     }
 
+protected:
     juce::String getParam1Text() const override
     {
         const float depthSemitones = param1->convertFrom0to1 (param1Value);

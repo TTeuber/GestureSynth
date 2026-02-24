@@ -86,8 +86,6 @@ public:
 
     void resetModOutputs() { modMatrix.resetOutputs(); }
 
-    void setVibratoRate (float rate) { vibrato.setRate (rate); }
-    void setVibratoDepth (float depth) { vibrato.setDepth (depth); }
     void setVibratoEnabled (bool enabled) { vibrato.setEnabled (enabled); }
 
     [[nodiscard]] int getWavelength() const
@@ -103,7 +101,11 @@ private:
 
     DynamicParameter pulseWidth = DynamicParameter (parameters.getParameter ("pulseWidth"));
     DynamicParameter oscWaveform = DynamicParameter (parameters.getParameter ("oscWaveform"));
-    JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth, oscWaveform);
+    DynamicParameter oscDetune = DynamicParameter (parameters.getParameter ("oscDetune"));
+    DynamicParameter oscWidth = DynamicParameter (parameters.getParameter ("oscWidth"));
+    DynamicParameter subOsc = DynamicParameter (parameters.getParameter ("subOsc"));
+    DynamicParameter subOscWave = DynamicParameter (parameters.getParameter ("subOscWave"));
+    JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth, oscWaveform, oscDetune, oscWidth, subOsc, subOscWave);
 
     std::array<MyLFO, 4> lfos = {
         MyLFO { "lfo1", "LFO 1", 1.0f },
@@ -111,6 +113,11 @@ private:
         MyLFO { "lfo3", "LFO 3", 1.0f },
         MyLFO { "lfo4", "LFO 4", 1.0f }
     };
+
+    DynamicParameter vibratoDepthParam = DynamicParameter (parameters.getParameter ("vibratoDepth"));
+    DynamicParameter vibratoRateParam = DynamicParameter (parameters.getParameter ("vibratoRate"));
+    DynamicParameter chorusDepthParam = DynamicParameter (parameters.getParameter ("chorusDepth"));
+    DynamicParameter chorusRateParam = DynamicParameter (parameters.getParameter ("chorusRate"));
 
     DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
 
@@ -220,7 +227,15 @@ private:
         { hpfCutoff.getID(), &hpfCutoff },
         { fineTuneParam.getID(), &fineTuneParam },
         { pulseWidth.getID(), &pulseWidth },
-        { oscWaveform.getID(), &oscWaveform }
+        { oscWaveform.getID(), &oscWaveform },
+        { oscDetune.getID(), &oscDetune },
+        { oscWidth.getID(), &oscWidth },
+        { subOsc.getID(), &subOsc },
+        { subOscWave.getID(), &subOscWave },
+        { vibratoDepthParam.getID(), &vibratoDepthParam },
+        { vibratoRateParam.getID(), &vibratoRateParam },
+        { chorusDepthParam.getID(), &chorusDepthParam },
+        { chorusRateParam.getID(), &chorusRateParam }
     };
 
     // Cache of source/dest per slot for correct removal on property change

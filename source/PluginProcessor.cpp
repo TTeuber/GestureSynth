@@ -184,6 +184,15 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     synth.resetOutputsIfIdle();
 
+    // Apply modulated chorus depth/rate from mod matrix (last-voice-wins)
+    // modDestOutputs stores normalized 0-1 values; convert to actual parameter range
+    {
+        auto* depthParam = parameters.getParameter ("chorusDepth");
+        auto* rateParam = parameters.getParameter ("chorusRate");
+        chorus.setDepth (depthParam->convertFrom0to1 (modDestOutputs[12].load (std::memory_order_relaxed)));
+        chorus.setRate (rateParam->convertFrom0to1 (modDestOutputs[13].load (std::memory_order_relaxed)));
+    }
+
     chorus.process (buffer);
 
     // Soft-clip the output to tame peaks from polyphonic voice summing

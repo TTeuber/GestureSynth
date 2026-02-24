@@ -10,10 +10,10 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
       waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[4], &p.modDestOutputs[5], modState, "oscWaveform", "pulseWidth"),
       filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[0], &p.modDestOutputs[1], modState),
       hpfDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
-      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
-      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
-      chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
-      vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
+      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[8], &p.modDestOutputs[9], modState, "subOsc", "subOscWave"),
+      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[6], &p.modDestOutputs[7], modState, "oscDetune", "oscWidth"),
+      chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[12], &p.modDestOutputs[13], modState, "chorusDepth", "chorusRate"),
+      vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[10], &p.modDestOutputs[11], modState, "vibratoDepth", "vibratoRate"),
       volumeComponent (p.parameters.getParameter ("volume"), &p.undoManager, &p.activeGestureCount, modState),
       noiseComponent (p.parameters.getParameter ("noiseLevel"), &p.undoManager, &p.activeGestureCount, modState),
       chorusMixComponent (p.parameters.getParameter ("chorusMix"), &p.undoManager, &p.activeGestureCount, modState),
@@ -165,8 +165,8 @@ void MainTabContent::resized()
 
 OscillatorTabContent::OscillatorTabContent (PluginProcessor& p)
     : waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[4], &p.modDestOutputs[5]),
-      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
-      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[6], &p.modDestOutputs[7]),
+      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[8], &p.modDestOutputs[9]),
       oscilloscope (p)
 {
     addAndMakeVisible (waveformComponent);
@@ -221,8 +221,8 @@ void ModulationTabContent::resized()
 
 EffectsTabContent::EffectsTabContent (PluginProcessor& p)
     : filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[0], &p.modDestOutputs[1]),
-      chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
-      vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
+      chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[12], &p.modDestOutputs[13]),
+      vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[10], &p.modDestOutputs[11]),
       volumeComponent (p.parameters.getParameter ("volume"), &p.undoManager, &p.activeGestureCount),
       noiseComponent (p.parameters.getParameter ("noiseLevel"), &p.undoManager, &p.activeGestureCount),
       chorusMixComponent (p.parameters.getParameter ("chorusMix"), &p.undoManager, &p.activeGestureCount),

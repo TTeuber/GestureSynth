@@ -80,8 +80,6 @@ private:
     bool monoMode = false;
     bool legatoMode = false;
 
-    float vibratoRate = 5.0f;
-    float vibratoDepth = 0.0f;
     bool vibratoOn = false;
 
     std::shared_ptr<MyADSR*> ampEnvPtr = std::make_shared<MyADSR*>();

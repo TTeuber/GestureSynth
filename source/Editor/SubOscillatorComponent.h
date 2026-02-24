@@ -6,7 +6,7 @@
 
 #include "Utility/DualParameterComponent.h"
 
-class SubOscillatorComponent : public DualParameterComponent
+class SubOscillatorComponent : public DualParameterComponent, private juce::Timer
 {
 public:
     SubOscillatorComponent (juce::RangedAudioParameter* subOscParam,
@@ -20,22 +20,42 @@ public:
     SubOscillatorComponent (juce::AudioProcessorValueTreeState& apvts,
         juce::UndoManager* undoManager = nullptr,
         std::atomic<int>* gestureCount = nullptr,
-        ModulationModeState* modModeState = nullptr)
+        std::atomic<float>* modSubOscOutput = nullptr,
+        std::atomic<float>* modSubOscWaveOutput = nullptr,
+        ModulationModeState* modModeState = nullptr,
+        const juce::String& param1DestID = {},
+        const juce::String& param2DestID = {})
         : DualParameterComponent (
               apvts.getParameter ("subOsc"),
               apvts.getParameter ("subOscWave"),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("subOn")),
               undoManager,
               gestureCount,
-              modModeState)
+              modModeState,
+              param1DestID,
+              param2DestID),
+          modSubOscOutput (modSubOscOutput),
+          modSubOscWaveOutput (modSubOscWaveOutput)
     {
+        if (modSubOscOutput != nullptr || modSubOscWaveOutput != nullptr)
+            startTimerHz (30);
     }
 
-    ~SubOscillatorComponent() override = default;
+    ~SubOscillatorComponent() override { stopTimer(); }
 
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
+        // Draw ghost path at modulated values (behind main)
+        if ((modSubOscOutput != nullptr || modSubOscWaveOutput != nullptr)
+            && (std::abs (modulatedSubOsc - param1Value) > 0.001f
+                || std::abs (modulatedSubOscWave - param2Value) > 0.001f))
+        {
+            g.setColour (TEXT_COLOR.withAlpha (0.25f));
+            drawMorphedWaveform (g, bounds, modulatedSubOsc, modulatedSubOscWave);
+        }
+
+        g.setColour (TEXT_COLOR);
         drawMorphedWaveform (g, bounds, param1Value, param2Value);
     }
 
@@ -67,6 +87,27 @@ protected:
     }
 
 private:
+    std::atomic<float>* modSubOscOutput = nullptr;
+    std::atomic<float>* modSubOscWaveOutput = nullptr;
+    float modulatedSubOsc = 0.0f;
+    float modulatedSubOscWave = 0.0f;
+
+    void timerCallback() override
+    {
+        constexpr float alpha = 0.3f;
+        if (modSubOscOutput != nullptr)
+        {
+            float target = modSubOscOutput->load (std::memory_order_relaxed);
+            modulatedSubOsc += alpha * (target - modulatedSubOsc);
+        }
+        if (modSubOscWaveOutput != nullptr)
+        {
+            float target = modSubOscWaveOutput->load (std::memory_order_relaxed);
+            modulatedSubOscWave += alpha * (target - modulatedSubOscWave);
+        }
+        repaint();
+    }
+
     // Returns waveform sample at position t (0-1) for a given wave index
     // 0=Sine, 1=Triangle, 2=Square, 3=Saw (down ramp)
     static float getWaveformSample (int waveIndex, float t)

@@ -34,6 +34,14 @@ MySynthVoice::MySynthVoice (
     fineTuneParam.setOutputIndex (3);
     pulseWidth.setOutputIndex (4);
     oscWaveform.setOutputIndex (5);
+    oscDetune.setOutputIndex (6);
+    oscWidth.setOutputIndex (7);
+    subOsc.setOutputIndex (8);
+    subOscWave.setOutputIndex (9);
+    vibratoDepthParam.setOutputIndex (10);
+    vibratoRateParam.setOutputIndex (11);
+    chorusDepthParam.setOutputIndex (12);
+    chorusRateParam.setOutputIndex (13);
 
     // Initialize slotCache from modTree
     for (int i = 0; i < modTree.getNumChildren() && i < static_cast<int> (slotCache.size()); ++i)
@@ -128,6 +136,9 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
         adsr4.getNextValue();
 
         modMatrix.processSample();
+
+        vibrato.setDepth (vibratoDepthParam.getCurrentValue());
+        vibrato.setRate (vibratoRateParam.getCurrentValue());
 
         if (currentEnvVal < targetEnvVal)
             currentEnvVal = juce::jmin (currentEnvVal + slewRate, targetEnvVal);

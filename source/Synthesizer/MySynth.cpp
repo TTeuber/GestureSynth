@@ -108,20 +108,6 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
     monoMode = *parameters.getRawParameterValue ("monoOn") > 0.5f;
     legatoMode = *parameters.getRawParameterValue ("legatoOn") > 0.5f;
 
-    const float newVibratoRate = *parameters.getRawParameterValue ("vibratoRate");
-    if (vibratoRate != newVibratoRate)
-    {
-        vibratoRate = newVibratoRate;
-        applyToAllVoices ([newVibratoRate] (MySynthVoice* voice) { voice->setVibratoRate (newVibratoRate); });
-    }
-
-    const float newVibratoDepth = *parameters.getRawParameterValue ("vibratoDepth");
-    if (vibratoDepth != newVibratoDepth)
-    {
-        vibratoDepth = newVibratoDepth;
-        applyToAllVoices ([newVibratoDepth] (MySynthVoice* voice) { voice->setVibratoDepth (newVibratoDepth); });
-    }
-
     const bool newVibratoOn = *parameters.getRawParameterValue ("vibratoOn") > 0.5f;
     if (vibratoOn != newVibratoOn)
     {

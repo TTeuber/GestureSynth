@@ -206,6 +206,8 @@ public:
             mouseDownX = e.x;
             mouseDownY = e.y;
             isModDragging = true;
+            modParam1Engaged = false;
+            modParam2Engaged = false;
             return;
         }
 
@@ -227,6 +229,8 @@ public:
             ++(*gestureCount);
 
         isDragging = true;
+        param1Engaged = false;
+        param2Engaged = false;
     }
 
     void mouseDrag (const juce::MouseEvent& e) override
@@ -235,16 +239,37 @@ public:
         {
             auto sourceID = modModeState->getTargetSourceID();
             const auto bounds = getLocalBounds();
+            const int absX = std::abs (e.x - mouseDownX);
+            const int absY = std::abs (e.y - mouseDownY);
 
-            if (param1DestID.isNotEmpty())
+            const bool wasModParam1Engaged = modParam1Engaged;
+            const bool wasModParam2Engaged = modParam2Engaged;
+            const bool wasModEitherEngaged = wasModParam1Engaged || wasModParam2Engaged;
+
+            if (!wasModParam1Engaged && param1DestID.isNotEmpty()
+                && absY >= (wasModEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
             {
-                float verticalDelta = (mouseDownY - e.y) / (bounds.getHeight() - padding);
+                modParam1Engaged = true;
+                modParam1RefY = e.y;
+                modDragInitialDepth1 = modModeState->getDepth (sourceID, param1DestID);
+            }
+            if (!wasModParam2Engaged && param2DestID.isNotEmpty()
+                && absX >= (wasModEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
+            {
+                modParam2Engaged = true;
+                modParam2RefX = e.x;
+                modDragInitialDepth2 = modModeState->getDepth (sourceID, param2DestID);
+            }
+
+            if (modParam1Engaged && param1DestID.isNotEmpty())
+            {
+                float verticalDelta = (modParam1RefY - e.y) / (bounds.getHeight() - padding);
                 float newDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialDepth1 + verticalDelta);
                 modModeState->setDepth (sourceID, param1DestID, newDepth);
             }
-            if (param2DestID.isNotEmpty())
+            if (modParam2Engaged && param2DestID.isNotEmpty())
             {
-                float horizontalDelta = (e.x - mouseDownX) / (bounds.getWidth() - padding);
+                float horizontalDelta = (e.x - modParam2RefX) / (bounds.getWidth() - padding);
                 float newDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialDepth2 + horizontalDelta);
                 modModeState->setDepth (sourceID, param2DestID, newDepth);
             }
@@ -257,18 +282,36 @@ public:
             return;
 
         const auto bounds = getLocalBounds();
+        const int absX = std::abs (e.x - mouseDownX);
+        const int absY = std::abs (e.y - mouseDownY);
 
-        // Calculate vertical movement for parameter 1
-        const float verticalDelta = (mouseDownY - e.y) / (bounds.getHeight() - padding);
-        const float newParam1Value = juce::jlimit (0.0f, 1.0f, initialParam1Value + verticalDelta);
+        const bool wasParam1Engaged = param1Engaged;
+        const bool wasParam2Engaged = param2Engaged;
+        const bool wasEitherEngaged = wasParam1Engaged || wasParam2Engaged;
 
-        // Calculate horizontal movement for parameter 2
-        const float horizontalDelta = (e.x - mouseDownX) / (bounds.getWidth() - padding);
-        const float newParam2Value = juce::jlimit (0.0f, 1.0f, initialParam2Value + horizontalDelta);
+        if (!wasParam1Engaged && absY >= (wasEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
+        {
+            param1Engaged = true;
+            param1RefY = e.y;
+            initialParam1Value = param1Value;
+        }
+        if (!wasParam2Engaged && absX >= (wasEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
+        {
+            param2Engaged = true;
+            param2RefX = e.x;
+            initialParam2Value = param2Value;
+        }
 
-        // Update parameters
-        param1->setValueNotifyingHost (newParam1Value);
-        param2->setValueNotifyingHost (newParam2Value);
+        if (param1Engaged)
+        {
+            const float verticalDelta = (param1RefY - e.y) / (bounds.getHeight() - padding);
+            param1->setValueNotifyingHost (juce::jlimit (0.0f, 1.0f, initialParam1Value + verticalDelta));
+        }
+        if (param2Engaged)
+        {
+            const float horizontalDelta = (e.x - param2RefX) / (bounds.getWidth() - padding);
+            param2->setValueNotifyingHost (juce::jlimit (0.0f, 1.0f, initialParam2Value + horizontalDelta));
+        }
     }
 
     void mouseUp (const juce::MouseEvent&) override
@@ -419,4 +462,18 @@ private:
     float initialParam2Value = 0.0f;
     float modDragInitialDepth1 = 0.0f;
     float modDragInitialDepth2 = 0.0f;
+
+    // Axis-locking dead zone
+    bool param1Engaged = false;
+    bool param2Engaged = false;
+    int param1RefY = 0;
+    int param2RefX = 0;
+
+    bool modParam1Engaged = false;
+    bool modParam2Engaged = false;
+    int modParam1RefY = 0;
+    int modParam2RefX = 0;
+
+    static constexpr int kPrimaryThreshold = 4;
+    static constexpr int kSecondaryThreshold = 12;
 };

@@ -6,7 +6,7 @@
 
 #include "Utility/DualParameterComponent.h"
 
-class ChorusComponent final : public DualParameterComponent
+class ChorusComponent final : public DualParameterComponent, private juce::Timer
 {
 public:
     ChorusComponent (juce::RangedAudioParameter* depthParam,
@@ -17,37 +17,85 @@ public:
         // Constructor implementation
     }
 
-    explicit ChorusComponent (const juce::AudioProcessorValueTreeState& apvts,
+    ChorusComponent (const juce::AudioProcessorValueTreeState& apvts,
         juce::UndoManager* undoManager = nullptr,
         std::atomic<int>* gestureCount = nullptr,
-        ModulationModeState* modModeState = nullptr)
+        std::atomic<float>* modDepthOutput = nullptr,
+        std::atomic<float>* modRateOutput = nullptr,
+        ModulationModeState* modModeState = nullptr,
+        const juce::String& param1DestID = {},
+        const juce::String& param2DestID = {})
         : DualParameterComponent (
               apvts.getParameter ("chorusDepth"),
               apvts.getParameter ("chorusRate"),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("chorusOn")),
               undoManager,
               gestureCount,
-              modModeState)
+              modModeState,
+              param1DestID,
+              param2DestID),
+          modDepthOutput (modDepthOutput),
+          modRateOutput (modRateOutput)
     {
+        if (modDepthOutput != nullptr || modRateOutput != nullptr)
+            startTimerHz (30);
     }
 
-    ~ChorusComponent() override = default;
+    ~ChorusComponent() override { stopTimer(); }
 
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
-        // Set up colors and stroke thickness
-        g.setColour (TEXT_COLOR);
         g.setOpacity (isActive ? 1.0f : 0.5f);
 
+        // Draw ghost path at modulated values (behind main)
+        if ((modDepthOutput != nullptr || modRateOutput != nullptr)
+            && (std::abs (modulatedDepth - param1Value) > 0.001f
+                || std::abs (modulatedRate - param2Value) > 0.001f))
+        {
+            g.setColour (TEXT_COLOR.withAlpha (0.25f));
+            drawChorusWaves (g, bounds, modulatedDepth, modulatedRate);
+        }
+
+        g.setColour (TEXT_COLOR);
+        drawChorusWaves (g, bounds, param1Value, param2Value);
+    }
+
+    void drawVisualizationWithValues (juce::Graphics& g,
+        const juce::Rectangle<int>& bounds, float p1, float p2) const override
+    {
+        drawChorusWaves (g, bounds, p1, p2);
+    }
+
+private:
+    std::atomic<float>* modDepthOutput = nullptr;
+    std::atomic<float>* modRateOutput = nullptr;
+    float modulatedDepth = 0.0f;
+    float modulatedRate = 0.0f;
+
+    void timerCallback() override
+    {
+        constexpr float alpha = 0.3f;
+        if (modDepthOutput != nullptr)
+        {
+            float target = modDepthOutput->load (std::memory_order_relaxed);
+            modulatedDepth += alpha * (target - modulatedDepth);
+        }
+        if (modRateOutput != nullptr)
+        {
+            float target = modRateOutput->load (std::memory_order_relaxed);
+            modulatedRate += alpha * (target - modulatedRate);
+        }
+        repaint();
+    }
+
+    static void drawChorusWaves (juce::Graphics& g, const juce::Rectangle<int>& bounds,
+        float depth, float rate)
+    {
         constexpr float strokeThickness = 1.5f;
 
-        // Calculate parameters for the sine waves
-        const float depth = param1Value; // chorusDepth - controls amplitude
-        const float rate = param2Value; // chorusRate - controls wavelength
-
         // Calculate wavelength based on rate (higher rate = shorter wavelength)
-        const float baseWaveLength = bounds.getWidth() * (1.0f - rate * 0.8f); // Invert rate effect
+        const float baseWaveLength = bounds.getWidth() * (1.0f - rate * 0.8f);
 
         // Calculate amplitude based on depth
         const float maxAmplitude = bounds.getHeight() * 0.40f;
@@ -55,14 +103,15 @@ protected:
 
         // Draw three sine waves with phase offsets
         constexpr float phase1 = 0.0f;
-        constexpr float phase2 = -0.1f; // Slight phase offset for the second wave
-        constexpr float phase3 = 0.1f; // Larger phase offset for the third wave
+        constexpr float phase2 = -0.1f;
+        constexpr float phase3 = 0.1f;
 
         drawSineWave (g, bounds, amplitude, baseWaveLength, phase1, strokeThickness);
-        drawSineWave (g, bounds, amplitude, baseWaveLength, phase2, strokeThickness / 1.5);
-        drawSineWave (g, bounds, amplitude, baseWaveLength, phase3, strokeThickness / 2);
+        drawSineWave (g, bounds, amplitude, baseWaveLength, phase2, strokeThickness / 1.5f);
+        drawSineWave (g, bounds, amplitude, baseWaveLength, phase3, strokeThickness / 2.0f);
     }
 
+protected:
     juce::String getParam1Text() const override
     {
         return formatParameterText (param1, param1Value, juce::StringRef ("Chrs Depth: ") + juce::String (param1Value * 30, param1Value == 1 ? 0 : 2) + juce::StringRef ("ms"));
