@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../Theme.h"
+#include "Utility/ModulationModeState.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -18,7 +19,8 @@ public:
         juce::UndoManager* undoManager = nullptr,
         std::atomic<int>* gestureCount = nullptr,
         std::atomic<float>* modCutoffOutput = nullptr,
-        std::atomic<float>* modResonanceOutput = nullptr);
+        std::atomic<float>* modResonanceOutput = nullptr,
+        ModulationModeState* modModeState = nullptr);
 
     ~FilterDisplay() override;
 
@@ -69,6 +71,10 @@ private:
     // Computes the gain in dB for a given x-coordinate (0 to 1), cutoff frequency, Q, and filter order
     double getYCoordinate (const float x, const int order = 2) const;
 
+    // Parameterized helper for drawing a filter curve at arbitrary cutoff/resonance
+    void drawFilterCurveAt (juce::Graphics& g, float normCutoff, float normRes,
+        juce::Colour colour, float strokeWidth) const;
+
     // Computes the gain in dB for a single second-order low-pass filter stage
     static double computeSecondOrderStage (const double freq, const double cutoffFreq, const double q);
 
@@ -94,6 +100,16 @@ private:
 
     void timerCallback() override;
     void drawModulatedFrequencyPath (juce::Graphics& g) const;
+
+    // Modulation mode
+    ModulationModeState* modModeState = nullptr;
+    bool isModDragging = false;
+    float modDragInitialCutoffDepth = 0.0f;
+    float modDragInitialResDepth = 0.0f;
+    int modDragStartX = 0;
+    int modDragStartY = 0;
+
+    void drawModModeOverlay (juce::Graphics& g) const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FilterDisplay)
 };

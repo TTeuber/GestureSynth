@@ -21,13 +21,15 @@ public:
 
     DetuneComponent (juce::AudioProcessorValueTreeState& apvts,
         juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr)
+        std::atomic<int>* gestureCount = nullptr,
+        ModulationModeState* modModeState = nullptr)
         : DualParameterComponent (
               apvts.getParameter ("oscDetune"),
               apvts.getParameter ("oscWidth"),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("detuneOn")),
               undoManager,
-              gestureCount)
+              gestureCount,
+              modModeState)
     {
     }
 

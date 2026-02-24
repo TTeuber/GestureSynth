@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../Theme.h"
+#include "Utility/ModulationModeState.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -15,7 +16,8 @@ class HPFDisplay final : public juce::Component,
 public:
     explicit HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
         juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr);
+        std::atomic<int>* gestureCount = nullptr,
+        ModulationModeState* modModeState = nullptr);
 
     ~HPFDisplay() override;
 
@@ -51,7 +53,7 @@ private:
     juce::Point<float> dragStartPosition;
     float dragStartDisplayX = 0.0f;
 
-    // Display frequency mapping (x=0 → 20Hz, x=1 → 3kHz)
+    // Display frequency mapping (x=0 -> 20Hz, x=1 -> 3kHz)
     static constexpr double kDisplayMinFreq = 20.0;
     static constexpr double kDisplayMaxFreq = 3000.0;
     // Curve starts drawing from here (maps to negative pixels) for visible rolloff
@@ -67,8 +69,15 @@ private:
 
     void drawFrequencyPath (juce::Graphics& g) const;
 
+    // Draw HPF curve at arbitrary cutoff frequency
+    void drawHPFCurveAt (juce::Graphics& g, float cutoffFreqHz,
+        juce::Colour colour, float strokeWidth) const;
+
     // Computes the gain in dB for a given frequency using HP transfer function
     double getHPGainDb (double freq) const;
+
+    // Static version for parameterized drawing
+    static double computeHPGainDb (double freq, double cutoffFreqHz);
 
     void updateControlPointPosition();
 
@@ -80,6 +89,14 @@ private:
 
     juce::UndoManager* undoManager = nullptr;
     std::atomic<int>* gestureCount = nullptr;
+
+    // Modulation mode
+    ModulationModeState* modModeState = nullptr;
+    bool isModDragging = false;
+    float modDragInitialDepth = 0.0f;
+    int modDragStartX = 0;
+
+    void drawModModeOverlay (juce::Graphics& g) const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HPFDisplay)
 };

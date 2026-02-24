@@ -23,13 +23,19 @@ public:
         juce::UndoManager* undoManager = nullptr,
         std::atomic<int>* gestureCount = nullptr,
         std::atomic<float>* modPulseWidthOutput = nullptr,
-        std::atomic<float>* modWaveformOutput = nullptr)
+        std::atomic<float>* modWaveformOutput = nullptr,
+        ModulationModeState* modModeState = nullptr,
+        const juce::String& param1DestID = {},
+        const juce::String& param2DestID = {})
         : DualParameterComponent (
               apvts.getParameter ("oscWaveform"),
               apvts.getParameter ("pulseWidth"),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("oscOn")),
               undoManager,
-              gestureCount),
+              gestureCount,
+              modModeState,
+              param1DestID,
+              param2DestID),
           modPulseWidthOutput (modPulseWidthOutput),
           modWaveformOutput (modWaveformOutput)
     {
@@ -56,6 +62,12 @@ protected:
         // Draw main path on top
         g.setColour (TEXT_COLOR);
         drawPath (g, bounds, centerY, 0.0f, param1Value);
+    }
+
+    void drawVisualizationWithValues (juce::Graphics& g,
+        const juce::Rectangle<int>& bounds, float p1, float p2) const override
+    {
+        drawPath (g, bounds, bounds.getCentreY(), 0.0f, p1, p2);
     }
 
 private:

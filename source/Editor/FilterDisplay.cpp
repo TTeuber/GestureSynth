@@ -7,9 +7,11 @@ FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
     juce::UndoManager* undoManager,
     std::atomic<int>* gestureCount,
     std::atomic<float>* modCutoffOutput,
-    std::atomic<float>* modResonanceOutput)
+    std::atomic<float>* modResonanceOutput,
+    ModulationModeState* modModeState)
     : apvts (apvts), undoManager (undoManager), gestureCount (gestureCount),
-      modCutoffOutput (modCutoffOutput), modResonanceOutput (modResonanceOutput)
+      modCutoffOutput (modCutoffOutput), modResonanceOutput (modResonanceOutput),
+      modModeState (modModeState)
 {
     // Add listeners to the parameters
     this->apvts.addParameterListener ("filterFrequency", this);
@@ -57,6 +59,9 @@ void FilterDisplay::paint (juce::Graphics& g)
 
     // Draw the filter response curve
     drawFrequencyPath (g);
+
+    // Draw mod mode overlay
+    drawModModeOverlay (g);
 }
 void FilterDisplay::resized()
 {
@@ -80,6 +85,27 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
             repaint();
         }
     }
+
+    // Modulation mode handling
+    if (modModeState != nullptr && modModeState->isModulationMode())
+    {
+        auto sourceID = modModeState->getTargetSourceID();
+
+        int cutoffSlot = modModeState->getOrCreateSlot (sourceID, "filterFrequency");
+        if (cutoffSlot < 0)
+            return;
+        int resSlot = modModeState->getOrCreateSlot (sourceID, "filterResonance");
+        if (resSlot < 0)
+            return;
+
+        modDragInitialCutoffDepth = modModeState->getDepth (sourceID, "filterFrequency");
+        modDragInitialResDepth = modModeState->getDepth (sourceID, "filterResonance");
+        modDragStartX = e.x;
+        modDragStartY = e.y;
+        isModDragging = true;
+        return;
+    }
+
     // Check if the mouse is near the control point
     if (isMouseOverControlPoint (e.getPosition()))
     {
@@ -100,6 +126,22 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
 }
 void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
 {
+    if (isModDragging && modModeState != nullptr)
+    {
+        auto sourceID = modModeState->getTargetSourceID();
+
+        float hDelta = static_cast<float> (e.x - modDragStartX) / static_cast<float> (getWidth());
+        float vDelta = static_cast<float> (modDragStartY - e.y) / static_cast<float> (getHeight());
+
+        float newCutoffDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialCutoffDepth + hDelta);
+        float newResDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialResDepth + vDelta);
+
+        modModeState->setDepth (sourceID, "filterFrequency", newCutoffDepth);
+        modModeState->setDepth (sourceID, "filterResonance", newResDepth);
+        repaint();
+        return;
+    }
+
     if (isDragging)
     {
         // Get the current position in the component
@@ -140,6 +182,12 @@ void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
 }
 void FilterDisplay::mouseUp (const juce::MouseEvent& e)
 {
+    juce::ignoreUnused (e);
+    if (isModDragging)
+    {
+        isModDragging = false;
+        return;
+    }
     if (isDragging)
     {
         if (cutoffParam)
@@ -154,6 +202,7 @@ void FilterDisplay::mouseUp (const juce::MouseEvent& e)
 
 void FilterDisplay::parameterChanged (const juce::String& parameterID, float newValue)
 {
+    juce::ignoreUnused (newValue);
     // Called when parameters change from outside this component
     if (parameterID == "filterFrequency" || parameterID == "filterResonance")
     {
@@ -256,7 +305,7 @@ double FilterDisplay::computeSecondOrderStage (const double freq, const double c
     }
 
     const double gain = 1.0 / denominator;
-    return 20.0 * std::log10 (gain); // Convert to herself
+    return 20.0 * std::log10 (gain); // Convert to dB
 }
 double FilterDisplay::computeFirstOrderStage (const double freq, const double cutoffFreq)
 {
@@ -360,12 +409,18 @@ void FilterDisplay::drawModulatedFrequencyPath (juce::Graphics& g) const
         && std::abs (modulatedNormResonance - normalizedResonance) < 0.001f)
         return;
 
+    drawFilterCurveAt (g, modulatedNormCutoff, modulatedNormResonance,
+        TEXT_COLOR.withAlpha (0.25f), 1.5f);
+}
+
+void FilterDisplay::drawFilterCurveAt (juce::Graphics& g, float normCutoff, float normRes,
+    juce::Colour colour, float strokeWidth) const
+{
     if (cutoffParam == nullptr || resonanceParam == nullptr)
         return;
 
-    // Convert normalized modulated values to actual frequency/resonance
-    const float modCutoffFreq = cutoffParam->getNormalisableRange().convertFrom0to1 (modulatedNormCutoff);
-    const float modRes = resonanceParam->getNormalisableRange().convertFrom0to1 (modulatedNormResonance);
+    const float modCutoffFreq = cutoffParam->getNormalisableRange().convertFrom0to1 (normCutoff);
+    const float modRes = resonanceParam->getNormalisableRange().convertFrom0to1 (normRes);
 
     if (modCutoffFreq <= 0.0f || modRes <= 0.0f)
         return;
@@ -378,7 +433,6 @@ void FilterDisplay::drawModulatedFrequencyPath (juce::Graphics& g) const
         const double x = static_cast<double> (xPixel) / getWidth();
         const double freq = cutoffParam->convertFrom0to1 (static_cast<float> (x));
 
-        // Same math as getYCoordinate but with modulated cutoff/resonance
         const double dB = computeSecondOrderStage (freq, modCutoffFreq, modRes);
         const float yPixel = getHeight() / 2.0f - static_cast<float> (dB) * getHeight() / 50.0f;
 
@@ -388,6 +442,36 @@ void FilterDisplay::drawModulatedFrequencyPath (juce::Graphics& g) const
             path.lineTo (static_cast<float> (xPixel), yPixel);
     }
 
-    g.setColour (TEXT_COLOR.withAlpha (0.25f));
-    g.strokePath (path, juce::PathStrokeType (1.5f));
+    g.setColour (colour);
+    g.strokePath (path, juce::PathStrokeType (strokeWidth));
+}
+
+void FilterDisplay::drawModModeOverlay (juce::Graphics& g) const
+{
+    if (modModeState == nullptr || !modModeState->isModulationMode())
+        return;
+
+    auto sourceID = modModeState->getTargetSourceID();
+
+    float cutoffDepth = modModeState->getDepth (sourceID, "filterFrequency");
+    float resDepth = modModeState->getDepth (sourceID, "filterResonance");
+
+    if (std::abs (cutoffDepth) < 0.001f && std::abs (resDepth) < 0.001f)
+        return;
+
+    bool bipolarCutoff = modModeState->isBipolar (sourceID, "filterFrequency");
+    bool bipolarRes = modModeState->isBipolar (sourceID, "filterResonance");
+
+    // Draw cyan curve at modulated position
+    float modCutoff = juce::jlimit (0.0f, 1.0f, normalizedCutoff + cutoffDepth);
+    float modRes = juce::jlimit (0.0f, 1.0f, normalizedResonance + resDepth);
+    drawFilterCurveAt (g, modCutoff, modRes, MOD_COLOR.withAlpha (0.7f), 2.0f);
+
+    // Draw faint ghost for bipolar
+    if (bipolarCutoff || bipolarRes)
+    {
+        float ghostCutoff = bipolarCutoff ? juce::jlimit (0.0f, 1.0f, normalizedCutoff - cutoffDepth) : modCutoff;
+        float ghostRes = bipolarRes ? juce::jlimit (0.0f, 1.0f, normalizedResonance - resDepth) : modRes;
+        drawFilterCurveAt (g, ghostCutoff, ghostRes, MOD_COLOR.withAlpha (0.2f), 1.5f);
+    }
 }

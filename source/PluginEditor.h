@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Editor/Tabs/TabContent.h"
+#include "Editor/Utility/ModulationModeState.h"
 #include "PluginProcessor.h"
 #include "Theme.h"
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -9,7 +10,10 @@
 #define WIDTH 1100
 
 //==============================================================================
-class PluginEditor final : public juce::AudioProcessorEditor, public juce::MidiKeyboardStateListener, private juce::Timer
+class PluginEditor final : public juce::AudioProcessorEditor,
+                           public juce::MidiKeyboardStateListener,
+                           public ModulationModeState::Listener,
+                           private juce::Timer
 {
 public:
     explicit PluginEditor (PluginProcessor&);
@@ -24,6 +28,9 @@ private:
     int windowWidth = WIDTH;
 
     PluginProcessor& processorRef;
+
+    ModulationModeState modModeState;
+    juce::Label modeLabel;
 
     juce::MidiKeyboardComponent keyboardComponent;
 
@@ -40,6 +47,9 @@ private:
 
     void handleNoteOn (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
     void handleNoteOff (juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float /*velocity*/) override;
+
+    // ModulationModeState::Listener
+    void modulationModeChanged (ModulationModeState::Mode newMode) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginEditor)
 };

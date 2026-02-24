@@ -8,6 +8,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../../Theme.h"
+#include "ModulationModeState.h"
 
 // Base Component Class for single parameter controls
 class SingleParameterComponent : public juce::Component,
@@ -17,11 +18,15 @@ public:
     explicit SingleParameterComponent (juce::RangedAudioParameter* param,
         juce::AudioParameterBool* activeParam = nullptr,
         juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr)
+        std::atomic<int>* gestureCount = nullptr,
+        ModulationModeState* modModeState = nullptr,
+        const juce::String& paramDestID = {})
         : param (param),
           activeParam (activeParam),
           undoManager (undoManager),
-          gestureCount (gestureCount)
+          gestureCount (gestureCount),
+          modModeState (modModeState),
+          paramDestID (paramDestID)
     {
         // Register as a listener for the parameter
         param->addListener (this);
@@ -82,7 +87,15 @@ public:
         // Draw the main visualization (implemented by derived classes)
         drawVisualization (g, bounds.withTrimmedTop (20).withTrimmedBottom (20));
 
+        // Draw modulation overlay
+        drawModulationOverlay (g, bounds.withTrimmedTop (20).withTrimmedBottom (20));
+
         // Draw value at the bottom
+        if (!isActive)
+            g.setColour (TEXT_INACTIVE_COLOR);
+        else
+            g.setColour (TEXT_COLOR);
+
         g.drawText (getParameterText(),
             bounds.getX(),
             bounds.getBottom() - 20,
@@ -132,6 +145,26 @@ public:
             }
         }
 
+        // Modulation mode handling
+        if (modModeState != nullptr && modModeState->isModulationMode())
+        {
+            if (paramDestID.isEmpty())
+                return;
+
+            if (!isActive)
+                return;
+
+            auto sourceID = modModeState->getTargetSourceID();
+            int slot = modModeState->getOrCreateSlot (sourceID, paramDestID);
+            if (slot < 0)
+                return;
+
+            modDragInitialDepth = modModeState->getDepth (sourceID, paramDestID);
+            mouseDownY = e.y;
+            isModDragging = true;
+            return;
+        }
+
         // Only process drag if the component is active
         if (!isActive)
             return;
@@ -151,6 +184,18 @@ public:
 
     void mouseDrag (const juce::MouseEvent& e) override
     {
+        if (isModDragging && modModeState != nullptr)
+        {
+            auto sourceID = modModeState->getTargetSourceID();
+            const auto bounds = getLocalBounds();
+
+            float verticalDelta = (mouseDownY - e.y) / (bounds.getHeight() - padding) / 2.0f;
+            float newDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialDepth + verticalDelta);
+            modModeState->setDepth (sourceID, paramDestID, newDepth);
+            repaint();
+            return;
+        }
+
         if (!isDragging || !isActive)
             return;
 
@@ -167,6 +212,11 @@ public:
 
     void mouseUp (const juce::MouseEvent&) override
     {
+        if (isModDragging)
+        {
+            isModDragging = false;
+            return;
+        }
         if (isDragging)
         {
             param->endChangeGesture();
@@ -191,6 +241,10 @@ protected:
 
     juce::UndoManager* undoManager = nullptr;
     std::atomic<int>* gestureCount = nullptr;
+
+    // Modulation mode
+    ModulationModeState* modModeState = nullptr;
+    juce::String paramDestID;
 
     // Virtual method to be implemented by derived classes
     virtual void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const {}
@@ -258,8 +312,41 @@ private:
         // Not needed for this implementation
     }
 
+    void drawModulationOverlay (juce::Graphics& g, const juce::Rectangle<int>& bounds)
+    {
+        if (modModeState == nullptr || !modModeState->isModulationMode())
+            return;
+        if (paramDestID.isEmpty())
+            return;
+
+        auto sourceID = modModeState->getTargetSourceID();
+        float depth = modModeState->getDepth (sourceID, paramDestID);
+
+        if (std::abs (depth) < 0.001f)
+            return;
+
+        bool bipolar = modModeState->isBipolar (sourceID, paramDestID);
+
+        // Draw a simple indicator line at the modulated position
+        float modValue = juce::jlimit (0.0f, 1.0f, paramValue + depth);
+        float modY = bounds.getBottom() - modValue * bounds.getHeight();
+
+        g.setColour (MOD_COLOR.withAlpha (0.7f));
+        g.drawHorizontalLine (static_cast<int> (modY), static_cast<float> (bounds.getX()), static_cast<float> (bounds.getRight()));
+
+        if (bipolar)
+        {
+            float ghostValue = juce::jlimit (0.0f, 1.0f, paramValue - depth);
+            float ghostY = bounds.getBottom() - ghostValue * bounds.getHeight();
+            g.setColour (MOD_COLOR.withAlpha (0.2f));
+            g.drawHorizontalLine (static_cast<int> (ghostY), static_cast<float> (bounds.getX()), static_cast<float> (bounds.getRight()));
+        }
+    }
+
     // Mouse drag tracking
     bool isDragging = false;
+    bool isModDragging = false;
     int mouseDownY = 0;
     float initialParamValue = 0.0f;
+    float modDragInitialDepth = 0.0f;
 };

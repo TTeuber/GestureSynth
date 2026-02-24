@@ -4,19 +4,20 @@
 // MainTabContent
 // =============================================================================
 
-MainTabContent::MainTabContent (PluginProcessor& p)
+MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modState)
     : processor (p),
-      waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[4], &p.modDestOutputs[5]),
-      filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[0], &p.modDestOutputs[1]),
-      hpfDisplay (p.parameters, &p.undoManager, &p.activeGestureCount),
-      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
-      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
-      chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
-      vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount),
-      volumeComponent (p.parameters.getParameter ("volume"), &p.undoManager, &p.activeGestureCount),
-      noiseComponent (p.parameters.getParameter ("noiseLevel"), &p.undoManager, &p.activeGestureCount),
-      chorusMixComponent (p.parameters.getParameter ("chorusMix"), &p.undoManager, &p.activeGestureCount),
-      portamentoComponent (p.parameters.getParameter ("portamentoTime"), &p.undoManager, &p.activeGestureCount),
+      modModeState (modState),
+      waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[4], &p.modDestOutputs[5], modState, "oscWaveform", "pulseWidth"),
+      filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[0], &p.modDestOutputs[1], modState),
+      hpfDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
+      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
+      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
+      chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
+      vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
+      volumeComponent (p.parameters.getParameter ("volume"), &p.undoManager, &p.activeGestureCount, modState),
+      noiseComponent (p.parameters.getParameter ("noiseLevel"), &p.undoManager, &p.activeGestureCount, modState),
+      chorusMixComponent (p.parameters.getParameter ("chorusMix"), &p.undoManager, &p.activeGestureCount, modState),
+      portamentoComponent (p.parameters.getParameter ("portamentoTime"), &p.undoManager, &p.activeGestureCount, modState),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
       adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount)
 {
@@ -34,36 +35,46 @@ MainTabContent::MainTabContent (PluginProcessor& p)
     addAndMakeVisible (lfoComponent);
     addAndMakeVisible (adsrGraph);
 
+    const juce::StringArray lfoIDs = { "lfo1", "lfo2", "lfo3", "lfo4" };
+    const juce::StringArray envIDs = { "env1", "env2", "env3", "env4" };
+
     for (int i = 0; i < 4; ++i)
     {
-        lfoButtons[i].setButtonText (juce::String (i + 1));
-        lfoButtons[i].setClickingTogglesState (true);
-        lfoButtons[i].setRadioGroupId (1001);
-        lfoButtons[i].setColour (juce::TextButton::buttonOnColourId, juce::Colours::orange);
-        lfoButtons[i].onClick = [this, i]() { selectLfo (i); };
-        addAndMakeVisible (lfoButtons[i]);
+        lfoTabs[i].setup ("LFO " + juce::String (i + 1), lfoIDs[i], modModeState,
+            [this, i]() { selectLfo (i); });
+        addAndMakeVisible (lfoTabs[i]);
 
-        envButtons[i].setButtonText (juce::String (i + 1));
-        envButtons[i].setClickingTogglesState (true);
-        envButtons[i].setRadioGroupId (1002);
-        envButtons[i].setColour (juce::TextButton::buttonOnColourId, juce::Colours::orange);
-        envButtons[i].onClick = [this, i]() { selectEnv (i); };
-        addAndMakeVisible (envButtons[i]);
+        envTabs[i].setup ("ENV " + juce::String (i + 1), envIDs[i], modModeState,
+            [this, i]() { selectEnv (i); });
+        addAndMakeVisible (envTabs[i]);
     }
 
-    lfoButtons[0].setToggleState (true, juce::dontSendNotification);
-    envButtons[0].setToggleState (true, juce::dontSendNotification);
+    lfoTabs[0].setSelected (true);
+    envTabs[0].setSelected (true);
+
+    if (modModeState != nullptr)
+        modModeState->addListener (this);
+}
+
+MainTabContent::~MainTabContent()
+{
+    if (modModeState != nullptr)
+        modModeState->removeListener (this);
 }
 
 void MainTabContent::selectLfo (int index)
 {
     activeLfoIndex = index;
+    for (int i = 0; i < 4; ++i)
+        lfoTabs[i].setSelected (i == index);
     lfoComponent.rebind (processor.lfoData[index], index + 1);
 }
 
 void MainTabContent::selectEnv (int index)
 {
     activeEnvIndex = index;
+    for (int i = 0; i < 4; ++i)
+        envTabs[i].setSelected (i == index);
     auto s = std::to_string (index + 1);
     auto adsrPtr = (index == 0) ? processor.getSynth().getAmpADSRPtr() : std::make_shared<MyADSR*> (nullptr);
     adsrGraph.rebind (
@@ -77,17 +88,28 @@ void MainTabContent::selectEnv (int index)
         adsrPtr);
 }
 
+void MainTabContent::modulationModeChanged (ModulationModeState::Mode)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        lfoTabs[i].repaint();
+        envTabs[i].repaint();
+    }
+    repaint();
+}
+
+void MainTabContent::targetSourceChanged (const juce::String&)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        lfoTabs[i].repaint();
+        envTabs[i].repaint();
+    }
+}
+
 void MainTabContent::paint (juce::Graphics& g)
 {
     g.fillAll (PRIMARY_COLOR);
-
-    // Draw LFO / ENV labels in the button row
-    g.setColour (TEXT_COLOR);
-    g.setFont (14.0f);
-    auto w = getWidth();
-    auto row3Top = getHeight() * 2 / 3;
-    g.drawText ("LFO", 0, row3Top, 40, 30, juce::Justification::centred);
-    g.drawText ("ENV", w / 2, row3Top, 40, 30, juce::Justification::centred);
 }
 
 void MainTabContent::resized()
@@ -116,23 +138,21 @@ void MainTabContent::resized()
     detuneComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
     hpfDisplay.setBounds (row2.reduced (5));
 
-    // Row 3: 30px button strip at top, then LFO | ADSR below
+    // Row 3: 30px tab strip at top, then LFO | ADSR below
     auto row3 = area;
     auto buttonRow = row3.removeFromTop (30);
-    auto lfoButtonArea = buttonRow.removeFromLeft (buttonRow.getWidth() / 2);
-    auto envButtonArea = buttonRow;
+    auto lfoTabArea = buttonRow.removeFromLeft (buttonRow.getWidth() / 2);
+    auto envTabArea = buttonRow;
 
-    // LFO label + buttons
-    lfoButtonArea.removeFromLeft (40); // space for painted label
-    int lfoBtnWidth = juce::jmin (30, lfoButtonArea.getWidth() / 4);
+    // LFO tabs
+    int lfoTabWidth = juce::jmin (75, lfoTabArea.getWidth() / 4);
     for (int i = 0; i < 4; ++i)
-        lfoButtons[i].setBounds (lfoButtonArea.removeFromLeft (lfoBtnWidth));
+        lfoTabs[i].setBounds (lfoTabArea.removeFromLeft (lfoTabWidth));
 
-    // ENV label + buttons
-    envButtonArea.removeFromLeft (40); // space for painted label
-    int envBtnWidth = juce::jmin (30, envButtonArea.getWidth() / 4);
+    // ENV tabs
+    int envTabWidth = juce::jmin (75, envTabArea.getWidth() / 4);
     for (int i = 0; i < 4; ++i)
-        envButtons[i].setBounds (envButtonArea.removeFromLeft (envBtnWidth));
+        envTabs[i].setBounds (envTabArea.removeFromLeft (envTabWidth));
 
     // LFO component | ADSR graph
     lfoComponent.setBounds (row3.removeFromLeft (row3.getWidth() / 2).reduced (5));

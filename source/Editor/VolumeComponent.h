@@ -11,8 +11,9 @@ class VolumeComponent final : public SingleParameterComponent
 public:
     explicit VolumeComponent (juce::RangedAudioParameter* volumeParam,
         juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr)
-        : SingleParameterComponent (volumeParam, nullptr, undoManager, gestureCount)
+        std::atomic<int>* gestureCount = nullptr,
+        ModulationModeState* modModeState = nullptr)
+        : SingleParameterComponent (volumeParam, nullptr, undoManager, gestureCount, modModeState)
     {
     }
 

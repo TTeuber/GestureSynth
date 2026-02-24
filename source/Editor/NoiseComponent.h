@@ -11,8 +11,9 @@ class NoiseComponent final : public SingleParameterComponent
 public:
     explicit NoiseComponent (juce::RangedAudioParameter* noiseParam,
         juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr)
-        : SingleParameterComponent (noiseParam, nullptr, undoManager, gestureCount)
+        std::atomic<int>* gestureCount = nullptr,
+        ModulationModeState* modModeState = nullptr)
+        : SingleParameterComponent (noiseParam, nullptr, undoManager, gestureCount, modModeState)
     {
     }
 

@@ -19,13 +19,15 @@ public:
 
     SubOscillatorComponent (juce::AudioProcessorValueTreeState& apvts,
         juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr)
+        std::atomic<int>* gestureCount = nullptr,
+        ModulationModeState* modModeState = nullptr)
         : DualParameterComponent (
               apvts.getParameter ("subOsc"),
               apvts.getParameter ("subOscWave"),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("subOn")),
               undoManager,
-              gestureCount)
+              gestureCount,
+              modModeState)
     {
     }
 

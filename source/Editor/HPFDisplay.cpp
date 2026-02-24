@@ -6,8 +6,10 @@
 
 HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
     juce::UndoManager* undoManager,
-    std::atomic<int>* gestureCount)
-    : apvts (apvts), undoManager (undoManager), gestureCount (gestureCount)
+    std::atomic<int>* gestureCount,
+    ModulationModeState* modModeState)
+    : apvts (apvts), undoManager (undoManager), gestureCount (gestureCount),
+      modModeState (modModeState)
 {
     this->apvts.addParameterListener ("hpfFrequency", this);
     this->apvts.addParameterListener ("hpfOn", this);
@@ -36,6 +38,7 @@ void HPFDisplay::paint (juce::Graphics& g)
     drawControlPoint (g);
     drawParameterValues (g);
     drawFrequencyPath (g);
+    drawModModeOverlay (g);
 }
 
 void HPFDisplay::resized()
@@ -59,6 +62,21 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
         }
     }
 
+    // Modulation mode handling
+    if (modModeState != nullptr && modModeState->isModulationMode())
+    {
+        auto sourceID = modModeState->getTargetSourceID();
+
+        int slot = modModeState->getOrCreateSlot (sourceID, "hpfFrequency");
+        if (slot < 0)
+            return;
+
+        modDragInitialDepth = modModeState->getDepth (sourceID, "hpfFrequency");
+        modDragStartX = e.x;
+        isModDragging = true;
+        return;
+    }
+
     if (isMouseOverControlPoint (e.getPosition()))
     {
         isDragging = true;
@@ -76,6 +94,17 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
 
 void HPFDisplay::mouseDrag (const juce::MouseEvent& e)
 {
+    if (isModDragging && modModeState != nullptr)
+    {
+        auto sourceID = modModeState->getTargetSourceID();
+
+        float hDelta = static_cast<float> (e.x - modDragStartX) / static_cast<float> (getWidth());
+        float newDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialDepth + hDelta);
+        modModeState->setDepth (sourceID, "hpfFrequency", newDepth);
+        repaint();
+        return;
+    }
+
     if (isDragging)
     {
         const juce::Point<float> pos = e.position;
@@ -108,6 +137,11 @@ void HPFDisplay::mouseDrag (const juce::MouseEvent& e)
 void HPFDisplay::mouseUp (const juce::MouseEvent& e)
 {
     juce::ignoreUnused (e);
+    if (isModDragging)
+    {
+        isModDragging = false;
+        return;
+    }
     if (isDragging)
     {
         if (cutoffParam)
@@ -180,10 +214,15 @@ void HPFDisplay::drawFrequencyPath (juce::Graphics& g) const
 
 double HPFDisplay::getHPGainDb (double freq) const
 {
-    if (cutoffFrequency <= 0.0 || freq <= 0.0)
+    return computeHPGainDb (freq, cutoffFrequency);
+}
+
+double HPFDisplay::computeHPGainDb (double freq, double cutoffFreqHz)
+{
+    if (cutoffFreqHz <= 0.0 || freq <= 0.0)
         return -60.0;
 
-    const double w = freq / cutoffFrequency;
+    const double w = freq / cutoffFreqHz;
     const double wSquared = w * w;
     const double q = 1.0 / std::sqrt (2.0); // ~0.707, Butterworth
     const double denominator = std::sqrt ((1.0 - wSquared) * (1.0 - wSquared) + (w / q) * (w / q));
@@ -251,6 +290,65 @@ void HPFDisplay::drawParameterValues (juce::Graphics& g) const
         g.setFont (12.0f);
         g.setColour (juce::Colours::lightgrey);
         g.drawText ("Hold Shift for fine control", 5, getHeight() - 40, getWidth() - 10, 20, juce::Justification::bottomLeft, true);
+    }
+}
+
+void HPFDisplay::drawHPFCurveAt (juce::Graphics& g, float cutoffFreqHz,
+    juce::Colour colour, float strokeWidth) const
+{
+    if (cutoffFreqHz <= 0.0f)
+        return;
+
+    juce::Path path;
+    constexpr int step = 5;
+
+    const int startPixel = static_cast<int> (freqToDisplayX (kCurveStartFreq) * getWidth());
+    bool pathStarted = false;
+
+    for (int xPixel = startPixel; xPixel < getWidth(); xPixel += step)
+    {
+        const double x = static_cast<double> (xPixel) / getWidth();
+        const double freq = displayXToFreq (x);
+        const double dB = computeHPGainDb (freq, cutoffFreqHz);
+        const float yPixel = getHeight() / 2.0f - static_cast<float> (dB) * getHeight() / 50.0f;
+
+        if (! pathStarted)
+        {
+            path.startNewSubPath (static_cast<float> (xPixel), yPixel);
+            pathStarted = true;
+        }
+        else
+            path.lineTo (static_cast<float> (xPixel), yPixel);
+    }
+
+    g.setColour (colour);
+    g.strokePath (path, juce::PathStrokeType (strokeWidth));
+}
+
+void HPFDisplay::drawModModeOverlay (juce::Graphics& g) const
+{
+    if (modModeState == nullptr || !modModeState->isModulationMode())
+        return;
+
+    auto sourceID = modModeState->getTargetSourceID();
+    float depth = modModeState->getDepth (sourceID, "hpfFrequency");
+
+    if (std::abs (depth) < 0.001f)
+        return;
+
+    bool bipolar = modModeState->isBipolar (sourceID, "hpfFrequency");
+
+    // Convert modulated normalized cutoff to frequency
+    float modNormCutoff = juce::jlimit (0.0f, 1.0f, normalizedCutoff + depth);
+    float modFreq = cutoffParam->getNormalisableRange().convertFrom0to1 (modNormCutoff);
+
+    drawHPFCurveAt (g, modFreq, MOD_COLOR.withAlpha (0.7f), 2.0f);
+
+    if (bipolar)
+    {
+        float ghostNormCutoff = juce::jlimit (0.0f, 1.0f, normalizedCutoff - depth);
+        float ghostFreq = cutoffParam->getNormalisableRange().convertFrom0to1 (ghostNormCutoff);
+        drawHPFCurveAt (g, ghostFreq, MOD_COLOR.withAlpha (0.2f), 1.5f);
     }
 }
 
