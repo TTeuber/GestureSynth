@@ -102,7 +102,8 @@ private:
     ModMatrix modMatrix;
 
     DynamicParameter pulseWidth = DynamicParameter (parameters.getParameter ("pulseWidth"));
-    JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth);
+    DynamicParameter oscWaveform = DynamicParameter (parameters.getParameter ("oscWaveform"));
+    JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth, oscWaveform);
 
     std::array<MyLFO, 4> lfos = {
         MyLFO { "lfo1", "LFO 1", 1.0f },
@@ -218,7 +219,8 @@ private:
         { filterResonance.getID(), &filterResonance },
         { hpfCutoff.getID(), &hpfCutoff },
         { fineTuneParam.getID(), &fineTuneParam },
-        { pulseWidth.getID(), &pulseWidth }
+        { pulseWidth.getID(), &pulseWidth },
+        { oscWaveform.getID(), &oscWaveform }
     };
 
     // Cache of source/dest per slot for correct removal on property change

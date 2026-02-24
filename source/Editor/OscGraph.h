@@ -22,16 +22,18 @@ public:
     WaveformComponent (juce::AudioProcessorValueTreeState& apvts,
         juce::UndoManager* undoManager = nullptr,
         std::atomic<int>* gestureCount = nullptr,
-        std::atomic<float>* modPulseWidthOutput = nullptr)
+        std::atomic<float>* modPulseWidthOutput = nullptr,
+        std::atomic<float>* modWaveformOutput = nullptr)
         : DualParameterComponent (
               apvts.getParameter ("oscWaveform"),
               apvts.getParameter ("pulseWidth"),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("oscOn")),
               undoManager,
               gestureCount),
-          modPulseWidthOutput (modPulseWidthOutput)
+          modPulseWidthOutput (modPulseWidthOutput),
+          modWaveformOutput (modWaveformOutput)
     {
-        if (modPulseWidthOutput != nullptr)
+        if (modPulseWidthOutput != nullptr || modWaveformOutput != nullptr)
             startTimerHz (30);
     }
 
@@ -42,12 +44,13 @@ protected:
     {
         const float centerY = bounds.getCentreY();
 
-        // Draw ghost path at modulated pulse width (behind main)
-        if (modPulseWidthOutput != nullptr
-            && std::abs (modulatedPulseWidth - param2Value) > 0.001f)
+        // Draw ghost path at modulated values (behind main)
+        if ((modPulseWidthOutput != nullptr || modWaveformOutput != nullptr)
+            && (std::abs (modulatedPulseWidth - param2Value) > 0.001f
+                || std::abs (modulatedWaveform - param1Value) > 0.001f))
         {
             g.setColour (TEXT_COLOR.withAlpha (0.25f));
-            drawPath (g, bounds, centerY, 0.0f, param1Value, modulatedPulseWidth);
+            drawPath (g, bounds, centerY, 0.0f, modulatedWaveform, modulatedPulseWidth);
         }
 
         // Draw main path on top
@@ -57,15 +60,22 @@ protected:
 
 private:
     std::atomic<float>* modPulseWidthOutput = nullptr;
+    std::atomic<float>* modWaveformOutput = nullptr;
     float modulatedPulseWidth = 0.5f;
+    float modulatedWaveform = 0.5f;
 
     void timerCallback() override
     {
+        constexpr float alpha = 0.3f;
         if (modPulseWidthOutput != nullptr)
         {
-            constexpr float alpha = 0.3f;
             float target = modPulseWidthOutput->load (std::memory_order_relaxed);
             modulatedPulseWidth += alpha * (target - modulatedPulseWidth);
+        }
+        if (modWaveformOutput != nullptr)
+        {
+            float target = modWaveformOutput->load (std::memory_order_relaxed);
+            modulatedWaveform += alpha * (target - modulatedWaveform);
         }
         repaint();
     }

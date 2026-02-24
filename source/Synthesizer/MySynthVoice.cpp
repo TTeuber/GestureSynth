@@ -33,6 +33,7 @@ MySynthVoice::MySynthVoice (
     hpfCutoff.setOutputIndex (2);
     fineTuneParam.setOutputIndex (3);
     pulseWidth.setOutputIndex (4);
+    oscWaveform.setOutputIndex (5);
 
     // Initialize slotCache from modTree
     for (int i = 0; i < modTree.getNumChildren() && i < static_cast<int> (slotCache.size()); ++i)

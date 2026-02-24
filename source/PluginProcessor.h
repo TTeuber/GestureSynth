@@ -64,7 +64,7 @@ public:
 
     std::array<std::atomic<float>, 12> modSourceOutputs {};
 
-    static constexpr int kNumModDests = 5;
+    static constexpr int kNumModDests = 6;
     std::array<std::atomic<float>, kNumModDests> modDestOutputs {};
 
     using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;
@@ -84,7 +84,7 @@ public:
     };
 
     static inline const juce::StringArray modSourceIDs  = { "None", "env1", "env2", "env3", "env4", "lfo1", "lfo2", "lfo3", "lfo4" };
-    static inline const juce::StringArray modDestIDs    = { "None", "filterFrequency", "filterResonance", "hpfFrequency", "fineTune", "pulseWidth" };
+    static inline const juce::StringArray modDestIDs    = { "None", "filterFrequency", "filterResonance", "hpfFrequency", "fineTune", "pulseWidth", "oscWaveform" };
 
     MySynth& getSynth() { return synth; }
 

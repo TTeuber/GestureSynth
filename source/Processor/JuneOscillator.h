@@ -17,10 +17,9 @@ public:
         Saw = 4
     };
 
-    JuneDCO (juce::AudioProcessorValueTreeState& p, DynamicParameter& pw)
-        : parameters (p), pulseWidth (pw)
+    JuneDCO (juce::AudioProcessorValueTreeState& p, DynamicParameter& pw, DynamicParameter& wf)
+        : parameters (p), pulseWidth (pw), waveformMix (wf)
     {
-        parameters.addParameterListener ("oscWaveform", this);
         parameters.addParameterListener ("oscDetune", this);
         parameters.addParameterListener ("oscWidth", this);
         parameters.addParameterListener ("subOsc", this);
@@ -33,7 +32,6 @@ public:
     }
     ~JuneDCO() override
     {
-        parameters.removeParameterListener ("oscWaveform", this);
         parameters.removeParameterListener ("oscDetune", this);
         parameters.removeParameterListener ("oscWidth", this);
         parameters.removeParameterListener ("subOsc", this);
@@ -45,13 +43,7 @@ public:
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
     {
-        if (parameterID == "oscWaveform")
-        {
-            // Handle waveform change if needed
-            sawLevel = 1.0f - newValue;
-            pulseLevel = newValue;
-        }
-        else if (parameterID == "oscDetune")
+        if (parameterID == "oscDetune")
         {
             // Handle detune change if needed
             detune = newValue;
@@ -120,14 +112,6 @@ public:
         phaseIncrementL = frequencyL / oversampledSampleRate;
         phaseIncrementR = frequencyR / oversampledSampleRate;
         subPhaseIncrement = frequency / oversampledSampleRate / 2; // Sub-oscillator is one octave lower
-    }
-
-    // Set mix levels (0.0 to 1.0)
-    void setWaveformMix (const float sawLevel, const float pulseLevel, const float subLevel)
-    {
-        this->sawLevel = juce::jlimit (0.0f, 1.0f, sawLevel);
-        this->pulseLevel = juce::jlimit (0.0f, 1.0f, pulseLevel);
-        this->subLevel = juce::jlimit (0.0f, 1.0f, subLevel);
     }
 
     // PolyBLEP function to reduce aliasing
@@ -275,13 +259,16 @@ public:
         }
 
         // Mix waveforms
+        const float currentWaveformMix = waveformMix.getCurrentValue();
+        const float liveSawLevel = 1.0f - currentWaveformMix;
+        const float livePulseLevel = currentWaveformMix;
         float outputL, outputR;
 
         if (detuneEnabled)
         {
             // Mix stereo signals
-            float leftSignal = sawOutputL * sawLevel + pulseOutputL * pulseLevel + subOutput * subLevel;
-            float rightSignal = sawOutputR * sawLevel + pulseOutputR * pulseLevel + subOutput * subLevel;
+            float leftSignal = sawOutputL * liveSawLevel + pulseOutputL * livePulseLevel + subOutput * subLevel;
+            float rightSignal = sawOutputR * liveSawLevel + pulseOutputR * livePulseLevel + subOutput * subLevel;
 
             // Apply stereo width
             // When stereoWidth is 0, both channels should be the same (mono)
@@ -294,7 +281,7 @@ public:
         else
         {
             // Mix mono signal
-            float monoOut = sawOutput * sawLevel + pulseOutput * pulseLevel + subOutput * subLevel;
+            float monoOut = sawOutput * liveSawLevel + pulseOutput * livePulseLevel + subOutput * subLevel;
             outputL = monoOut;
             outputR = monoOut;
         }
@@ -302,7 +289,7 @@ public:
         // Normalize output to prevent clipping
         float activeMixSum = 0.0f;
         if (oscillatorEnabled)
-            activeMixSum += sawLevel + pulseLevel;
+            activeMixSum += liveSawLevel + livePulseLevel;
         if (subOscillatorEnabled)
             activeMixSum += subLevel;
 
@@ -350,8 +337,7 @@ private:
     float subPhase = 0.0;
     float subPhaseIncrement = 0.0;
     DynamicParameter& pulseWidth;
-    float sawLevel = 0.0f;
-    float pulseLevel = 1.0f;
+    DynamicParameter& waveformMix;
     float subLevel = 0.0f;
     float detune = 0.0f;
     float detuneAmount = 0.25f;
