@@ -41,7 +41,7 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
     attackCurve = parameters.getRawParameterValue (attackCurveId)->load();
     decayTime = parameters.getRawParameterValue (decayId)->load();
     decayCurve = parameters.getRawParameterValue (decayCurveId)->load();
-    sustainLevel = parameters.getRawParameterValue (sustainId)->load();
+    sustainLevel = (1 - parameters.getRawParameterValue (sustainId)->load()) * static_cast<float> (getHeight());
     releaseTime = parameters.getRawParameterValue (releaseId)->load();
     releaseCurve = parameters.getRawParameterValue (releaseCurveId)->load();
 
@@ -106,7 +106,7 @@ void ADSRGraph::rebind (
     attackCurve = parameters.getRawParameterValue (attackCurveId)->load();
     decayTime = parameters.getRawParameterValue (decayId)->load();
     decayCurve = parameters.getRawParameterValue (decayCurveId)->load();
-    sustainLevel = parameters.getRawParameterValue (sustainId)->load();
+    sustainLevel = (1 - parameters.getRawParameterValue (sustainId)->load()) * static_cast<float> (getHeight());
     releaseTime = parameters.getRawParameterValue (releaseId)->load();
     releaseCurve = parameters.getRawParameterValue (releaseCurveId)->load();
 

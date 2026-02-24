@@ -9,6 +9,7 @@
 
 #include "../../Theme.h"
 #include "ModulationModeState.h"
+#include "ModulationContextMenu.h"
 
 // Base Component Class
 class DualParameterComponent : public juce::Component,
@@ -139,6 +140,26 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
+        // Modulation context menu on right-click in mod mode
+        if (e.mods.isRightButtonDown()
+            && modModeState != nullptr && modModeState->isModulationMode()
+            && isActive)
+        {
+            auto sourceID = modModeState->getTargetSourceID();
+            std::vector<ModulationContextMenu::ParamInfo> entries;
+
+            if (param1DestID.isNotEmpty() && modModeState->findSlotIndex (sourceID, param1DestID) >= 0)
+                entries.push_back ({ param1->getName (15), sourceID, param1DestID });
+            if (param2DestID.isNotEmpty() && modModeState->findSlotIndex (sourceID, param2DestID) >= 0)
+                entries.push_back ({ param2->getName (15), sourceID, param2DestID });
+
+            if (!entries.empty())
+            {
+                showModulationContextMenu (this, modModeState, std::move (entries), e.getScreenPosition());
+                return;
+            }
+        }
+
         // Check if clicking the toggle button
         if (activeParam != nullptr)
         {
@@ -155,7 +176,7 @@ public:
         }
 
         // Modulation mode handling
-        if (modModeState != nullptr && modModeState->isModulationMode())
+        if (modModeState != nullptr && modModeState->isModulationMode() && !e.mods.isShiftDown())
         {
             // Block interaction if no dest IDs configured
             if (param1DestID.isEmpty() && param2DestID.isEmpty())

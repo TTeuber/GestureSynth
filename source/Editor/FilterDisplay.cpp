@@ -71,6 +71,24 @@ void FilterDisplay::resized()
 
 void FilterDisplay::mouseDown (const juce::MouseEvent& e)
 {
+    // Modulation context menu on right-click in mod mode
+    if (e.mods.isRightButtonDown()
+        && modModeState != nullptr && modModeState->isModulationMode()
+        && filterEnabled)
+    {
+        auto sourceID = modModeState->getTargetSourceID();
+        std::vector<ModulationContextMenu::ParamInfo> entries;
+        if (modModeState->findSlotIndex (sourceID, "filterFrequency") >= 0)
+            entries.push_back ({ cutoffParam->getName (15), sourceID, "filterFrequency" });
+        if (modModeState->findSlotIndex (sourceID, "filterResonance") >= 0)
+            entries.push_back ({ resonanceParam->getName (15), sourceID, "filterResonance" });
+        if (!entries.empty())
+        {
+            showModulationContextMenu (this, modModeState, std::move (entries), e.getScreenPosition());
+            return;
+        }
+    }
+
     if (e.mods.isRightButtonDown())
     {
         auto* filterOnParam = apvts.getParameter ("filterOn");
@@ -89,6 +107,27 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
     // Modulation mode handling
     if (modModeState != nullptr && modModeState->isModulationMode())
     {
+        if (e.mods.isShiftDown())
+        {
+            if (!filterEnabled)
+                return;
+
+            isDragging = true;
+            dragStartPosition = e.position;
+            dragStartCutoff = normalizedCutoff;
+            dragStartResonance = normalizedResonance;
+
+            if (undoManager != nullptr)
+                undoManager->beginNewTransaction();
+            if (cutoffParam)
+                cutoffParam->beginChangeGesture();
+            if (resonanceParam)
+                resonanceParam->beginChangeGesture();
+            if (gestureCount != nullptr)
+                ++(*gestureCount);
+            return;
+        }
+
         auto sourceID = modModeState->getTargetSourceID();
 
         int cutoffSlot = modModeState->getOrCreateSlot (sourceID, "filterFrequency");
@@ -144,31 +183,10 @@ void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
 
     if (isDragging)
     {
-        // Get the current position in the component
+        // Direct control - map position directly to parameter values
         const juce::Point<float> pos = e.position;
-
-        // Check if shift is held for fine control
-        const bool fineControl = e.mods.isShiftDown();
-
-        // Calculate new parameter values
-        float newCutoff, newResonance;
-
-        if (fineControl)
-        {
-            // Apply fine control (reduced sensitivity)
-            constexpr float sensitivity = 0.1f; // 10% of normal sensitivity
-            const float xOffset = (pos.x - dragStartPosition.x) * sensitivity;
-            const float yOffset = (pos.y - dragStartPosition.y) * sensitivity;
-
-            newCutoff = juce::jlimit (0.0f, 1.0f, dragStartCutoff + xOffset / getWidth());
-            newResonance = juce::jlimit (0.0f, 1.0f, dragStartResonance - yOffset / getHeight());
-        }
-        else
-        {
-            // Direct control - map position directly to parameter values
-            newCutoff = juce::jlimit (0.0f, 1.0f, pos.x / getWidth());
-            newResonance = juce::jlimit (0.0f, 1.0f, 1.0f - pos.y / getHeight());
-        }
+        float newCutoff = juce::jlimit (0.0f, 1.0f, pos.x / getWidth());
+        float newResonance = juce::jlimit (0.0f, 1.0f, 1.0f - pos.y / getHeight());
 
         if (cutoffParam && resonanceParam)
         {

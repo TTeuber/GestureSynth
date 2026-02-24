@@ -9,6 +9,7 @@
 
 #include "../../Theme.h"
 #include "ModulationModeState.h"
+#include "ModulationContextMenu.h"
 
 // Base Component Class for single parameter controls
 class SingleParameterComponent : public juce::Component,
@@ -130,6 +131,20 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
+        // Modulation context menu on right-click in mod mode
+        if (e.mods.isRightButtonDown()
+            && modModeState != nullptr && modModeState->isModulationMode()
+            && paramDestID.isNotEmpty() && isActive)
+        {
+            auto sourceID = modModeState->getTargetSourceID();
+            if (modModeState->findSlotIndex (sourceID, paramDestID) >= 0)
+            {
+                showModulationContextMenu (this, modModeState,
+                    { { param->getName (15), sourceID, paramDestID } }, e.getScreenPosition());
+            }
+            return;
+        }
+
         // Check if clicking the toggle button
         if (activeParam != nullptr)
         {

@@ -3,6 +3,7 @@
 #include "../PluginProcessor.h"
 #include "../Theme.h"
 #include "Utility/DepthSlider.h"
+#include "Utility/ModulationIconDrawing.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 class MatrixComponent final : public juce::Component, public juce::ValueTree::Listener, public juce::Timer
@@ -231,41 +232,7 @@ private:
             g.setColour (TEXT_COLOR.withAlpha (0.3f));
             g.drawRoundedRectangle (bounds.reduced (0.5f), 4.0f, 1.0f);
 
-            const auto inner = bounds.reduced (5.0f);
-            juce::Path icon;
-
-            const float cx = inner.getCentreX();
-            const float cy = inner.getCentreY();
-            const float hw = inner.getWidth() * 0.45f;
-            const float ah = inner.getHeight() * 0.25f;
-
-            if (bipolar)
-            {
-                // Double-sided arrow <-->
-                icon.startNewSubPath (cx - hw, cy);
-                icon.lineTo (cx + hw, cy);
-                // Left arrowhead
-                icon.startNewSubPath (cx - hw + ah, cy - ah);
-                icon.lineTo (cx - hw, cy);
-                icon.lineTo (cx - hw + ah, cy + ah);
-                // Right arrowhead
-                icon.startNewSubPath (cx + hw - ah, cy - ah);
-                icon.lineTo (cx + hw, cy);
-                icon.lineTo (cx + hw - ah, cy + ah);
-            }
-            else
-            {
-                // Single right arrow -->
-                icon.startNewSubPath (cx - hw, cy);
-                icon.lineTo (cx + hw, cy);
-                // Right arrowhead only
-                icon.startNewSubPath (cx + hw - ah, cy - ah);
-                icon.lineTo (cx + hw, cy);
-                icon.lineTo (cx + hw - ah, cy + ah);
-            }
-
-            g.setColour (TEXT_COLOR);
-            g.strokePath (icon, juce::PathStrokeType (1.5f));
+            ModulationIcons::drawBipolarIcon (g, bounds.reduced (5.0f), bipolar);
         }
 
         void mouseUp (const juce::MouseEvent& e) override
@@ -299,20 +266,7 @@ private:
             g.setColour (bg);
             g.fillRoundedRectangle (bounds, 4.0f);
 
-            const auto inner = bounds.reduced (5.0f);
-            const float cx = inner.getCentreX();
-            const float cy = inner.getCentreY();
-            const float r = juce::jmin (inner.getWidth(), inner.getHeight()) * 0.4f;
-
-            const float alpha = bypassed ? 1.0f : 0.3f;
-            g.setColour (TEXT_COLOR.withAlpha (alpha));
-
-            // Circle
-            g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.5f);
-
-            // Diagonal line
-            const float offset = r * 0.707f; // cos(45)
-            g.drawLine (cx - offset, cy - offset, cx + offset, cy + offset, 1.5f);
+            ModulationIcons::drawBypassIcon (g, bounds.reduced (5.0f), bypassed);
         }
 
         void mouseUp (const juce::MouseEvent& e) override
@@ -346,15 +300,7 @@ private:
             g.setColour (bg);
             g.fillRoundedRectangle (bounds, 4.0f);
 
-            const auto inner = bounds.reduced (6.0f);
-            const float alpha = isMouseOver() ? 0.7f : 0.3f;
-            g.setColour (TEXT_COLOR.withAlpha (alpha));
-
-            // X icon
-            g.drawLine (inner.getX(), inner.getY(),
-                        inner.getRight(), inner.getBottom(), 1.5f);
-            g.drawLine (inner.getRight(), inner.getY(),
-                        inner.getX(), inner.getBottom(), 1.5f);
+            ModulationIcons::drawClearIcon (g, bounds.reduced (6.0f), isMouseOver());
         }
 
         void mouseUp (const juce::MouseEvent& e) override

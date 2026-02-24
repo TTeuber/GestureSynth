@@ -48,6 +48,21 @@ void HPFDisplay::resized()
 
 void HPFDisplay::mouseDown (const juce::MouseEvent& e)
 {
+    // Modulation context menu on right-click in mod mode
+    if (e.mods.isRightButtonDown()
+        && modModeState != nullptr && modModeState->isModulationMode()
+        && hpfEnabled)
+    {
+        auto sourceID = modModeState->getTargetSourceID();
+        if (modModeState->findSlotIndex (sourceID, "hpfFrequency") >= 0)
+        {
+            showModulationContextMenu (this, modModeState,
+                { { cutoffParam->getName (15), sourceID, "hpfFrequency" } },
+                e.getScreenPosition());
+            return;
+        }
+    }
+
     if (e.mods.isRightButtonDown())
     {
         auto* hpfOnParam = apvts.getParameter ("hpfOn");

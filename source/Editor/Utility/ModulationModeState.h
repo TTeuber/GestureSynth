@@ -127,6 +127,46 @@ public:
         return false;
     }
 
+    bool isBypassed (const juce::String& sourceID, const juce::String& destID) const
+    {
+        int idx = findSlotIndex (sourceID, destID);
+        if (idx >= 0 && modTree != nullptr)
+            return static_cast<bool> (modTree->getChild (idx).getProperty ("bypassed"));
+        return false;
+    }
+
+    void setBypassed (const juce::String& sourceID, const juce::String& destID, bool bypassed)
+    {
+        int idx = findSlotIndex (sourceID, destID);
+        if (idx >= 0 && modTree != nullptr)
+            modTree->getChild (idx).setProperty ("bypassed", bypassed, nullptr);
+    }
+
+    void toggleBipolar (const juce::String& sourceID, const juce::String& destID)
+    {
+        int idx = findSlotIndex (sourceID, destID);
+        if (idx >= 0 && modTree != nullptr)
+        {
+            auto child = modTree->getChild (idx);
+            bool current = static_cast<bool> (child.getProperty ("isBipolar"));
+            child.setProperty ("isBipolar", !current, nullptr);
+        }
+    }
+
+    void clearSlot (const juce::String& sourceID, const juce::String& destID)
+    {
+        int idx = findSlotIndex (sourceID, destID);
+        if (idx >= 0 && modTree != nullptr)
+        {
+            auto child = modTree->getChild (idx);
+            child.setProperty ("source", "None", nullptr);
+            child.setProperty ("destination", "None", nullptr);
+            child.setProperty ("depth", 0.0f, nullptr);
+            child.setProperty ("isBipolar", false, nullptr);
+            child.setProperty ("bypassed", false, nullptr);
+        }
+    }
+
 private:
     Mode currentMode = Mode::Normal;
     juce::String targetSourceID { "lfo1" };

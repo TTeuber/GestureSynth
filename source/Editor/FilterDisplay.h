@@ -6,6 +6,7 @@
 
 #include "../Theme.h"
 #include "Utility/ModulationModeState.h"
+#include "Utility/ModulationContextMenu.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
