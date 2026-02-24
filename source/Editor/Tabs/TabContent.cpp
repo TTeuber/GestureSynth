@@ -280,6 +280,17 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     legatoToggle.setColour (juce::ToggleButton::tickColourId, TEXT_COLOR);
     addAndMakeVisible (legatoToggle);
     legatoAttachment = std::make_unique<ButtonAttachment> (p.parameters, "legatoOn", legatoToggle);
+
+    pitchBendRangeSlider.setSliderStyle (juce::Slider::IncDecButtons);
+    pitchBendRangeSlider.setTextBoxStyle (juce::Slider::TextBoxLeft, false, 40, 24);
+    pitchBendRangeSlider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
+    pitchBendRangeSlider.setColour (juce::Slider::textBoxOutlineColourId, SECONDARY_COLOR);
+    addAndMakeVisible (pitchBendRangeSlider);
+    pitchBendRangeAttachment = std::make_unique<SliderAttachment> (p.parameters, "pitchBendRange", pitchBendRangeSlider);
+
+    pitchBendRangeLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
+    pitchBendRangeLabel.setJustificationType (juce::Justification::centred);
+    addAndMakeVisible (pitchBendRangeLabel);
 }
 
 void ExperimentTabContent::paint (juce::Graphics& g)
@@ -289,6 +300,7 @@ void ExperimentTabContent::paint (juce::Graphics& g)
     g.setColour (TEXT_COLOR);
     g.setFont (18.0f);
     g.drawText ("Voice Mode", getLocalBounds().removeFromTop (40), juce::Justification::centred);
+    g.drawText ("Pitch Bend", getLocalBounds().withTop (120).removeFromTop (30), juce::Justification::centred);
 }
 
 void ExperimentTabContent::resized()
@@ -299,4 +311,9 @@ void ExperimentTabContent::resized()
     auto toggleArea = area.removeFromTop (60).withSizeKeepingCentre (200, 60);
     monoToggle.setBounds (toggleArea.removeFromTop (30));
     legatoToggle.setBounds (toggleArea.removeFromTop (30));
+
+    area.removeFromTop (30); // space for "Pitch Bend" header
+    auto sliderArea = area.removeFromTop (30).withSizeKeepingCentre (200, 30);
+    pitchBendRangeLabel.setBounds (sliderArea.removeFromTop (0)); // label is drawn via paint()
+    pitchBendRangeSlider.setBounds (sliderArea);
 }

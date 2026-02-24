@@ -1,6 +1,7 @@
 #pragma once
 
 // #include "AntiAliasOscillator.h"
+#include "../Modulation/ModWheelSource.h"
 #include "../Modulation/Modulation.h"
 #include "../Modulation/MyADSR.h"
 #include "../Modulation/MyLFO.h"
@@ -38,8 +39,16 @@ public:
     void startNote (int midiNoteNumber, float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition) override;
     void stopNote (float velocity, bool allowTailOff) override;
 
-    void pitchWheelMoved (int) override {}
-    void controllerMoved (int, int) override {}
+    void pitchWheelMoved (int newPitchWheelValue) override
+    {
+        pitchBendValue = (newPitchWheelValue - 8192) / 8192.0f;
+    }
+
+    void controllerMoved (int controllerNumber, int newControllerValue) override
+    {
+        if (controllerNumber == 1)
+            modWheelSource.setValue (newControllerValue / 127.0f);
+    }
 
     void renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
     int readWaveformData (float* dest, int maxSamples);
@@ -123,6 +132,9 @@ private:
 
     juce::dsp::StateVariableTPTFilter<float> filter = juce::dsp::StateVariableTPTFilter<float>();
     juce::dsp::StateVariableTPTFilter<float> hpFilter = juce::dsp::StateVariableTPTFilter<float>();
+
+    ModWheelSource modWheelSource;
+    float pitchBendValue = 0.0f;
 
     float frequency = 0.0f;
     float targetFrequency = 0.0f;
@@ -219,6 +231,7 @@ private:
         { adsr2.getID(), &adsr2 },
         { adsr3.getID(), &adsr3 },
         { adsr4.getID(), &adsr4 },
+        { modWheelSource.getID(), &modWheelSource },
     };
 
     std::map<juce::String, ModDestination*> modDestinations = {

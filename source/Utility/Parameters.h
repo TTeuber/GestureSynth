@@ -99,6 +99,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     // Voice Mode Parameters
     layout.add (make_unique<AudioParameterBool> (ParameterID ("monoOn", 1), "Mono Mode", false));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("legatoOn", 1), "Legato", false));
+    layout.add (make_unique<Parameter> (ParameterID ("pitchBendRange", 1), "Pitch Bend Range", Normalize (1.0f, 12.0f, 1.0f), 2.0f));
 
     // ================================================================================================================================================
     // Envelope Parameters

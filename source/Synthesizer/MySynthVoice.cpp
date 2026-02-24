@@ -102,7 +102,9 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
             waveLength /= 2;
     }
 
-    juneOscillator.setFrequency (frequency * vibrato.getFrequencyMultiplier (numSamples));
+    const float pitchBendRange = *parameters.getRawParameterValue ("pitchBendRange");
+    const float pitchBendMultiplier = std::pow (2.0f, pitchBendRange * pitchBendValue / 12.0f);
+    juneOscillator.setFrequency (frequency * vibrato.getFrequencyMultiplier (numSamples) * pitchBendMultiplier);
     juneOscillator.processBlock (block);
 
     if (noiseLevel > 0.0f)
@@ -343,6 +345,7 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
 
 void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
+    pitchBendValue = (currentPitchWheelPosition - 8192) / 8192.0f;
     targetFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
 
     if (portamentoTimeMs > 0.0f && portamentoFromFrequency > 0.0f && !skipPortamento)
