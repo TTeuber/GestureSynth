@@ -12,6 +12,7 @@
 #include "../MatrixComponent.h"
 #include "../OscGraph.h"
 #include "../CustomKeyboard.h"
+#include "../KeyVelComponent.h"
 #include "../Oscilliscope.h"
 #include "../SubOscillatorComponent.h"
 #include "../ChorusMixComponent.h"
@@ -151,6 +152,8 @@ private:
     PortamentoComponent portamentoComponent;
     LFOComponent lfoComponent;
     ADSRGraph adsrGraph;
+    KeyVelComponent keyVelComponent;
+    CustomKeyboard keyboard;
 
     ModSourceTab lfoTabs[4];
     ModSourceTab envTabs[4];

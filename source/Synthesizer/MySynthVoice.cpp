@@ -102,6 +102,9 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
             waveLength /= 2;
     }
 
+    velocitySource.setCurve (velocityCurveParam.getValue());
+    keyboardSource.setCurve (keyboardCurveParam.getValue());
+
     const float pitchBendRange = *parameters.getRawParameterValue ("pitchBendRange");
     const float pitchBendMultiplier = std::pow (2.0f, pitchBendRange * pitchBendValue / 12.0f);
     juneOscillator.setFrequency (frequency * vibrato.getFrequencyMultiplier (numSamples) * pitchBendMultiplier);
@@ -360,6 +363,12 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
     juneOscillator.setFrequency (frequency);
     vibrato.reset();
     this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
+
+    velocitySource.setValue (this->velocity);
+    velocitySource.setCurve (velocityCurveParam.getValue());
+    keyboardSource.setNoteNumber (midiNoteNumber);
+    keyboardSource.setCurve (keyboardCurveParam.getValue());
+
     for (auto* env : envs)
         env->noteOn();
     *env1ptr = &adsr1;
@@ -389,6 +398,8 @@ void MySynthVoice::glideToNote (int midiNoteNumber, float vel)
     // frequency stays as-is — voice glides from current position
     // Do NOT retrigger envelopes or reset vibrato
     velocity = juce::jlimit (0.0f, 1.0f, vel);
+    keyboardSource.setNoteNumber (midiNoteNumber);
+    keyboardSource.setCurve (keyboardCurveParam.getValue());
     pitchTracker->updateFrequency (targetFrequency);
     waveLength = static_cast<int> (std::ceil (2 * currentSampleRate / targetFrequency));
     while (waveLength > WaveformBuffer::kBufferSize)

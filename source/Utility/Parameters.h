@@ -115,5 +115,10 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
         layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "ReleaseCurve", 1), "Envelope " + std::to_string (i) + " Release Curve", Normalize (0.1f, 10.0f, 0.001f, 0.3f), 1.0f));
     }
 
+    // ================================================================================================================================================
+    // Velocity & Keyboard Curve Parameters
+    layout.add (make_unique<Parameter> (ParameterID ("velocityCurve", 1), "Velocity Curve", Normalize (-1.0f, 1.0f, 0.01f), 0.0f));
+    layout.add (make_unique<Parameter> (ParameterID ("keyboardCurve", 1), "Keyboard Curve", Normalize (-1.0f, 1.0f, 0.01f), 0.0f));
+
     return layout;
 }

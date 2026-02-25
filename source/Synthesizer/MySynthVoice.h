@@ -1,7 +1,9 @@
 #pragma once
 
 // #include "AntiAliasOscillator.h"
+#include "../Modulation/KeyboardSource.h"
 #include "../Modulation/ModWheelSource.h"
+#include "../Modulation/VelocitySource.h"
 #include "../Modulation/Modulation.h"
 #include "../Modulation/MyADSR.h"
 #include "../Modulation/MyLFO.h"
@@ -134,6 +136,10 @@ private:
     juce::dsp::StateVariableTPTFilter<float> hpFilter = juce::dsp::StateVariableTPTFilter<float>();
 
     ModWheelSource modWheelSource;
+    VelocitySource velocitySource;
+    KeyboardSource keyboardSource;
+    StaticParameter velocityCurveParam = StaticParameter (parameters.getParameter ("velocityCurve"));
+    StaticParameter keyboardCurveParam = StaticParameter (parameters.getParameter ("keyboardCurve"));
     float pitchBendValue = 0.0f;
 
     float frequency = 0.0f;
@@ -232,6 +238,8 @@ private:
         { adsr3.getID(), &adsr3 },
         { adsr4.getID(), &adsr4 },
         { modWheelSource.getID(), &modWheelSource },
+        { velocitySource.getID(), &velocitySource },
+        { keyboardSource.getID(), &keyboardSource },
     };
 
     std::map<juce::String, ModDestination*> modDestinations = {

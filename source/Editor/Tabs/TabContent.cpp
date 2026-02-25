@@ -19,7 +19,9 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
       chorusMixComponent (p.parameters.getParameter ("chorusMix"), &p.undoManager, &p.activeGestureCount, modState),
       portamentoComponent (p.parameters.getParameter ("portamentoTime"), &p.undoManager, &p.activeGestureCount, modState),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
-      adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount)
+      adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount),
+      keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
+      keyboard (p.keyboardState)
 {
     addAndMakeVisible (waveformComponent);
     addAndMakeVisible (filterDisplay);
@@ -34,6 +36,8 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
     addAndMakeVisible (portamentoComponent);
     addAndMakeVisible (lfoComponent);
     addAndMakeVisible (adsrGraph);
+    addAndMakeVisible (keyVelComponent);
+    addAndMakeVisible (keyboard);
 
     const juce::StringArray lfoIDs = { "lfo1", "lfo2", "lfo3", "lfo4" };
     const juce::StringArray envIDs = { "env1", "env2", "env3", "env4" };
@@ -117,6 +121,10 @@ void MainTabContent::paint (juce::Graphics& g)
 void MainTabContent::resized()
 {
     auto area = getLocalBounds();
+    auto keyboardHeight = area.getHeight() / 6;
+    auto keyboardRow = area.removeFromBottom (keyboardHeight);
+    keyboard.setBounds (keyboardRow.reduced (2));
+
     auto rowHeight = area.getHeight() / 3;
 
     auto squareCol = rowHeight;
@@ -140,11 +148,13 @@ void MainTabContent::resized()
     detuneComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
     hpfDisplay.setBounds (row2.reduced (5));
 
-    // Row 3: 30px tab strip at top, then LFO | ADSR below
+    // Row 3: 30px tab strip at top, then LFO | ADSR | KeyVel below
     auto row3 = area;
     auto buttonRow = row3.removeFromTop (30);
-    auto lfoTabArea = buttonRow.removeFromLeft (buttonRow.getWidth() / 2);
-    auto envTabArea = buttonRow;
+    int thirdWidth = buttonRow.getWidth() / 3;
+    auto lfoTabArea = buttonRow.removeFromLeft (thirdWidth);
+    auto envTabArea = buttonRow.removeFromLeft (thirdWidth);
+    // Remaining buttonRow space is empty (above KeyVel)
 
     // LFO tabs
     int lfoTabWidth = juce::jmin (75, lfoTabArea.getWidth() / 4);
@@ -156,9 +166,11 @@ void MainTabContent::resized()
     for (int i = 0; i < 4; ++i)
         envTabs[i].setBounds (envTabArea.removeFromLeft (envTabWidth));
 
-    // LFO component | ADSR graph
-    lfoComponent.setBounds (row3.removeFromLeft (row3.getWidth() / 2).reduced (5));
-    adsrGraph.setBounds (row3.reduced (5));
+    // LFO component | ADSR graph | KeyVel component
+    int contentThird = row3.getWidth() / 3;
+    lfoComponent.setBounds (row3.removeFromLeft (contentThird).reduced (5));
+    adsrGraph.setBounds (row3.removeFromLeft (contentThird).reduced (5));
+    keyVelComponent.setBounds (row3.reduced (5));
 }
 
 // =============================================================================
