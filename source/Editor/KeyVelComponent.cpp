@@ -199,12 +199,13 @@ void KeyVelComponent::updateCurveFromDrag (const juce::MouseEvent& e)
     float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
     auto graphArea = graphRect.withSizeKeepingCentre (side, side);
 
-    // Map vertical position to curve value [-1, 1]
-    // Top = -1 (concave), bottom = +1 (convex), center = 0 (linear)
+    // Normalized Y in [0, 1]: 0 = bottom of graph, 1 = top
     float normalizedY = 1.0f - (static_cast<float> (e.y) - graphArea.getY()) / graphArea.getHeight();
-    // Map so dragging handle up (higher output at 0.5) = positive curve (convex)
-    // and dragging down = negative curve (concave)
-    float curveValue = juce::jlimit (-1.0f, 1.0f, (normalizedY - 0.5f) * 2.0f);
+    float safeY = juce::jlimit (0.001f, 0.999f, normalizedY);
+
+    // Inverse of applyCurve at x=0.5: k = -ln((1/y - 1)) / ln(1000)
+    float curveValue = juce::jlimit (-1.0f, 1.0f,
+        -std::log ((1.0f / safeY) - 1.0f) / std::log (1000.0f));
 
     if (auto* p = getCurrentParam())
     {
