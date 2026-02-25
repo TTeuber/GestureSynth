@@ -7,7 +7,27 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 
 #define HEIGHT 840
-#define WIDTH 1100
+#define WIDTH 1260
+
+//==============================================================================
+class ResizeGrip : public juce::ResizableCornerComponent
+{
+public:
+    using juce::ResizableCornerComponent::ResizableCornerComponent;
+
+    void paint (juce::Graphics& g) override
+    {
+        auto bounds = getLocalBounds().toFloat();
+        g.setColour (TEXT_COLOR.withAlpha (0.3f));
+
+        for (int i = 0; i < 3; ++i)
+        {
+            float offset = 4.0f * (float) (i + 1);
+            g.drawLine (bounds.getRight() - offset, bounds.getBottom(),
+                        bounds.getRight(), bounds.getBottom() - offset, 1.0f);
+        }
+    }
+};
 
 //==============================================================================
 class PluginEditor final : public juce::AudioProcessorEditor,
@@ -24,13 +44,18 @@ public:
     void resized() override;
 
 private:
-    int windowHeight = HEIGHT;
-    int windowWidth = WIDTH;
+    static constexpr float kMinScale = 0.5f;
+    static constexpr float kMaxScale = 1.5f;
+
+    float scaleFactor = 1.0f;
 
     PluginProcessor& processorRef;
 
     ModulationModeState modModeState;
+
+    juce::Component contentWrapper;
     juce::Label modeLabel;
+    juce::Label scaleLabel;
 
     std::unique_ptr<MainTabContent> mainTab;
     std::unique_ptr<KeyboardTabContent> keyboardTab;
@@ -39,6 +64,9 @@ private:
     std::unique_ptr<ExperimentTabContent> experimentTab;
 
     juce::TabbedComponent tabbedComponent { juce::TabbedButtonBar::TabsAtTop };
+
+    juce::ComponentBoundsConstrainer constrainer;
+    std::unique_ptr<ResizeGrip> resizeGrip;
 
     bool keyPressed (const juce::KeyPress& key) override;
     void timerCallback() override;

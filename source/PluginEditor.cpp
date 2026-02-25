@@ -8,12 +8,19 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     modModeState.setModTree (&processorRef.modTree);
     modModeState.addListener (this);
 
-    // Mode label
+    // Mode label — child of contentWrapper
     modeLabel.setText ("Normal Mode", juce::dontSendNotification);
     modeLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
     modeLabel.setFont (juce::Font (14.0f));
     modeLabel.setJustificationType (juce::Justification::centredLeft);
-    addAndMakeVisible (modeLabel);
+    contentWrapper.addAndMakeVisible (modeLabel);
+
+    // Scale label — child of contentWrapper
+    scaleLabel.setText ("100%", juce::dontSendNotification);
+    scaleLabel.setColour (juce::Label::textColourId, TEXT_COLOR.withAlpha (0.5f));
+    scaleLabel.setFont (juce::Font (12.0f));
+    scaleLabel.setJustificationType (juce::Justification::centredRight);
+    contentWrapper.addAndMakeVisible (scaleLabel);
 
     processorRef.keyboardState.addListener (this);
 
@@ -36,12 +43,25 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     tabBar.setColour (juce::TabbedButtonBar::tabOutlineColourId, juce::Colours::transparentBlack);
     tabBar.setColour (juce::TabbedButtonBar::tabTextColourId, TEXT_COLOR);
 
-    addAndMakeVisible (tabbedComponent);
+    contentWrapper.addAndMakeVisible (tabbedComponent);
+    addAndMakeVisible (contentWrapper);
+
+    // Constrainer: fixed aspect ratio, min/max scale
+    constrainer.setFixedAspectRatio ((double) WIDTH / (double) HEIGHT);
+    constrainer.setSizeLimits ((int) (WIDTH * kMinScale), (int) (HEIGHT * kMinScale),
+                               (int) (WIDTH * kMaxScale), (int) (HEIGHT * kMaxScale));
+
+    setResizable (true, false);
+    setConstrainer (&constrainer);
+
+    // Resize grip — direct child of editor
+    resizeGrip = std::make_unique<ResizeGrip> (this, &constrainer);
+    addAndMakeVisible (*resizeGrip);
 
     setWantsKeyboardFocus (true);
     startTimer (500);
 
-    setSize (windowWidth, windowHeight);
+    setSize (WIDTH, HEIGHT);
 }
 
 PluginEditor::~PluginEditor()
@@ -58,8 +78,12 @@ void PluginEditor::paint (juce::Graphics& g)
 
 void PluginEditor::resized()
 {
-    juce::Rectangle<int> area = getLocalBounds();
-    tabbedComponent.setBounds (area);
+    scaleFactor = (float) getWidth() / (float) WIDTH;
+
+    contentWrapper.setTransform (juce::AffineTransform::scale (scaleFactor));
+    contentWrapper.setBounds (0, 0, WIDTH, HEIGHT);
+
+    tabbedComponent.setBounds (0, 0, WIDTH, HEIGHT);
 
     // Position mode label to the right of the tab bar
     auto& tabBar = tabbedComponent.getTabbedButtonBar();
@@ -74,6 +98,14 @@ void PluginEditor::resized()
         tabBarBounds.getY(),
         200,
         tabBarBounds.getHeight());
+
+    // Scale label in top-right of tab bar area
+    scaleLabel.setBounds (WIDTH - 80, tabBarBounds.getY(), 70, tabBarBounds.getHeight());
+    int scalePercent = juce::roundToInt (scaleFactor * 100.0f);
+    scaleLabel.setText (juce::String (scalePercent) + "%", juce::dontSendNotification);
+
+    // Resize grip at physical bottom-right corner (not inside contentWrapper)
+    resizeGrip->setBounds (getWidth() - 16, getHeight() - 16, 16, 16);
 }
 
 bool PluginEditor::keyPressed (const juce::KeyPress& key)
