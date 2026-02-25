@@ -17,12 +17,12 @@ public:
     float getNextValue() noexcept override { return applyCurve (rawValue, curve); }
     [[nodiscard]] float getCurrentValue() const noexcept override { return applyCurve (rawValue, curve); }
 
-    static float applyCurve (float input, float c) noexcept
+    static float applyCurve (float x, float k) noexcept
     {
-        if (input <= 0.0f) return 0.0f;
-        if (input >= 1.0f) return 1.0f;
-        float exponent = std::pow (2.0f, -c * 3.0f);
-        return std::pow (input, exponent);
+        if (x <= 0.0f) return 0.0f;
+        if (x >= 1.0f) return 1.0f;
+        float w = std::pow (1000.0f, -k);
+        return x / (x + w * (1.0f - x));
     }
 
 private:

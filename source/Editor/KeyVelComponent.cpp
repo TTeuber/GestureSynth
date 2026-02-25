@@ -86,8 +86,10 @@ void KeyVelComponent::paint (juce::Graphics& g)
         g.drawText (tabLabels[i], tabF.withTrimmedLeft (iconSize + 8), juce::Justification::centred, true);
     }
 
-    // Graph area
-    auto graphArea = bounds.toFloat().reduced (4.0f);
+    // Graph area — force square aspect ratio
+    auto graphRect = bounds.toFloat().reduced (4.0f);
+    float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
+    auto graphArea = graphRect.withSizeKeepingCentre (side, side);
     g.setColour (SECONDARY_COLOR);
     g.fillRoundedRectangle (graphArea, 3.0f);
 
@@ -193,7 +195,9 @@ void KeyVelComponent::mouseUp (const juce::MouseEvent&)
 
 void KeyVelComponent::updateCurveFromDrag (const juce::MouseEvent& e)
 {
-    auto graphArea = getLocalBounds().withTrimmedTop (kTabHeight).toFloat().reduced (4.0f);
+    auto graphRect = getLocalBounds().withTrimmedTop (kTabHeight).toFloat().reduced (4.0f);
+    float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
+    auto graphArea = graphRect.withSizeKeepingCentre (side, side);
 
     // Map vertical position to curve value [-1, 1]
     // Top = -1 (concave), bottom = +1 (convex), center = 0 (linear)
