@@ -62,16 +62,20 @@ public:
     std::array<float, kWaveBufferSize> waveData {};
     std::atomic<int> waveWritePos { 0 };
 
-    std::array<std::atomic<float>, 12> modSourceOutputs {};
+    std::array<std::atomic<float>, 16> modSourceOutputs {};
 
     static constexpr int kNumModDests = 14;
     std::array<std::atomic<float>, kNumModDests> modDestOutputs {};
 
     using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;
     ModList modList = {
-        { "env1", 0.0f, "filterFrequency", false },
-        { "lfo1", 0.0f, "filterFrequency", true },
-        { "lfo1", 0.0f, "pulseWidth", true },
+        { "None", 0.0f, "None", false },
+        { "None", 0.0f, "None", false },
+        { "None", 0.0f, "None", false },
+        { "None", 0.0f, "None", false },
+        { "None", 0.0f, "None", false },
+        { "None", 0.0f, "None", false },
+        { "None", 0.0f, "None", false },
         { "None", 0.0f, "None", false },
         { "None", 0.0f, "None", false },
         { "None", 0.0f, "None", false },

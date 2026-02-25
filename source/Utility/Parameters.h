@@ -87,7 +87,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (make_unique<AudioParameterBool> (ParameterID ("filterOn", 1), "Filter On", true));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("hpfOn", 1), "HPF On", true));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("chorusOn", 1), "Chorus On", true));
-    layout.add (make_unique<AudioParameterBool> (ParameterID ("vibratoOn", 1), "Vibrato On", false));
+    layout.add (make_unique<AudioParameterBool> (ParameterID ("vibratoOn", 1), "Vibrato On", true));
 
     // ================================================================================================================================================
     // Portamento Parameters

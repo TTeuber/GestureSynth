@@ -14,7 +14,7 @@ public:
     {
         modTree.addListener (this);
 
-        for (int i = 0; i < 12 && i < modTree.getNumChildren(); ++i)
+        for (int i = 0; i < 16 && i < modTree.getNumChildren(); ++i)
         {
             auto child = modTree.getChild (i);
             auto& row = rows[i];
@@ -118,7 +118,7 @@ public:
         if (sourceOutputs == nullptr)
             return;
 
-        for (int i = 0; i < 12; ++i)
+        for (int i = 0; i < 16; ++i)
             rows[i].depthSlider.setSourceValue (sourceOutputs[i].load (std::memory_order_relaxed));
     }
 
@@ -129,7 +129,7 @@ public:
 
     void paintOverChildren (juce::Graphics& g) override
     {
-        const int numRows = 12;
+        const int numRows = 16;
         const int rowHeight = getHeight() / numRows;
         g.setColour (TEXT_INACTIVE_COLOR.withAlpha (0.3f));
         for (int i = 1; i < numRows; ++i)
@@ -139,7 +139,7 @@ public:
     void resized() override
     {
         auto area = getLocalBounds();
-        const int numRows = 12;
+        const int numRows = 16;
         const int rowHeight = area.getHeight() / numRows;
 
         for (int i = 0; i < numRows; ++i)
@@ -169,7 +169,7 @@ public:
             return;
 
         const int index = modTree.indexOf (treeWhosePropertyHasChanged);
-        if (index < 0 || index >= 12)
+        if (index < 0 || index >= 16)
             return;
 
         auto& row = rows[index];
@@ -321,5 +321,5 @@ private:
         BypassButton   bypassButton;
         ClearButton    clearButton;
     };
-    std::array<SlotRow, 12> rows;
+    std::array<SlotRow, 16> rows;
 };
