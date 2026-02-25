@@ -162,39 +162,32 @@ void MainTabContent::resized()
 }
 
 // =============================================================================
-// OscillatorTabContent
+// KeyboardTabContent
 // =============================================================================
 
-OscillatorTabContent::OscillatorTabContent (PluginProcessor& p)
-    : waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[4], &p.modDestOutputs[5]),
-      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[6], &p.modDestOutputs[7]),
-      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[8], &p.modDestOutputs[9]),
-      oscilloscope (p)
+KeyboardTabContent::KeyboardTabContent (PluginProcessor& p)
+    : oscilloscope (p),
+      keyboard (p.keyboardState)
 {
-    addAndMakeVisible (waveformComponent);
-    addAndMakeVisible (detuneComponent);
-    addAndMakeVisible (subOscillatorComponent);
     addAndMakeVisible (oscilloscope);
+    addAndMakeVisible (keyboard);
 }
 
-void OscillatorTabContent::paint (juce::Graphics& g)
+void KeyboardTabContent::paint (juce::Graphics& g)
 {
     g.fillAll (PRIMARY_COLOR);
 }
 
-void OscillatorTabContent::resized()
+void KeyboardTabContent::resized()
 {
     auto area = getLocalBounds();
 
-    // Left column: waveform, detune, sub oscillator
-    auto leftColumn = area.removeFromLeft (area.getWidth() / 4);
-    auto cellHeight = leftColumn.getHeight() / 3;
-    waveformComponent.setBounds (leftColumn.removeFromTop (cellHeight).reduced (5));
-    detuneComponent.setBounds (leftColumn.removeFromTop (cellHeight).reduced (5));
-    subOscillatorComponent.setBounds (leftColumn.reduced (5));
+    // Top 60%: oscilloscope
+    auto oscArea = area.removeFromTop (static_cast<int> (area.getHeight() * 0.6f));
+    oscilloscope.setBounds (oscArea.reduced (5));
 
-    // Right: oscilloscope takes remaining space
-    oscilloscope.setBounds (area.reduced (5));
+    // Bottom 40%: custom keyboard
+    keyboard.setBounds (area.reduced (2));
 }
 
 // =============================================================================

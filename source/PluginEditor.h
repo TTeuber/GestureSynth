@@ -32,10 +32,8 @@ private:
     ModulationModeState modModeState;
     juce::Label modeLabel;
 
-    juce::MidiKeyboardComponent keyboardComponent;
-
     std::unique_ptr<MainTabContent> mainTab;
-    std::unique_ptr<OscillatorTabContent> oscillatorTab;
+    std::unique_ptr<KeyboardTabContent> keyboardTab;
     std::unique_ptr<ModulationTabContent> modulationTab;
     std::unique_ptr<EffectsTabContent> effectsTab;
     std::unique_ptr<ExperimentTabContent> experimentTab;

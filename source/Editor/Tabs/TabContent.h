@@ -11,6 +11,7 @@
 #include "../LFOComponent.h"
 #include "../MatrixComponent.h"
 #include "../OscGraph.h"
+#include "../CustomKeyboard.h"
 #include "../Oscilliscope.h"
 #include "../SubOscillatorComponent.h"
 #include "../ChorusMixComponent.h"
@@ -158,20 +159,18 @@ private:
 };
 
 // =============================================================================
-// Oscillator Tab: Waveform, Detune, Sub Oscillator, Oscilloscope
+// Keyboard Tab: Custom Keyboard, Oscilloscope
 // =============================================================================
-class OscillatorTabContent final : public juce::Component
+class KeyboardTabContent final : public juce::Component
 {
 public:
-    explicit OscillatorTabContent (PluginProcessor& p);
+    explicit KeyboardTabContent (PluginProcessor& p);
     void resized() override;
     void paint (juce::Graphics& g) override;
 
 private:
-    WaveformComponent waveformComponent;
-    DetuneComponent detuneComponent;
-    SubOscillatorComponent subOscillatorComponent;
     Oscilloscope oscilloscope;
+    CustomKeyboard keyboard;
 };
 
 // =============================================================================
