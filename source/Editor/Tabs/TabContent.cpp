@@ -105,6 +105,8 @@ void MainTabContent::targetSourceChanged (const juce::String&)
         lfoTabs[i].repaint();
         envTabs[i].repaint();
     }
+    hpfDisplay.repaint();
+    filterDisplay.repaint();
 }
 
 void MainTabContent::paint (juce::Graphics& g)
