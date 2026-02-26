@@ -39,6 +39,11 @@ public:
     std::shared_ptr<MyADSR*> getAmpADSRPtr() { return ampEnvPtr; }
     std::shared_ptr<MyADSR*> getFilterADSRPtr() { return filterEnvPtr; }
 
+    std::atomic<float>* getVelocityRawPtr() { return &currentVelocityRaw; }
+    std::atomic<float>* getKeyboardRawPtr() { return &currentKeyboardRaw; }
+    std::atomic<float>* getModWheelRawPtr() { return &currentModWheelRaw; }
+    std::atomic<float>* getPitchBendRawPtr() { return &currentPitchBendRaw; }
+
 private:
     juce::AudioProcessorValueTreeState& parameters;
     juce::ValueTree& modTree;
@@ -84,4 +89,9 @@ private:
 
     std::shared_ptr<MyADSR*> ampEnvPtr = std::make_shared<MyADSR*>();
     std::shared_ptr<MyADSR*> filterEnvPtr = std::make_shared<MyADSR*>();
+
+    std::atomic<float> currentVelocityRaw { 0.0f };
+    std::atomic<float> currentKeyboardRaw { 0.0f };
+    std::atomic<float> currentModWheelRaw { 0.0f };
+    std::atomic<float> currentPitchBendRaw { 8192.0f };
 };

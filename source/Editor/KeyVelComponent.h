@@ -11,13 +11,16 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 class KeyVelComponent final : public juce::Component,
-                              public ModulationModeState::Listener
+                              public ModulationModeState::Listener,
+                              private juce::Timer
 {
 public:
     KeyVelComponent (juce::AudioProcessorValueTreeState& apvts,
                      juce::UndoManager* um,
                      std::atomic<int>* gestureCount,
-                     ModulationModeState* modState = nullptr);
+                     ModulationModeState* modState = nullptr,
+                     std::atomic<float>* velocityRaw = nullptr,
+                     std::atomic<float>* keyboardRaw = nullptr);
     ~KeyVelComponent() override;
 
     // ModulationModeState::Listener
@@ -45,6 +48,12 @@ private:
 
     int activeTab = 0; // 0 = Vel, 1 = Key
     bool dragging = false;
+
+    std::atomic<float>* velocityRawPtr = nullptr;
+    std::atomic<float>* keyboardRawPtr = nullptr;
+    float currentInputValue = 0.0f;
+
+    void timerCallback() override;
 
 public:
     void setActiveTab (int index) { activeTab = index; repaint(); }

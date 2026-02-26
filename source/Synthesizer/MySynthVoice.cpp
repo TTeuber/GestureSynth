@@ -5,11 +5,19 @@ MySynthVoice::MySynthVoice (
     juce::ValueTree& mt,
     std::shared_ptr<MyADSR*> ampEnvPtr,
     std::shared_ptr<PitchTracker> pt,
-    std::array<std::shared_ptr<LFOData>, 4>& lfoData)
+    std::array<std::shared_ptr<LFOData>, 4>& lfoData,
+    std::atomic<float>* velocityRawOut,
+    std::atomic<float>* keyboardRawOut,
+    std::atomic<float>* modWheelRawOut,
+    std::atomic<float>* pitchBendRawOut)
     : parameters (p),
       modTree (mt),
       env1ptr (std::move (ampEnvPtr)),
-      pitchTracker (std::move (pt))
+      pitchTracker (std::move (pt)),
+      velocityRawOutput (velocityRawOut),
+      keyboardRawOutput (keyboardRawOut),
+      modWheelRawOutput (modWheelRawOut),
+      pitchBendRawOutput (pitchBendRawOut)
 {
     for (int i = 0; i < 4; ++i)
         if (lfoData[i])
@@ -376,6 +384,11 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
     velocitySource.setCurve (velocityCurveParam.getValue());
     keyboardSource.setNoteNumber (midiNoteNumber);
     keyboardSource.setCurve (keyboardCurveParam.getValue());
+
+    if (velocityRawOutput != nullptr)
+        velocityRawOutput->store (this->velocity, std::memory_order_relaxed);
+    if (keyboardRawOutput != nullptr)
+        keyboardRawOutput->store (juce::jlimit (0.0f, 1.0f, static_cast<float> (midiNoteNumber) / 127.0f), std::memory_order_relaxed);
 
     for (auto* env : envs)
         env->noteOn();

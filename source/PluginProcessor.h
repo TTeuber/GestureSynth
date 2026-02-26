@@ -90,6 +90,9 @@ public:
     static inline const juce::StringArray modSourceIDs  = { "None", "env1", "env2", "env3", "env4", "lfo1", "lfo2", "lfo3", "lfo4", "modWheel", "velocity", "keyboard" };
     static inline const juce::StringArray modDestIDs    = { "None", "filterFrequency", "filterResonance", "hpfFrequency", "fineTune", "pulseWidth", "oscWaveform", "oscDetune", "oscWidth", "subOsc", "subOscWave", "vibratoDepth", "vibratoRate", "chorusDepth", "chorusRate" };
 
+    std::atomic<float> uiModWheelValue { -1.0f };
+    std::atomic<int>   uiPitchBendValue { -1 };
+
     MySynth& getSynth() { return synth; }
 
     std::shared_ptr<PitchTracker> pitchTracker = std::make_shared<PitchTracker>();

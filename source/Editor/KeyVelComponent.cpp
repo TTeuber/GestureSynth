@@ -6,23 +6,44 @@
 KeyVelComponent::KeyVelComponent (juce::AudioProcessorValueTreeState& apvts,
                                   juce::UndoManager* um,
                                   std::atomic<int>* gestureCount,
-                                  ModulationModeState* modState)
+                                  ModulationModeState* modState,
+                                  std::atomic<float>* velocityRaw,
+                                  std::atomic<float>* keyboardRaw)
     : parameters (apvts),
       undoManager (um),
       activeGestureCount (gestureCount),
-      modModeState (modState)
+      modModeState (modState),
+      velocityRawPtr (velocityRaw),
+      keyboardRawPtr (keyboardRaw)
 {
     velCurveParam = parameters.getParameter ("velocityCurve");
     keyCurveParam = parameters.getParameter ("keyboardCurve");
 
     if (modModeState != nullptr)
         modModeState->addListener (this);
+
+    startTimerHz (60);
 }
 
 KeyVelComponent::~KeyVelComponent()
 {
+    stopTimer();
     if (modModeState != nullptr)
         modModeState->removeListener (this);
+}
+
+void KeyVelComponent::timerCallback()
+{
+    auto* ptr = (activeTab == 0) ? velocityRawPtr : keyboardRawPtr;
+    if (ptr != nullptr)
+    {
+        float newVal = ptr->load (std::memory_order_relaxed);
+        if (newVal != currentInputValue)
+        {
+            currentInputValue = newVal;
+            repaint();
+        }
+    }
 }
 
 void KeyVelComponent::modulationModeChanged (ModulationModeState::Mode)
@@ -81,6 +102,18 @@ void KeyVelComponent::paint (juce::Graphics& g)
     g.fillEllipse (handleX - 5.0f, handleY - 5.0f, 10.0f, 10.0f);
     g.setColour (juce::Colours::orange);
     g.drawEllipse (handleX - 5.0f, handleY - 5.0f, 10.0f, 10.0f, 1.5f);
+
+    // Draw current value indicator
+    auto* ptr = (activeTab == 0) ? velocityRawPtr : keyboardRawPtr;
+    if (ptr != nullptr)
+    {
+        float x = currentInputValue;
+        float y = VelocitySource::applyCurve (x, curve);
+        float px = graphArea.getX() + x * graphArea.getWidth();
+        float py = graphArea.getBottom() - y * graphArea.getHeight();
+        g.setColour (TEXT_COLOR);
+        g.fillEllipse (px - 5.0f, py - 5.0f, 10.0f, 10.0f);
+    }
 }
 
 void KeyVelComponent::resized()

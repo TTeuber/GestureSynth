@@ -12,6 +12,7 @@
 #include "../MatrixComponent.h"
 #include "../OscGraph.h"
 #include "../CustomKeyboard.h"
+#include "../WheelComponent.h"
 #include "../KeyVelComponent.h"
 #include "../Oscilliscope.h"
 #include "../SubOscillatorComponent.h"
@@ -153,6 +154,8 @@ private:
     LFOComponent lfoComponent;
     ADSRGraph adsrGraph;
     KeyVelComponent keyVelComponent;
+    ModWheelComponent modWheel;
+    PitchWheelComponent pitchWheel;
     CustomKeyboard keyboard;
 
     void selectKeyVel (int index);

@@ -4,7 +4,7 @@ MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, st
 {
     clearVoices();
     for (int i = 0; i < 8; ++i)
-        addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pt, lfoData));
+        addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pt, lfoData, &currentVelocityRaw, &currentKeyboardRaw, &currentModWheelRaw, &currentPitchBendRaw));
 
     monoVoice = dynamic_cast<MySynthVoice*> (voices.getUnchecked (0));
 

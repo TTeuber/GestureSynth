@@ -20,7 +20,9 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
       portamentoComponent (p.parameters.getParameter ("portamentoTime"), &p.undoManager, &p.activeGestureCount, modState),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
       adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount),
-      keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
+      keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr()),
+      modWheel (p, modState),
+      pitchWheel (p),
       keyboard (p.keyboardState)
 {
     addAndMakeVisible (waveformComponent);
@@ -37,6 +39,8 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
     addAndMakeVisible (lfoComponent);
     addAndMakeVisible (adsrGraph);
     addAndMakeVisible (keyVelComponent);
+    addAndMakeVisible (modWheel);
+    addAndMakeVisible (pitchWheel);
     addAndMakeVisible (keyboard);
 
     const juce::StringArray lfoIDs = { "lfo1", "lfo2", "lfo3", "lfo4" };
@@ -115,6 +119,7 @@ void MainTabContent::modulationModeChanged (ModulationModeState::Mode)
     }
     velTab.repaint();
     keyTab.repaint();
+    modWheel.repaint();
     repaint();
 }
 
@@ -127,6 +132,7 @@ void MainTabContent::targetSourceChanged (const juce::String&)
     }
     velTab.repaint();
     keyTab.repaint();
+    modWheel.repaint();
     hpfDisplay.repaint();
     filterDisplay.repaint();
 }
@@ -141,6 +147,11 @@ void MainTabContent::resized()
     auto area = getLocalBounds();
     auto keyboardHeight = area.getHeight() / 6;
     auto keyboardRow = area.removeFromBottom (keyboardHeight);
+
+    int wheelWidth = juce::jmax (36, keyboardRow.getHeight() / 3);
+    auto wheelsArea = keyboardRow.removeFromLeft (wheelWidth * 2 + 4);
+    modWheel.setBounds (wheelsArea.removeFromLeft (wheelWidth).reduced (2));
+    pitchWheel.setBounds (wheelsArea.removeFromLeft (wheelWidth).reduced (2));
     keyboard.setBounds (keyboardRow.reduced (2));
 
     auto rowHeight = area.getHeight() / 3;

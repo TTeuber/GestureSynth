@@ -26,7 +26,9 @@ public:
 class MySynthVoice final : public juce::SynthesiserVoice, public juce::ValueTree::Listener, juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData);
+    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData,
+                  std::atomic<float>* velocityRawOut = nullptr, std::atomic<float>* keyboardRawOut = nullptr,
+                  std::atomic<float>* modWheelRawOut = nullptr, std::atomic<float>* pitchBendRawOut = nullptr);
     void addNodeToMatrix (const juce::ValueTree& childNode);
 
     void parameterChanged (const juce::String& parameterID, float newValue) override;
@@ -44,12 +46,18 @@ public:
     void pitchWheelMoved (int newPitchWheelValue) override
     {
         pitchBendValue = (newPitchWheelValue - 8192) / 8192.0f;
+        if (pitchBendRawOutput != nullptr)
+            pitchBendRawOutput->store (static_cast<float> (newPitchWheelValue), std::memory_order_relaxed);
     }
 
     void controllerMoved (int controllerNumber, int newControllerValue) override
     {
         if (controllerNumber == 1)
+        {
             modWheelSource.setValue (newControllerValue / 127.0f);
+            if (modWheelRawOutput != nullptr)
+                modWheelRawOutput->store (newControllerValue / 127.0f, std::memory_order_relaxed);
+        }
     }
 
     void renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
@@ -258,6 +266,11 @@ private:
         { chorusDepthParam.getID(), &chorusDepthParam },
         { chorusRateParam.getID(), &chorusRateParam }
     };
+
+    std::atomic<float>* velocityRawOutput = nullptr;
+    std::atomic<float>* keyboardRawOutput = nullptr;
+    std::atomic<float>* modWheelRawOutput = nullptr;
+    std::atomic<float>* pitchBendRawOutput = nullptr;
 
     // Cache of source/dest per slot for correct removal on property change
     std::array<std::pair<juce::String, juce::String>, 16> slotCache;

@@ -157,6 +157,22 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     const double startTime = juce::Time::getMillisecondCounterHiRes();
 
     keyboardState.processNextMidiBuffer (midiMessages, 0, buffer.getNumSamples(), true);
+
+    // Inject UI wheel values as MIDI messages
+    {
+        float pendingMod = uiModWheelValue.exchange (-1.0f, std::memory_order_relaxed);
+        if (pendingMod >= 0.0f)
+        {
+            int cc1 = juce::jlimit (0, 127, static_cast<int> (pendingMod * 127.0f));
+            midiMessages.addEvent (juce::MidiMessage::controllerEvent (1, 1, cc1), 0);
+        }
+    }
+    {
+        int pendingBend = uiPitchBendValue.exchange (-1, std::memory_order_relaxed);
+        if (pendingBend >= 0)
+            midiMessages.addEvent (juce::MidiMessage::pitchWheel (1, pendingBend), 0);
+    }
+
     juce::ignoreUnused (midiMessages);
 
     juce::ScopedNoDenormals noDenormals;
