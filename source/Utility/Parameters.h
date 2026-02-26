@@ -38,17 +38,17 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     // Oscillator Parameters
     layout.add (make_unique<Parameter> (ParameterID ("oscWaveform", 1), "Waveform", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> (ParameterID ("pulseWidth", 1), "Pulse Width", 0.1f, 0.9f, 0.5f));
-    layout.add (make_unique<Parameter> (ParameterID ("oscDetune", 1), "Detune", 0.0f, 1.0f, 0.0f));
+    layout.add (make_unique<Parameter> (ParameterID ("oscDetune", 1), "Detune", 0.0f, 1.0f, 0.2f));
     layout.add (make_unique<Parameter> (ParameterID ("oscWidth", 1), "Width", 0.0f, 1.0f, 1.0f));
-    layout.add (make_unique<Parameter> (ParameterID ("subOsc", 1), "Sub Level", 0.0f, 1.0f, 0.0f));
-    layout.add (make_unique<Parameter> (ParameterID ("subOscWave", 2), "Sub Wave", 0.0f, 1.0f, 0.0f));
+    layout.add (make_unique<Parameter> (ParameterID ("subOsc", 1), "Sub Level", 0.0f, 1.0f, 0.75f));
+    layout.add (make_unique<Parameter> (ParameterID ("subOscWave", 2), "Sub Wave", 0.0f, 1.0f, 0.67f));
     layout.add (make_unique<Parameter> (ParameterID ("fineTune", 1), "Fine Tune", -0.5f, 0.5f, 0.0f));
 
     // ================================================================================================================================================
     // Chorus Parameters
     layout.add (make_unique<Parameter> (ParameterID ("chorusMix", 1), "Chorus Mix", 0.0f, 1.0f, 0.5f));
-    layout.add (make_unique<Parameter> (ParameterID ("chorusDepth", 1), "Chorus Depth", Normalize (0.0f, 0.03f, 0.0f), 0.0028f));
-    auto chorusRate = make_unique<Parameter> (ParameterID ("chorusRate", 1), "Chorus Rate", Normalize (0.0f, 1.0f, 0.0f), 0.3f);
+    layout.add (make_unique<Parameter> (ParameterID ("chorusDepth", 1), "Chorus Depth", Normalize (0.0f, 0.03f, 0.0f), 0.015f));
+    auto chorusRate = make_unique<Parameter> (ParameterID ("chorusRate", 1), "Chorus Rate", Normalize (0.0f, 1.0f, 0.0f), 0.15f);
     chorusRate->range.setSkewForCentre (0.3f);
     layout.add (std::move (chorusRate));
 
@@ -82,11 +82,11 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     // ================================================================================================================================================
     // Boolean Parameters
     layout.add (make_unique<AudioParameterBool> (ParameterID ("oscOn", 1), "Osc On", true));
-    layout.add (make_unique<AudioParameterBool> (ParameterID ("detuneOn", 1), "Detune On", true));
-    layout.add (make_unique<AudioParameterBool> (ParameterID ("subOn", 1), "Sub On", true));
+    layout.add (make_unique<AudioParameterBool> (ParameterID ("detuneOn", 1), "Detune On", false));
+    layout.add (make_unique<AudioParameterBool> (ParameterID ("subOn", 1), "Sub On", false));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("filterOn", 1), "Filter On", true));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("hpfOn", 1), "HPF On", true));
-    layout.add (make_unique<AudioParameterBool> (ParameterID ("chorusOn", 1), "Chorus On", true));
+    layout.add (make_unique<AudioParameterBool> (ParameterID ("chorusOn", 1), "Chorus On", false));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("vibratoOn", 1), "Vibrato On", true));
 
     // ================================================================================================================================================
@@ -109,10 +109,10 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
         layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Attack", 1), "Envelope " + std::to_string (i) + " Attack", Normalize (0.01f, 10.0f, 0.001f, 0.3f), 0.0f));
         layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "AttackCurve", 1), "Envelope " + std::to_string (i) + " Attack Curve", Normalize (-1.0f, 1.0f, 0.01f), 0.0f));
         layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Decay", 1), "Envelope " + std::to_string (i) + " Decay", Normalize (0.01f, 10.0f, 0.001f, 0.3f), 0.5f));
-        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "DecayCurve", 1), "Envelope " + std::to_string (i) + " Decay Curve", Normalize (-1.0f, 1.0f, 0.01f), 0.0f));
+        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "DecayCurve", 1), "Envelope " + std::to_string (i) + " Decay Curve", Normalize (-1.0f, 1.0f, 0.01f), 0.25f));
         layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Sustain", 1), "Envelope " + std::to_string (i) + " Sustain", 0.0f, 1.0f, 1.0f));
         layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "Release", 1), "Envelope " + std::to_string (i) + " Release", Normalize (0.01f, 10.0f, 0.001f, 0.3f), 0.0f));
-        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "ReleaseCurve", 1), "Envelope " + std::to_string (i) + " Release Curve", Normalize (-1.0f, 1.0f, 0.01f), 0.0f));
+        layout.add (make_unique<Parameter> (ParameterID ("env" + std::to_string (i) + "ReleaseCurve", 1), "Envelope " + std::to_string (i) + " Release Curve", Normalize (-1.0f, 1.0f, 0.01f), 0.25f));
     }
 
     // ================================================================================================================================================
