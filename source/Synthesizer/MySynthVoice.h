@@ -133,7 +133,7 @@ private:
     DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
 
     juce::dsp::StateVariableTPTFilter<float> filter = juce::dsp::StateVariableTPTFilter<float>();
-    juce::dsp::StateVariableTPTFilter<float> hpFilter = juce::dsp::StateVariableTPTFilter<float>();
+    std::array<juce::dsp::StateVariableTPTFilter<float>, 2> hpFilters;
 
     ModWheelSource modWheelSource;
     VelocitySource velocitySource;

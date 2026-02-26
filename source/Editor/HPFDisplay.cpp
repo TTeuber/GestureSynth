@@ -239,19 +239,19 @@ double HPFDisplay::computeHPGainDb (double freq, double cutoffFreqHz)
 
     const double w = freq / cutoffFreqHz;
     const double wSquared = w * w;
-    const double q = 1.0 / std::sqrt (2.0); // ~0.707, Butterworth
+    const double q = 1.0 / std::sqrt (2.0); // ~0.707, Butterworth per stage
     const double denominator = std::sqrt ((1.0 - wSquared) * (1.0 - wSquared) + (w / q) * (w / q));
 
     if (denominator < 1e-10)
         return -60.0;
 
-    // HP gain: H(s) = s^2 / (s^2 + s/Q + 1) => |H| = w^2 / denominator
+    // Two cascaded 2nd-order HP stages => square the magnitude (double the dB)
     const double gain = wSquared / denominator;
 
     if (gain < 1e-10)
         return -60.0;
 
-    return 20.0 * std::log10 (gain);
+    return 2.0 * 20.0 * std::log10 (gain);
 }
 
 void HPFDisplay::updateControlPointPosition()
