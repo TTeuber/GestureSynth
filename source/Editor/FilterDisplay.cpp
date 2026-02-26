@@ -185,7 +185,14 @@ void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
     {
         // Direct control - map position directly to parameter values
         const juce::Point<float> pos = e.position;
-        float newCutoff = juce::jlimit (0.0f, 1.0f, pos.x / getWidth());
+
+        // Convert mouse x through log display mapping to frequency, then to normalized param value
+        double displayX = static_cast<double> (pos.x) / getWidth();
+        double freq = displayXToFreq (displayX);
+        freq = juce::jlimit (cutoffParam->getNormalisableRange().start,
+                             cutoffParam->getNormalisableRange().end, static_cast<float> (freq));
+        float newCutoff = static_cast<float> (cutoffParam->getNormalisableRange().convertTo0to1 (static_cast<float> (freq)));
+
         float newResonance = juce::jlimit (0.0f, 1.0f, 1.0f - pos.y / getHeight());
 
         if (cutoffParam && resonanceParam)
@@ -282,8 +289,8 @@ void FilterDisplay::drawFrequencyPath (juce::Graphics& g) const
 
 double FilterDisplay::getYCoordinate (const float x, const int order) const
 {
-    // Map x (0 to 1) to frequency (20 Hz to 20 kHz, logarithmic scale)
-    const double freq = cutoffParam->convertFrom0to1 (x);
+    // Map x (0 to 1) to frequency using true logarithmic scale
+    const double freq = displayXToFreq (x);
 
     // Handle invalid inputs
     if (cutoffFrequency <= 0.0 || resonance <= 0.0 || order < 1 || freq <= 0.0)
@@ -342,8 +349,8 @@ double FilterDisplay::computeFirstOrderStage (const double freq, const double cu
 
 void FilterDisplay::updateControlPointPosition()
 {
-    // Convert normalized values to component coordinates
-    controlPoint.x = normalizedCutoff * static_cast<float> (getWidth());
+    // Convert frequency to display x using logarithmic mapping
+    controlPoint.x = static_cast<float> (freqToDisplayX (cutoffFrequency)) * static_cast<float> (getWidth());
     controlPoint.y = (1.0f - normalizedResonance) * static_cast<float> (getHeight());
 }
 bool FilterDisplay::isMouseOverControlPoint (const juce::Point<int>& mousePosition) const
@@ -449,7 +456,7 @@ void FilterDisplay::drawFilterCurveAt (juce::Graphics& g, float normCutoff, floa
     for (int xPixel = 0; xPixel < getWidth(); xPixel += step)
     {
         const double x = static_cast<double> (xPixel) / getWidth();
-        const double freq = cutoffParam->convertFrom0to1 (static_cast<float> (x));
+        const double freq = displayXToFreq (x);
 
         const double dB = computeSecondOrderStage (freq, modCutoffFreq, modRes);
         const float yPixel = getHeight() / 2.0f - static_cast<float> (dB) * getHeight() / 50.0f;
@@ -490,4 +497,16 @@ void FilterDisplay::drawModModeOverlay (juce::Graphics& g) const
         float ghostRes = bipolarRes ? juce::jlimit (0.0f, 1.0f, normalizedResonance - resDepth) : modRes;
         drawFilterCurveAt (g, ghostCutoff, ghostRes, MOD_COLOR.withAlpha (0.2f), 1.5f);
     }
+}
+
+double FilterDisplay::displayXToFreq (double x) const
+{
+    return kDisplayMinFreq * std::pow (kDisplayMaxFreq / kDisplayMinFreq, x);
+}
+
+double FilterDisplay::freqToDisplayX (double freq) const
+{
+    if (freq <= 0.0)
+        return 0.0;
+    return std::log (freq / kDisplayMinFreq) / std::log (kDisplayMaxFreq / kDisplayMinFreq);
 }

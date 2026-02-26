@@ -62,6 +62,13 @@ private:
     float dragStartCutoff = 0.5f;
     float dragStartResonance = 0.5f;
 
+    // Display frequency mapping (true logarithmic, x=0 -> 20Hz, x=1 -> 20kHz)
+    static constexpr double kDisplayMinFreq = 20.0;
+    static constexpr double kDisplayMaxFreq = 20000.0;
+
+    double displayXToFreq (double x) const;
+    double freqToDisplayX (double freq) const;
+
     //==============================================================================
     void parameterChanged (const juce::String& parameterID, float newValue) override;
 
