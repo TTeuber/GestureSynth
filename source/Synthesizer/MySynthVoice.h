@@ -172,6 +172,9 @@ private:
 
     DynamicParameter hpfCutoff = DynamicParameter (parameters.getParameter ("hpfFrequency"));
     bool hpfEnabled = false;
+    bool gateMode = false;
+    float gateAmp = 0.0f;
+    bool gateReleasing = false;
 
     MyADSR adsr1 = MyADSR (parameters, 1);
     MyADSR adsr2 = MyADSR (parameters, 2);

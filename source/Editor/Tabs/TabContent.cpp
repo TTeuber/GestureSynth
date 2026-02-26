@@ -335,6 +335,11 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     addAndMakeVisible (legatoToggle);
     legatoAttachment = std::make_unique<ButtonAttachment> (p.parameters, "legatoOn", legatoToggle);
 
+    gateModeToggle.setColour (juce::ToggleButton::textColourId, TEXT_COLOR);
+    gateModeToggle.setColour (juce::ToggleButton::tickColourId, TEXT_COLOR);
+    addAndMakeVisible (gateModeToggle);
+    gateModeAttachment = std::make_unique<ButtonAttachment> (p.parameters, "gateMode", gateModeToggle);
+
     pitchBendRangeSlider.setSliderStyle (juce::Slider::IncDecButtons);
     pitchBendRangeSlider.setTextBoxStyle (juce::Slider::TextBoxLeft, false, 40, 24);
     pitchBendRangeSlider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
@@ -362,9 +367,10 @@ void ExperimentTabContent::resized()
     auto area = getLocalBounds();
     area.removeFromTop (50);
 
-    auto toggleArea = area.removeFromTop (60).withSizeKeepingCentre (200, 60);
+    auto toggleArea = area.removeFromTop (90).withSizeKeepingCentre (200, 90);
     monoToggle.setBounds (toggleArea.removeFromTop (30));
     legatoToggle.setBounds (toggleArea.removeFromTop (30));
+    gateModeToggle.setBounds (toggleArea.removeFromTop (30));
 
     area.removeFromTop (30); // space for "Pitch Bend" header
     auto sliderArea = area.removeFromTop (30).withSizeKeepingCentre (200, 30);

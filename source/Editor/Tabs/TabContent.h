@@ -230,6 +230,7 @@ public:
 private:
     juce::ToggleButton monoToggle { "Mono" };
     juce::ToggleButton legatoToggle { "Legato" };
+    juce::ToggleButton gateModeToggle { "Gate Mode" };
 
     juce::Slider pitchBendRangeSlider;
     juce::Label pitchBendRangeLabel { {}, "Pitch Bend Range" };
@@ -238,5 +239,6 @@ private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     std::unique_ptr<ButtonAttachment> monoAttachment;
     std::unique_ptr<ButtonAttachment> legatoAttachment;
+    std::unique_ptr<ButtonAttachment> gateModeAttachment;
     std::unique_ptr<SliderAttachment> pitchBendRangeAttachment;
 };

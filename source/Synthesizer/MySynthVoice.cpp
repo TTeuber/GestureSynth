@@ -30,6 +30,9 @@ MySynthVoice::MySynthVoice (
     parameters.addParameterListener ("hpfOn", this);
     hpfEnabled = *parameters.getRawParameterValue ("hpfOn") > 0.5f;
 
+    parameters.addParameterListener ("gateMode", this);
+    gateMode = *parameters.getRawParameterValue ("gateMode") > 0.5f;
+
     // Initialize the mod destinations
     // Currently this is how the current value is updated when there are no mod sources
     for (const auto& [_, d] : modDestinations)
@@ -70,7 +73,7 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     // Process any pending modulation commands from UI thread
     modMatrix.processPendingCommands();
 
-    if (!adsr1.isActive())
+    if (!gateMode && !adsr1.isActive())
     {
         clearCurrentNote();
     }
@@ -161,9 +164,26 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
             currentEnvVal = juce::jmin (currentEnvVal + slewRate, targetEnvVal);
         else if (currentEnvVal > targetEnvVal)
             currentEnvVal = juce::jmax (currentEnvVal - slewRate, targetEnvVal);
-        tempDataL[sample] *= currentEnvVal * velocity * volume;
-        tempDataR[sample] *= currentEnvVal * velocity * volume;
+        float ampVal;
+        if (gateMode)
+        {
+            const float gateTarget = gateReleasing ? 0.0f : 1.0f;
+            if (gateAmp < gateTarget)
+                gateAmp = juce::jmin (gateAmp + slewRate, gateTarget);
+            else if (gateAmp > gateTarget)
+                gateAmp = juce::jmax (gateAmp - slewRate, gateTarget);
+            ampVal = gateAmp;
+        }
+        else
+        {
+            ampVal = currentEnvVal;
+        }
+        tempDataL[sample] *= ampVal * velocity * volume;
+        tempDataR[sample] *= ampVal * velocity * volume;
     }
+
+    if (gateMode && gateReleasing && gateAmp <= 0.0f)
+        clearCurrentNote();
 
     outputBuffer.addFrom (0, startSample, tempBuffer, 0, 0, numSamples);
     outputBuffer.addFrom (1, startSample, tempBuffer, 1, 0, numSamples);
@@ -218,6 +238,10 @@ void MySynthVoice::parameterChanged (const juce::String& parameterID, float newV
         if (hpfEnabled && !wasEnabled)
             for (auto& hpf : hpFilters)
                 hpf.reset();
+    }
+    else if (parameterID == "gateMode")
+    {
+        gateMode = newValue > 0.5f;
     }
 }
 
@@ -390,6 +414,9 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
     if (keyboardRawOutput != nullptr)
         keyboardRawOutput->store (juce::jlimit (0.0f, 1.0f, static_cast<float> (midiNoteNumber) / 127.0f), std::memory_order_relaxed);
 
+    gateAmp = 0.0f;
+    gateReleasing = false;
+
     for (auto* env : envs)
         env->noteOn();
     *env1ptr = &adsr1;
@@ -402,8 +429,11 @@ void MySynthVoice::stopNote (float velocity, const bool allowTailOff)
 {
     if (allowTailOff)
     {
-        for (auto* env : envs)
-            env->noteOff();
+        if (gateMode)
+            gateReleasing = true;
+        else
+            for (auto* env : envs)
+                env->noteOff();
     }
     else
     {
