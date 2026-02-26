@@ -139,6 +139,8 @@ private:
 
         currentValue = juce::jlimit (0.0f, 1.0f, rawVal);
         processor.uiModWheelValue.store (currentValue, std::memory_order_relaxed);
+        if (modWheelRawPtr != nullptr)
+            modWheelRawPtr->store (currentValue, std::memory_order_relaxed);
         repaint();
     }
 
