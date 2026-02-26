@@ -4,6 +4,7 @@
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_dsp/juce_dsp.h>
 #include <ranges>
+#include "../Utility/CurveUtils.h"
 
 /**
  * Enumeration for predefined LFO shapes
@@ -93,10 +94,10 @@ public:
             case LFOShape::Sine:
                 // Points with curves to create a sine-like shape
                 points = {
-                    { 0.0f, 0.5f, -0.8f },
-                    { 0.25f, 1.0f, 0.8f },
-                    { 0.5f, 0.5f, -0.8f },
-                    { 0.75f, 0.0f, 0.8f },
+                    { 0.0f, 0.5f, 0.13f },
+                    { 0.25f, 1.0f, -0.13f },
+                    { 0.5f, 0.5f, 0.13f },
+                    { 0.75f, 0.0f, -0.13f },
                     { 1.0f, 0.5f, 0.0f }
                 };
                 break;
@@ -360,10 +361,10 @@ private:
         {
             // Default to a simple sine-like wave if no points are defined
             points = {
-                { 0.0f, 0.5f, 0.0f },
-                { 0.25f, 1.0f, -0.8f },
-                { 0.5f, 0.5f, 0.0f },
-                { 0.75f, 0.0f, -0.8f },
+                { 0.0f, 0.5f, -0.13f },
+                { 0.25f, 1.0f, 0.13f },
+                { 0.5f, 0.5f, -0.13f },
+                { 0.75f, 0.0f, 0.13f },
                 { 1.0f, 0.5f, 0.0f }
             };
         }
@@ -390,23 +391,7 @@ private:
      */
     static float applyCurve (float position, const float curve) noexcept
     {
-        // Ensure the position is in the valid range
-        position = juce::jlimit (0.0f, 1.0f, position);
-
-        if (std::abs (curve) < 0.001f)
-            return position; // Linear
-
-        // Apply an exponential or logarithmic curve
-        const float exponent = std::abs (curve) * 5.0f;
-        const float skew = std::exp2f (exponent);
-
-        if (curve > 0.0f)
-        {
-            // Exponential
-            return (std::exp2f (exponent * position) - 1.0f) / (skew - 1.0f);
-        }
-        // Logarithmic
-        return 1.0f - (std::exp2f (exponent * (1.0f - position)) - 1.0f) / (skew - 1.0f);
+        return CurveUtils::applyCurve (juce::jlimit (0.0f, 1.0f, position), curve);
     }
 
     std::vector<LFOPoint> points; // Array of points defining the LFO shape

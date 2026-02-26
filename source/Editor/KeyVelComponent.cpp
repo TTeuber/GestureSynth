@@ -48,46 +48,8 @@ float KeyVelComponent::getCurveParam() const
 
 void KeyVelComponent::paint (juce::Graphics& g)
 {
-    auto bounds = getLocalBounds();
-
-    // Tab strip
-    auto tabArea = bounds.removeFromTop (kTabHeight);
-    int tabWidth = tabArea.getWidth() / 2;
-
-    const juce::String sourceIDs[] = { "velocity", "keyboard" };
-    const juce::String tabLabels[] = { "Vel", "Key" };
-
-    for (int i = 0; i < 2; ++i)
-    {
-        auto tab = tabArea.removeFromLeft (tabWidth);
-        g.setColour (i == activeTab ? juce::Colours::orange : SECONDARY_COLOR);
-        g.fillRect (tab);
-
-        // Crosshair icon
-        auto tabF = tab.toFloat();
-        const float iconSize = 16.0f;
-        auto iconArea = tabF.withWidth (iconSize + 8).reduced (4.0f);
-        float cx = iconArea.getCentreX();
-        float cy = iconArea.getCentreY();
-        float r = iconSize * 0.35f;
-
-        bool isTarget = modModeState != nullptr
-            && modModeState->isModulationMode()
-            && modModeState->getTargetSourceID() == sourceIDs[i];
-
-        g.setColour (isTarget ? MOD_COLOR : TEXT_COLOR.withAlpha (0.6f));
-        g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.5f);
-        g.drawLine (cx - r - 2, cy, cx + r + 2, cy, 1.2f);
-        g.drawLine (cx, cy - r - 2, cx, cy + r + 2, 1.2f);
-
-        // Text label
-        g.setColour (i == activeTab ? juce::Colours::black : TEXT_COLOR);
-        g.setFont (13.0f);
-        g.drawText (tabLabels[i], tabF.withTrimmedLeft (iconSize + 8), juce::Justification::centred, true);
-    }
-
     // Graph area — force square aspect ratio
-    auto graphRect = bounds.toFloat().reduced (4.0f);
+    auto graphRect = getLocalBounds().toFloat().reduced (4.0f);
     float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
     auto graphArea = graphRect.withSizeKeepingCentre (side, side);
     g.setColour (SECONDARY_COLOR);
@@ -127,42 +89,6 @@ void KeyVelComponent::resized()
 
 void KeyVelComponent::mouseDown (const juce::MouseEvent& e)
 {
-    auto tabArea = getLocalBounds().removeFromTop (kTabHeight);
-    if (e.y < kTabHeight)
-    {
-        int newTab = e.x < tabArea.getWidth() / 2 ? 0 : 1;
-        int tabLeft = newTab * (tabArea.getWidth() / 2);
-        bool clickedCrosshair = (e.x - tabLeft) < 24;
-
-        const juce::String sourceIDs[] = { "velocity", "keyboard" };
-
-        if (modModeState != nullptr)
-        {
-            if (clickedCrosshair && !modModeState->isModulationMode())
-            {
-                modModeState->setTargetSource (sourceIDs[newTab]);
-                modModeState->setMode (ModulationModeState::Mode::Modulation);
-                activeTab = newTab;
-                repaint();
-                return;
-            }
-            if (modModeState->isModulationMode())
-            {
-                modModeState->setTargetSource (sourceIDs[newTab]);
-                activeTab = newTab;
-                repaint();
-                return;
-            }
-        }
-
-        if (newTab != activeTab)
-        {
-            activeTab = newTab;
-            repaint();
-        }
-        return;
-    }
-
     dragging = true;
     if (auto* p = getCurrentParam())
     {
@@ -195,7 +121,7 @@ void KeyVelComponent::mouseUp (const juce::MouseEvent&)
 
 void KeyVelComponent::updateCurveFromDrag (const juce::MouseEvent& e)
 {
-    auto graphRect = getLocalBounds().withTrimmedTop (kTabHeight).toFloat().reduced (4.0f);
+    auto graphRect = getLocalBounds().toFloat().reduced (4.0f);
     float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
     auto graphArea = graphRect.withSizeKeepingCentre (side, side);
 
@@ -203,9 +129,7 @@ void KeyVelComponent::updateCurveFromDrag (const juce::MouseEvent& e)
     float normalizedY = 1.0f - (static_cast<float> (e.y) - graphArea.getY()) / graphArea.getHeight();
     float safeY = juce::jlimit (0.001f, 0.999f, normalizedY);
 
-    // Inverse of applyCurve at x=0.5: k = -ln((1/y - 1)) / ln(1000)
-    float curveValue = juce::jlimit (-1.0f, 1.0f,
-        -std::log ((1.0f / safeY) - 1.0f) / std::log (1000.0f));
+    float curveValue = juce::jlimit (-1.0f, 1.0f, CurveUtils::inverseCurveAtHalf (safeY));
 
     if (auto* p = getCurrentParam())
     {

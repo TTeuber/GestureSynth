@@ -4,7 +4,7 @@
 #pragma once
 
 #include "Modulation.h"
-#include <cmath>
+#include "../Utility/CurveUtils.h"
 
 class VelocitySource final : public ModSource
 {
@@ -19,10 +19,7 @@ public:
 
     static float applyCurve (float x, float k) noexcept
     {
-        if (x <= 0.0f) return 0.0f;
-        if (x >= 1.0f) return 1.0f;
-        float w = std::pow (1000.0f, -k);
-        return x / (x + w * (1.0f - x));
+        return CurveUtils::applyCurve (x, k);
     }
 
 private:

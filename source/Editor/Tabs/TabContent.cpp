@@ -56,6 +56,12 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
     lfoTabs[0].setSelected (true);
     envTabs[0].setSelected (true);
 
+    velTab.setup ("Vel", "velocity", modModeState, [this] { selectKeyVel (0); });
+    keyTab.setup ("Key", "keyboard", modModeState, [this] { selectKeyVel (1); });
+    addAndMakeVisible (velTab);
+    addAndMakeVisible (keyTab);
+    velTab.setSelected (true);
+
     if (modModeState != nullptr)
         modModeState->addListener (this);
 }
@@ -92,6 +98,14 @@ void MainTabContent::selectEnv (int index)
         adsrPtr);
 }
 
+void MainTabContent::selectKeyVel (int index)
+{
+    activeKeyVelTab = index;
+    velTab.setSelected (index == 0);
+    keyTab.setSelected (index == 1);
+    keyVelComponent.setActiveTab (index);
+}
+
 void MainTabContent::modulationModeChanged (ModulationModeState::Mode)
 {
     for (int i = 0; i < 4; ++i)
@@ -99,6 +113,8 @@ void MainTabContent::modulationModeChanged (ModulationModeState::Mode)
         lfoTabs[i].repaint();
         envTabs[i].repaint();
     }
+    velTab.repaint();
+    keyTab.repaint();
     repaint();
 }
 
@@ -109,6 +125,8 @@ void MainTabContent::targetSourceChanged (const juce::String&)
         lfoTabs[i].repaint();
         envTabs[i].repaint();
     }
+    velTab.repaint();
+    keyTab.repaint();
     hpfDisplay.repaint();
     filterDisplay.repaint();
 }
@@ -151,10 +169,16 @@ void MainTabContent::resized()
     // Row 3: 30px tab strip at top, then LFO | ADSR | KeyVel below
     auto row3 = area;
     auto buttonRow = row3.removeFromTop (30);
-    int thirdWidth = buttonRow.getWidth() / 3;
-    auto lfoTabArea = buttonRow.removeFromLeft (thirdWidth);
-    auto envTabArea = buttonRow.removeFromLeft (thirdWidth);
-    // Remaining buttonRow space is empty (above KeyVel)
+
+    // KeyVel is square — give it only the width it needs (= row3 height + padding)
+    int kvWidth = row3.getHeight() + 10; // reduced(5) on each side = 10 total padding
+    auto keyVelTabArea = buttonRow.removeFromRight (kvWidth);
+    auto kvColumn = row3.removeFromRight (kvWidth);
+
+    // Split remaining tab strip and content between LFO and ENV
+    int halfWidth = buttonRow.getWidth() / 2;
+    auto lfoTabArea = buttonRow.removeFromLeft (halfWidth);
+    auto envTabArea = buttonRow;
 
     // LFO tabs
     int lfoTabWidth = juce::jmin (75, lfoTabArea.getWidth() / 4);
@@ -166,11 +190,23 @@ void MainTabContent::resized()
     for (int i = 0; i < 4; ++i)
         envTabs[i].setBounds (envTabArea.removeFromLeft (envTabWidth));
 
-    // LFO component | ADSR graph | KeyVel component
-    int contentThird = row3.getWidth() / 3;
-    lfoComponent.setBounds (row3.removeFromLeft (contentThird).reduced (5));
-    adsrGraph.setBounds (row3.removeFromLeft (contentThird).reduced (5));
-    keyVelComponent.setBounds (row3.reduced (5));
+    // LFO component | ADSR graph (split remaining space)
+    int contentHalf = row3.getWidth() / 2;
+    lfoComponent.setBounds (row3.removeFromLeft (contentHalf).reduced (5));
+    adsrGraph.setBounds (row3.reduced (5));
+
+    // KeyVel component
+    auto kvBounds = kvColumn.reduced (5);
+    keyVelComponent.setBounds (kvBounds);
+
+    // Vel/Key tabs: sized to match graph square width, centered in keyVelTabArea
+    auto graphRect = kvBounds.toFloat().reduced (4.0f);
+    float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
+    int tabTotalWidth = static_cast<int> (side);
+    int tabCentreX = keyVelTabArea.getCentreX();
+    int velKeyTabLeft = tabCentreX - tabTotalWidth / 2;
+    velTab.setBounds (velKeyTabLeft, keyVelTabArea.getY(), tabTotalWidth / 2, keyVelTabArea.getHeight());
+    keyTab.setBounds (velKeyTabLeft + tabTotalWidth / 2, keyVelTabArea.getY(), tabTotalWidth - tabTotalWidth / 2, keyVelTabArea.getHeight());
 }
 
 // =============================================================================

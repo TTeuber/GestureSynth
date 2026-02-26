@@ -562,21 +562,22 @@ void LFOComponent::mouseDrag (const juce::MouseEvent& e)
         if (selectedCurveIndex >= static_cast<int> (points.size()) - 1)
             return;
 
-        // Map vertical displacement to curve value
         const auto& p1 = points[selectedCurveIndex];
         const auto& p2 = points[selectedCurveIndex + 1];
-        float midPos = (p1.position + p2.position) * 0.5f;
-        float linearMidValue = (p1.value + p2.value) * 0.5f;
-        float linearMidY = valueToY (linearMidValue);
 
-        // Displacement from the linear midpoint
-        float displacement = (linearMidY - my) / (getGraphBounds().getHeight() * 0.5f);
+        float mouseValue = yToValue (my);
+        float range = p2.value - p1.value;
 
-        // Flip for ascending segments so dragging up always bows the curve upward
-        if (p2.value > p1.value)
-            displacement = -displacement;
-
-        float newCurve = juce::jlimit (-1.0f, 1.0f, displacement);
+        float newCurve;
+        if (std::abs (range) < 0.001f)
+        {
+            newCurve = 0.0f;
+        }
+        else
+        {
+            float t = juce::jlimit (0.001f, 0.999f, (mouseValue - p1.value) / range);
+            newCurve = juce::jlimit (-1.0f, 1.0f, CurveUtils::inverseCurveAtHalf (t));
+        }
 
         lfoData->updateCurve (static_cast<size_t> (selectedCurveIndex), newCurve);
     }

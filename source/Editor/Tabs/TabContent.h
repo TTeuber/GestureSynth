@@ -155,10 +155,14 @@ private:
     KeyVelComponent keyVelComponent;
     CustomKeyboard keyboard;
 
+    void selectKeyVel (int index);
+
     ModSourceTab lfoTabs[4];
     ModSourceTab envTabs[4];
+    ModSourceTab velTab, keyTab;
     int activeLfoIndex = 0;
     int activeEnvIndex = 0;
+    int activeKeyVelTab = 0;
 };
 
 // =============================================================================

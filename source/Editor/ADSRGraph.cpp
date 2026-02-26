@@ -273,7 +273,8 @@ void ADSRGraph::showTime()
     if (myADSR != nullptr && *myADSR != nullptr)
     {
         const std::array<float, 2> xy = (*myADSR)->getTimePoint();
-        timePoint = { xy[0] / durationWidth * static_cast<float> (getWidth()) - xOffset, ((1 - xy[1]) * static_cast<float> (getHeight())) };
+        const float x = xy[0] / durationWidth * static_cast<float> (getWidth()) - xOffset;
+        timePoint = { x, getCurveY (x) };
         repaint();
     }
 }
@@ -376,8 +377,11 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
 
     else if (selectedPoint == AttackCurve)
     {
-        attackCurve = juce::jlimit (0.0f, height, event.position.y) / height;
-        parameters.getParameter (attackCurveId)->setValueNotifyingHost (attackCurve);
+        float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - event.position.y / height);
+        float k = CurveUtils::inverseCurveAtHalf (graphValue);
+        attackCurve = juce::jlimit (-1.0f, 1.0f, k);
+        float normalized = parameters.getParameterRange (attackCurveId).convertTo0to1 (attackCurve);
+        parameters.getParameter (attackCurveId)->setValueNotifyingHost (normalized);
     }
 
     else if (selectedPoint == Decay)
@@ -392,8 +396,13 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
 
     else if (selectedPoint == DecayCurve)
     {
-        decayCurve = 1 - juce::jlimit (0.0f, sustainLevel, event.position.y) / sustainLevel;
-        parameters.getParameter (decayCurveId)->setValueNotifyingHost (decayCurve);
+        float sustain = 1.0f - sustainLevel / height;
+        float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - event.position.y / height);
+        float t = juce::jlimit (0.001f, 0.999f, (1.0f - graphValue) / (1.0f - sustain));
+        float k = CurveUtils::inverseCurveAtHalf (t);
+        decayCurve = juce::jlimit (-1.0f, 1.0f, k);
+        float normalized = parameters.getParameterRange (decayCurveId).convertTo0to1 (decayCurve);
+        parameters.getParameter (decayCurveId)->setValueNotifyingHost (normalized);
     }
 
     else if (selectedPoint == Release)
@@ -406,8 +415,13 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
 
     else if (selectedPoint == ReleaseCurve)
     {
-        releaseCurve = 1 - juce::jlimit (0.0f, height - sustainLevel, event.position.y - sustainLevel) / (height - sustainLevel);
-        parameters.getParameter (releaseCurveId)->setValueNotifyingHost (releaseCurve);
+        float sustain = 1.0f - sustainLevel / height;
+        float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - event.position.y / height);
+        float t = juce::jlimit (0.001f, 0.999f, (sustain - graphValue) / sustain);
+        float k = CurveUtils::inverseCurveAtHalf (t);
+        releaseCurve = juce::jlimit (-1.0f, 1.0f, k);
+        float normalized = parameters.getParameterRange (releaseCurveId).convertTo0to1 (releaseCurve);
+        parameters.getParameter (releaseCurveId)->setValueNotifyingHost (normalized);
     }
 
     repaint();

@@ -9,9 +9,9 @@ void MyADSR::setParameters (const Parameters& parameters)
     decayTime.setValue (parameters.decay);
     sustainLevel.setValue (parameters.sustain);
     releaseTime.setValue (parameters.release);
-    attackExponent.setValue (parameters.attackExponent);
-    decayExponent.setValue (parameters.decayExponent);
-    releaseExponent.setValue (parameters.releaseExponent);
+    attackCurve.setValue (parameters.attackCurve);
+    decayCurve.setValue (parameters.decayCurve);
+    releaseCurve.setValue (parameters.releaseCurve);
 
     recalculateRates();
 }
@@ -91,7 +91,7 @@ float MyADSR::getNextValue() noexcept
     switch (state)
     {
         case State::Attack:
-            envelopeValue = toAttackCurve (time / attackTime.getValue(), attackExponent.getValue()); // Ease-in attack
+            envelopeValue = toAttackCurve (time / attackTime.getValue(), attackCurve.getValue()); // Ease-in attack
             if (envelopeValue >= 1.0f || time >= attackTime.getValue())
             {
                 state = State::Decay;
@@ -102,7 +102,7 @@ float MyADSR::getNextValue() noexcept
 
         case State::Decay:
             if (sustainLevel.getValue() < 1 && time < decayTime.getValue() + attackTime.getValue())
-                envelopeValue = toDecayCurve (juce::jlimit<float> (0, 1, (time - attackTime.getValue()) / decayTime.getValue()), sustainLevel.getValue(), decayExponent.getValue()); // Ease-out decay
+                envelopeValue = toDecayCurve (juce::jlimit<float> (0, 1, (time - attackTime.getValue()) / decayTime.getValue()), sustainLevel.getValue(), decayCurve.getValue()); // Ease-out decay
             else
             {
                 state = State::Sustain;
@@ -119,7 +119,7 @@ float MyADSR::getNextValue() noexcept
             if (envelopeValue <= 0.0f || time >= attackTime.getValue() + decayTime.getValue() + releaseTime.getValue())
                 state = State::Idle;
             else
-                envelopeValue = toReleaseCurve (juce::jlimit<float> (0, 1, (time - attackTime.getValue() - decayTime.getValue()) / releaseTime.getValue()), tempSustain, releaseExponent.getValue()); // Ease-out release
+                envelopeValue = toReleaseCurve (juce::jlimit<float> (0, 1, (time - attackTime.getValue() - decayTime.getValue()) / releaseTime.getValue()), tempSustain, releaseCurve.getValue()); // Ease-out release
             time += 1.0f / sampleRate;
             break;
 

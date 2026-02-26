@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Utility/MyParameter.h"
+#include "../Utility/CurveUtils.h"
 #include "Modulation.h"
 
 #include <juce_dsp/juce_dsp.h>
@@ -26,24 +27,24 @@ public:
             const float decayTimeSeconds,
             const float newSustainLevel,
             const float releaseTimeSeconds,
-            const float attackCurve = 1.0f,
-            const float decayCurve = 1.0f,
-            const float releaseCurve = 1.0f
+            const float attackCurveParam = 0.0f,
+            const float decayCurveParam = 0.0f,
+            const float releaseCurveParam = 0.0f
             ):
             attack (attackTimeSeconds),
             decay (decayTimeSeconds),
             sustain (newSustainLevel),
             release (releaseTimeSeconds),
-            attackExponent (attackCurve),
-            decayExponent (decayCurve),
-            releaseExponent (releaseCurve)
+            attackCurve (attackCurveParam),
+            decayCurve (decayCurveParam),
+            releaseCurve (releaseCurveParam)
         // clang-format on
         {
         }
         juce::StringRef attackId, decayId, sustainId, releaseId;
         float attack = 0.0f, decay = 0.5f, sustain = 1.0f, release = 0.0f;
         juce::StringRef attackCurveId, decayCurveId, releaseCurveId;
-        float attackExponent = 1.0f, decayExponent = 1.0f, releaseExponent = 1.0f;
+        float attackCurve = 0.0f, decayCurve = 0.0f, releaseCurve = 0.0f;
     };
 
     MyADSR (const juce::AudioProcessorValueTreeState& p, const int i)
@@ -52,9 +53,9 @@ public:
           decayTime (p.getParameter ("env" + std::to_string (i) + "Decay")),
           sustainLevel (p.getParameter ("env" + std::to_string (i) + "Sustain")),
           releaseTime (p.getParameter ("env" + std::to_string (i) + "Release")),
-          attackExponent (p.getParameter ("env" + std::to_string (i) + "AttackCurve")),
-          decayExponent (p.getParameter ("env" + std::to_string (i) + "DecayCurve")),
-          releaseExponent (p.getParameter ("env" + std::to_string (i) + "ReleaseCurve"))
+          attackCurve (p.getParameter ("env" + std::to_string (i) + "AttackCurve")),
+          decayCurve (p.getParameter ("env" + std::to_string (i) + "DecayCurve")),
+          releaseCurve (p.getParameter ("env" + std::to_string (i) + "ReleaseCurve"))
     {
         recalculateRates();
         attackTime.onUpdate ([this] { recalculateRates(); });
@@ -70,33 +71,33 @@ public:
     float getNextValue() noexcept override;
     void setSampleRate (const double newSampleRate) { sampleRate = static_cast<float> (newSampleRate); }
 
-    static float toAttackCurve (const float time, const float exponent)
+    static float toAttackCurve (const float time, const float k)
     {
-        return (1 - std::pow (1 - time, 1 / exponent) + std::pow (time, exponent)) / 2;
+        return CurveUtils::applyCurve (time, k);
     }
-    static float toDecayCurve (const float time, const float sustain, const float exponent)
+    static float toDecayCurve (const float time, const float sustain, const float k)
     {
-        return sustain + (1 - sustain) * (std::pow (1 - time, 1 / exponent) + 1 - std::pow (time, exponent)) / 2;
+        return sustain + (1.0f - sustain) * (1.0f - CurveUtils::applyCurve (time, k));
     }
-    static float toReleaseCurve (const float time, const float sustain, const float exponent)
+    static float toReleaseCurve (const float time, const float sustain, const float k)
     {
         jassert (time <= 1.0f && time >= 0.0f);
-        const float val = sustain * (std::pow (1 - time, 1 / exponent) + 1 - std::pow (time, exponent)) / 2;
+        const float val = sustain * (1.0f - CurveUtils::applyCurve (time, k));
         jassert (!std::isnan (val));
         return val;
     }
 
     [[nodiscard]] bool isActive() const { return state != State::Idle; }
     [[nodiscard]] std::array<float, 2> getTimePoint() const { return { time, envelopeValue }; }
-    [[nodiscard]] float getAttackExponent() const { return attackExponent.getValue(); }
-    [[nodiscard]] float getDecayExponent() const { return decayExponent.getValue(); }
-    [[nodiscard]] float getReleaseExponent() const { return releaseExponent.getValue(); }
+    [[nodiscard]] float getAttackCurve() const { return attackCurve.getValue(); }
+    [[nodiscard]] float getDecayCurve() const { return decayCurve.getValue(); }
+    [[nodiscard]] float getReleaseCurve() const { return releaseCurve.getValue(); }
 
 private:
     State state = State::Idle;
     StaticParameter attackTime, decayTime, sustainLevel, releaseTime;
     float tempSustain = sustainLevel.getValue();
-    StaticParameter attackExponent, decayExponent, releaseExponent;
+    StaticParameter attackCurve, decayCurve, releaseCurve;
     float attackRate = 0.0f, decayRate = 0.0f, releaseRate = 0.0f;
     float envelopeValue = 0.0f;
     float time = 0.0f;

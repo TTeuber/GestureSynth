@@ -46,5 +46,6 @@ private:
     int activeTab = 0; // 0 = Vel, 1 = Key
     bool dragging = false;
 
-    static constexpr int kTabHeight = 24;
+public:
+    void setActiveTab (int index) { activeTab = index; repaint(); }
 };
