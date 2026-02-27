@@ -157,18 +157,7 @@ void MainTabContent::resized()
     // KeyVel column on the right (square aspect ratio)
     int kvWidth = bottomRow.getHeight() + 10;
     auto kvColumn = bottomRow.removeFromRight (kvWidth);
-    auto kvTabArea = kvColumn.removeFromTop (24);
-    auto kvBounds = kvColumn.reduced (5);
-    keyVelComponent.setBounds (kvBounds);
-
-    // Vel/Key tabs centered above KeyVel graph
-    auto graphRect = kvBounds.toFloat().reduced (4.0f);
-    float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
-    int tabTotalWidth = static_cast<int> (side);
-    int tabCentreX = kvTabArea.getCentreX();
-    int velKeyTabLeft = tabCentreX - tabTotalWidth / 2;
-    velTab.setBounds (velKeyTabLeft, kvTabArea.getY(), tabTotalWidth / 2, kvTabArea.getHeight());
-    keyTab.setBounds (velKeyTabLeft + tabTotalWidth / 2, kvTabArea.getY(), tabTotalWidth - tabTotalWidth / 2, kvTabArea.getHeight());
+    keyVelComponent.setBounds (kvColumn.reduced (5));
 
     // Keyboard fills between wheels and KeyVel
     keyboard.setBounds (bottomRow.reduced (2));
@@ -195,9 +184,14 @@ void MainTabContent::resized()
     detuneComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
     hpfDisplay.setBounds (row2.reduced (5));
 
-    // Row 3: 30px tab strip at top, then LFO | ADSR (full width)
+    // Row 3: LFO | ADSR (full width), then 30px tab strip at bottom
     auto row3 = area;
-    auto buttonRow = row3.removeFromTop (30);
+    auto buttonRow = row3.removeFromBottom (30);
+
+    // LFO component | ADSR graph (split full width)
+    int contentHalf = row3.getWidth() / 2;
+    lfoComponent.setBounds (row3.removeFromLeft (contentHalf).reduced (5));
+    adsrGraph.setBounds (row3.reduced (5));
 
     // Split tab strip between LFO and ENV
     int halfWidth = buttonRow.getWidth() / 2;
@@ -214,10 +208,10 @@ void MainTabContent::resized()
     for (int i = 0; i < 4; ++i)
         envTabs[i].setBounds (envTabArea.removeFromLeft (envTabWidth));
 
-    // LFO component | ADSR graph (split full width)
-    int contentHalf = row3.getWidth() / 2;
-    lfoComponent.setBounds (row3.removeFromLeft (contentHalf).reduced (5));
-    adsrGraph.setBounds (row3.reduced (5));
+    // Vel/Key tabs at the end of the button row
+    int kvTabWidth = juce::jmin (75, envTabArea.getWidth() / 2);
+    velTab.setBounds (envTabArea.removeFromLeft (kvTabWidth));
+    keyTab.setBounds (envTabArea.removeFromLeft (kvTabWidth));
 }
 
 // =============================================================================

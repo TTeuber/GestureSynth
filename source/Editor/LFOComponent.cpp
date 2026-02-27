@@ -104,10 +104,10 @@ void LFOComponent::lfoDataChanged()
 
 juce::Rectangle<float> LFOComponent::getGraphBounds() const
 {
-    const float controlSpace = hasRateSlider ? kSliderHeight : 0.0f;
+    const float controlSpace = hasRateSlider ? kControlColumnWidth : 0.0f;
     return { kMargin + kShapeStripWidth, kMargin,
-        static_cast<float> (getWidth()) - 2.0f * kMargin - kShapeStripWidth,
-        static_cast<float> (getHeight()) - controlSpace - 2.0f * kMargin };
+        static_cast<float> (getWidth()) - 2.0f * kMargin - kShapeStripWidth - controlSpace,
+        static_cast<float> (getHeight()) - 2.0f * kMargin };
 }
 
 float LFOComponent::positionToX (float position) const
@@ -296,18 +296,17 @@ void LFOComponent::resized()
     if (hasRateSlider)
     {
         auto area = getLocalBounds();
-        auto controlRow = area.removeFromBottom (static_cast<int> (kSliderHeight));
-        controlRow.removeFromLeft (static_cast<int> (kMargin + kShapeStripWidth));
+        auto controlCol = area.removeFromRight (static_cast<int> (kControlColumnWidth));
+        controlCol.removeFromTop (static_cast<int> (kMargin));
+        controlCol.removeFromBottom (static_cast<int> (kMargin));
 
-        int totalWidth = controlRow.getWidth();
-        int rateWidth = static_cast<int> (totalWidth * 0.4f);
-        int remaining = totalWidth - rateWidth;
-        int toggleWidth = remaining / 3;
+        int controlHeight = controlCol.getHeight() / 4;
+        const int pad = 2;
 
-        rateComponent->setBounds (controlRow.removeFromLeft (rateWidth).reduced (2));
-        bpmToggle->setBounds (controlRow.removeFromLeft (toggleWidth).reduced (2));
-        hostToggle->setBounds (controlRow.removeFromLeft (toggleWidth).reduced (2));
-        monoToggle->setBounds (controlRow.reduced (2));
+        monoToggle->setBounds (controlCol.removeFromTop (controlHeight).reduced (pad));
+        hostToggle->setBounds (controlCol.removeFromTop (controlHeight).reduced (pad));
+        bpmToggle->setBounds (controlCol.removeFromTop (controlHeight).reduced (pad));
+        rateComponent->setBounds (controlCol.reduced (pad));
     }
 }
 

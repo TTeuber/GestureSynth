@@ -7,7 +7,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 
 #define HEIGHT 840
-#define WIDTH 1260
+#define WIDTH 1000
 
 //==============================================================================
 class ResizeGrip : public juce::ResizableCornerComponent

@@ -74,7 +74,7 @@ private:
     static constexpr float kHitRadius = 12.0f;
     static constexpr float kCurveHandleRadius = 4.0f;
     static constexpr float kMargin = 10.0f;
-    static constexpr float kSliderHeight = 30.0f;
+    static constexpr float kControlColumnWidth = 50.0f;
     static constexpr float kStickThreshold = 15.0f;
     static constexpr float kShapeButtonSize = 24.0f;
     static constexpr float kShapeStripWidth = 32.0f;
