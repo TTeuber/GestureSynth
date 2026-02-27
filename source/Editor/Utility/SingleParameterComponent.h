@@ -261,6 +261,15 @@ protected:
     ModulationModeState* modModeState = nullptr;
     juce::String paramDestID;
 
+    void rebindParam (juce::RangedAudioParameter* newParam)
+    {
+        param->removeListener (this);
+        param = newParam;
+        paramValue = param->getValue();
+        param->addListener (this);
+        repaint();
+    }
+
     // Virtual method to be implemented by derived classes
     virtual void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const {}
 

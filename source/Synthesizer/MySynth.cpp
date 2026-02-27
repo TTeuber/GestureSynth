@@ -96,6 +96,32 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
                 applyToAllVoices ([li, newLfoRate] (MySynthVoice* voice) { voice->setLFORate (li, newLfoRate); });
             }
         }
+
+        // Mono LFO: copy oldest active voice's phase to all others
+        lfoMono[li] = *parameters.getRawParameterValue ("lfo" + s + "Mono") > 0.5f;
+        if (lfoMono[li])
+        {
+            MySynthVoice* oldest = nullptr;
+            uint64_t oldestOrder = UINT64_MAX;
+            for (int vi = 0; vi < voices.size(); ++vi)
+            {
+                auto* v = dynamic_cast<MySynthVoice*> (voices.getUnchecked (vi));
+                if (v != nullptr && v->isVoiceActive() && v->getVoiceStartOrder() < oldestOrder)
+                {
+                    oldestOrder = v->getVoiceStartOrder();
+                    oldest = v;
+                }
+            }
+            if (oldest != nullptr)
+            {
+                const float monoPhase = oldest->getLFOPhase (li);
+                applyToAllVoices ([li, monoPhase, oldest] (MySynthVoice* voice)
+                {
+                    if (voice != oldest && voice->isVoiceActive())
+                        voice->setLFOPhase (li, monoPhase);
+                });
+            }
+        }
     }
 
     const float newPortamentoTime = *parameters.getRawParameterValue ("portamentoTime");

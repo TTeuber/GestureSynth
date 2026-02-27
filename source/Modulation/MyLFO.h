@@ -96,6 +96,8 @@ public:
         phase = juce::jlimit (0.0f, 1.0f, newPhase);
     }
 
+    [[nodiscard]] float getPhase() const noexcept { return phase; }
+
     /**
      * Gets the shared LFO data pointer
      */

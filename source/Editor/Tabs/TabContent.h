@@ -235,10 +235,14 @@ private:
     juce::Slider pitchBendRangeSlider;
     juce::Label pitchBendRangeLabel { {}, "Pitch Bend Range" };
 
+    juce::Slider manualBpmSlider;
+    juce::Label manualBpmLabel { {}, "Manual BPM" };
+
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     std::unique_ptr<ButtonAttachment> monoAttachment;
     std::unique_ptr<ButtonAttachment> legatoAttachment;
     std::unique_ptr<ButtonAttachment> gateModeAttachment;
     std::unique_ptr<SliderAttachment> pitchBendRangeAttachment;
+    std::unique_ptr<SliderAttachment> manualBpmAttachment;
 };

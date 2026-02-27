@@ -87,6 +87,8 @@ public:
     }
     void setLFORate (int index, float rate) { lfos[index].setRate (rate); }
     void setLFOPhase (int index, float phase) { lfos[index].setPhase (phase); }
+    float getLFOPhase (int index) const { return lfos[index].getPhase(); }
+    uint64_t getVoiceStartOrder() const { return voiceStartOrder; }
 
     void setNoiseLevel (float level) { noiseLevel = level; }
 
@@ -234,6 +236,7 @@ private:
         juce::AudioBuffer<float> buffer;
     };
     WaveformBuffer waveformBuffer;
+    uint64_t voiceStartOrder = 0;
     double startTime = 0.0;
     int waveLength = 1024;
 

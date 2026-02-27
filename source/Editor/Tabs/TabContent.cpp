@@ -145,17 +145,35 @@ void MainTabContent::paint (juce::Graphics& g)
 void MainTabContent::resized()
 {
     auto area = getLocalBounds();
-    auto keyboardHeight = area.getHeight() / 6;
-    auto keyboardRow = area.removeFromBottom (keyboardHeight);
+    auto bottomHeight = area.getHeight() * 22 / 100;
+    auto bottomRow = area.removeFromBottom (bottomHeight);
 
-    int wheelWidth = juce::jmax (36, keyboardRow.getHeight() / 3);
-    auto wheelsArea = keyboardRow.removeFromLeft (wheelWidth * 2 + 4);
+    // Bottom row: ModWheel | PitchWheel | Keyboard | [Vel/Key tabs + KeyVel]
+    int wheelWidth = juce::jmax (36, bottomRow.getHeight() / 3);
+    auto wheelsArea = bottomRow.removeFromLeft (wheelWidth * 2 + 4);
     modWheel.setBounds (wheelsArea.removeFromLeft (wheelWidth).reduced (2));
     pitchWheel.setBounds (wheelsArea.removeFromLeft (wheelWidth).reduced (2));
-    keyboard.setBounds (keyboardRow.reduced (2));
 
-    auto rowHeight = area.getHeight() / 3;
+    // KeyVel column on the right (square aspect ratio)
+    int kvWidth = bottomRow.getHeight() + 10;
+    auto kvColumn = bottomRow.removeFromRight (kvWidth);
+    auto kvTabArea = kvColumn.removeFromTop (24);
+    auto kvBounds = kvColumn.reduced (5);
+    keyVelComponent.setBounds (kvBounds);
 
+    // Vel/Key tabs centered above KeyVel graph
+    auto graphRect = kvBounds.toFloat().reduced (4.0f);
+    float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
+    int tabTotalWidth = static_cast<int> (side);
+    int tabCentreX = kvTabArea.getCentreX();
+    int velKeyTabLeft = tabCentreX - tabTotalWidth / 2;
+    velTab.setBounds (velKeyTabLeft, kvTabArea.getY(), tabTotalWidth / 2, kvTabArea.getHeight());
+    keyTab.setBounds (velKeyTabLeft + tabTotalWidth / 2, kvTabArea.getY(), tabTotalWidth - tabTotalWidth / 2, kvTabArea.getHeight());
+
+    // Keyboard fills between wheels and KeyVel
+    keyboard.setBounds (bottomRow.reduced (2));
+
+    auto rowHeight = area.getHeight() * 3 / 10;
     auto squareCol = rowHeight;
 
     // Row 1: 2x2 grid | Chorus | Vibrato | FilterDisplay (fills remaining)
@@ -177,16 +195,11 @@ void MainTabContent::resized()
     detuneComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
     hpfDisplay.setBounds (row2.reduced (5));
 
-    // Row 3: 30px tab strip at top, then LFO | ADSR | KeyVel below
+    // Row 3: 30px tab strip at top, then LFO | ADSR (full width)
     auto row3 = area;
     auto buttonRow = row3.removeFromTop (30);
 
-    // KeyVel is square — give it only the width it needs (= row3 height + padding)
-    int kvWidth = row3.getHeight() + 10; // reduced(5) on each side = 10 total padding
-    auto keyVelTabArea = buttonRow.removeFromRight (kvWidth);
-    auto kvColumn = row3.removeFromRight (kvWidth);
-
-    // Split remaining tab strip and content between LFO and ENV
+    // Split tab strip between LFO and ENV
     int halfWidth = buttonRow.getWidth() / 2;
     auto lfoTabArea = buttonRow.removeFromLeft (halfWidth);
     auto envTabArea = buttonRow;
@@ -201,23 +214,10 @@ void MainTabContent::resized()
     for (int i = 0; i < 4; ++i)
         envTabs[i].setBounds (envTabArea.removeFromLeft (envTabWidth));
 
-    // LFO component | ADSR graph (split remaining space)
+    // LFO component | ADSR graph (split full width)
     int contentHalf = row3.getWidth() / 2;
     lfoComponent.setBounds (row3.removeFromLeft (contentHalf).reduced (5));
     adsrGraph.setBounds (row3.reduced (5));
-
-    // KeyVel component
-    auto kvBounds = kvColumn.reduced (5);
-    keyVelComponent.setBounds (kvBounds);
-
-    // Vel/Key tabs: sized to match graph square width, centered in keyVelTabArea
-    auto graphRect = kvBounds.toFloat().reduced (4.0f);
-    float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
-    int tabTotalWidth = static_cast<int> (side);
-    int tabCentreX = keyVelTabArea.getCentreX();
-    int velKeyTabLeft = tabCentreX - tabTotalWidth / 2;
-    velTab.setBounds (velKeyTabLeft, keyVelTabArea.getY(), tabTotalWidth / 2, keyVelTabArea.getHeight());
-    keyTab.setBounds (velKeyTabLeft + tabTotalWidth / 2, keyVelTabArea.getY(), tabTotalWidth - tabTotalWidth / 2, keyVelTabArea.getHeight());
 }
 
 // =============================================================================
@@ -350,6 +350,19 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     pitchBendRangeLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
     pitchBendRangeLabel.setJustificationType (juce::Justification::centred);
     addAndMakeVisible (pitchBendRangeLabel);
+
+    manualBpmSlider.setSliderStyle (juce::Slider::LinearHorizontal);
+    manualBpmSlider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 60, 24);
+    manualBpmSlider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
+    manualBpmSlider.setColour (juce::Slider::textBoxBackgroundColourId, SECONDARY_COLOR);
+    manualBpmSlider.setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+    manualBpmSlider.setTextValueSuffix (" BPM");
+    addAndMakeVisible (manualBpmSlider);
+    manualBpmAttachment = std::make_unique<SliderAttachment> (p.parameters, "manualBpm", manualBpmSlider);
+
+    manualBpmLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
+    manualBpmLabel.setJustificationType (juce::Justification::centred);
+    addAndMakeVisible (manualBpmLabel);
 }
 
 void ExperimentTabContent::paint (juce::Graphics& g)
@@ -360,6 +373,7 @@ void ExperimentTabContent::paint (juce::Graphics& g)
     g.setFont (18.0f);
     g.drawText ("Voice Mode", getLocalBounds().removeFromTop (40), juce::Justification::centred);
     g.drawText ("Pitch Bend", getLocalBounds().withTop (120).removeFromTop (30), juce::Justification::centred);
+    g.drawText ("Manual BPM", getLocalBounds().withTop (210).removeFromTop (30), juce::Justification::centred);
 }
 
 void ExperimentTabContent::resized()
@@ -376,4 +390,8 @@ void ExperimentTabContent::resized()
     auto sliderArea = area.removeFromTop (30).withSizeKeepingCentre (200, 30);
     pitchBendRangeLabel.setBounds (sliderArea.removeFromTop (0)); // label is drawn via paint()
     pitchBendRangeSlider.setBounds (sliderArea);
+
+    area.removeFromTop (30); // space for "Manual BPM" header
+    auto bpmArea = area.removeFromTop (30).withSizeKeepingCentre (250, 30);
+    manualBpmSlider.setBounds (bpmArea);
 }

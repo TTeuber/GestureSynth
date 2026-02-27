@@ -388,6 +388,8 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
 
 void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
+    static uint64_t globalStartCounter = 0;
+    voiceStartOrder = ++globalStartCounter;
     pitchBendValue = (currentPitchWheelPosition - 8192) / 8192.0f;
     targetFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
 

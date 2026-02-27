@@ -5,10 +5,11 @@
 
 #include "../Modulation/LFOData.h"
 #include "../Theme.h"
+#include "LFORateComponent.h"
+#include "Utility/CustomToggleComponent.h"
 
 class LFOComponent final : public juce::Component,
-                           public LFOData::Listener,
-                           public juce::AudioProcessorValueTreeState::Listener
+                           public LFOData::Listener
 {
 public:
     LFOComponent (std::shared_ptr<LFOData> lfoData, juce::AudioProcessorValueTreeState& parameters, bool showRateSlider = true, int lfoIndex = 1);
@@ -17,7 +18,6 @@ public:
     void rebind (std::shared_ptr<LFOData> newData, int newLfoIndex);
 
     void lfoDataChanged() override;
-    void parameterChanged (const juce::String& parameterID, float newValue) override;
 
     void paint (juce::Graphics& g) override;
     void resized() override;
@@ -48,8 +48,6 @@ private:
     int hitTestCurveHandle (float x, float y) const;
     juce::Point<float> getCurveHandlePosition (size_t segmentIndex) const;
 
-    void updateSyncVisibility (bool tempoSyncOn);
-
     static juce::String paramId (const juce::String& base, int index)
     {
         return "lfo" + juce::String (index) + base;
@@ -60,20 +58,11 @@ private:
     const bool hasRateSlider;
     int lfoIndex;
 
-    juce::Slider rateSlider;
-    juce::Label rateLabel;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> rateAttachment;
-
-    // Tempo sync controls (only used when hasRateSlider == true)
-    juce::ToggleButton tempoSyncToggle { "Sync" };
-    juce::ComboBox noteDivisionCombo;
-    juce::ToggleButton beatSyncToggle { "Beat Lock" };
-    juce::Slider bpmSlider;
-    juce::Label bpmLabel;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> tempoSyncAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> noteDivisionAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> beatSyncAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> bpmAttachment;
+    // New rate display and toggle components
+    std::unique_ptr<LFORateComponent> rateComponent;
+    std::unique_ptr<CustomToggleComponent> bpmToggle;
+    std::unique_ptr<CustomToggleComponent> hostToggle;
+    std::unique_ptr<CustomToggleComponent> monoToggle;
 
     DragTarget dragTarget = DragTarget::None;
     int selectedPointIndex = -1;

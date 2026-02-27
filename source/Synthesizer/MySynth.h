@@ -74,6 +74,7 @@ private:
     std::array<bool, 4> lfoTempoSync = { false, false, false, false };
     std::array<int, 4> lfoNoteDivision = { 6, 6, 6, 6 };
     std::array<bool, 4> lfoBeatSync = { false, false, false, false };
+    std::array<bool, 4> lfoMono = { false, false, false, false };
     float manualBpm = 120.0f;
 
     float portamentoTime = 0.0f;

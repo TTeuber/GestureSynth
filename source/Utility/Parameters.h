@@ -74,6 +74,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
         layout.add (make_unique<AudioParameterChoice> (ParameterID ("lfo" + s + "NoteDivision", 1), "LFO " + s + " Note Division",
             juce::StringArray { "4/1", "2/1", "1/1", "1/2", "1/2T", "1/2D", "1/4", "1/4T", "1/4D", "1/8", "1/8T", "1/8D", "1/16", "1/16T", "1/16D", "1/32" }, 6));
         layout.add (make_unique<AudioParameterBool> (ParameterID ("lfo" + s + "BeatSync", 1), "LFO " + s + " Beat Sync", false));
+        layout.add (make_unique<AudioParameterBool> (ParameterID ("lfo" + s + "Mono", 1), "LFO " + s + " Mono", false));
     }
 
     auto manualBpm = make_unique<Parameter> (ParameterID ("manualBpm", 1), "Manual BPM", Normalize (20.0f, 300.0f, 0.1f), 120.0f);

@@ -31,64 +31,24 @@ LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorV
 
     if (hasRateSlider)
     {
-        // Rate slider (free Hz mode)
-        rateSlider.setSliderStyle (juce::Slider::LinearHorizontal);
-        rateSlider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 50, 20);
-        rateSlider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
-        rateSlider.setColour (juce::Slider::textBoxBackgroundColourId, SECONDARY_COLOR);
-        rateSlider.setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
-        rateSlider.setTextValueSuffix (" Hz");
-        addAndMakeVisible (rateSlider);
+        auto* rateParam = parameters.getParameter (paramId ("Rate", lfoIndex));
+        auto* noteDivParam = dynamic_cast<juce::AudioParameterChoice*> (parameters.getParameter (paramId ("NoteDivision", lfoIndex)));
+        auto* tempoSyncParam = dynamic_cast<juce::AudioParameterBool*> (parameters.getParameter (paramId ("TempoSync", lfoIndex)));
+        auto* beatSyncParam = dynamic_cast<juce::AudioParameterBool*> (parameters.getParameter (paramId ("BeatSync", lfoIndex)));
+        auto* monoParam = dynamic_cast<juce::AudioParameterBool*> (parameters.getParameter (paramId ("Mono", lfoIndex)));
 
-        rateLabel.setText ("Rate", juce::dontSendNotification);
-        rateLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
-        rateLabel.attachToComponent (&rateSlider, true);
+        rateComponent = std::make_unique<LFORateComponent> (rateParam, noteDivParam, tempoSyncParam);
+        addAndMakeVisible (*rateComponent);
 
-        rateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (parameters, paramId ("Rate", lfoIndex), rateSlider);
+        bpmToggle = std::make_unique<CustomToggleComponent> (tempoSyncParam, "BPM");
+        addAndMakeVisible (*bpmToggle);
 
-        // Tempo sync toggle
-        tempoSyncToggle.setColour (juce::ToggleButton::textColourId, TEXT_COLOR);
-        tempoSyncToggle.setColour (juce::ToggleButton::tickColourId, TEXT_COLOR);
-        addAndMakeVisible (tempoSyncToggle);
-        tempoSyncAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (parameters, paramId ("TempoSync", lfoIndex), tempoSyncToggle);
+        hostToggle = std::make_unique<CustomToggleComponent> (beatSyncParam, "Host");
+        hostToggle->setOpacityCallback ([tempoSyncParam]() { return tempoSyncParam->get(); });
+        addAndMakeVisible (*hostToggle);
 
-        // Note division combo
-        const juce::StringArray divisions { "4/1", "2/1", "1/1", "1/2", "1/2T", "1/2D", "1/4", "1/4T", "1/4D", "1/8", "1/8T", "1/8D", "1/16", "1/16T", "1/16D", "1/32" };
-        for (int i = 0; i < divisions.size(); ++i)
-            noteDivisionCombo.addItem (divisions[i], i + 1);
-        noteDivisionCombo.setColour (juce::ComboBox::backgroundColourId, SECONDARY_COLOR);
-        noteDivisionCombo.setColour (juce::ComboBox::textColourId, TEXT_COLOR);
-        noteDivisionCombo.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
-        addChildComponent (noteDivisionCombo);
-        noteDivisionAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (parameters, paramId ("NoteDivision", lfoIndex), noteDivisionCombo);
-
-        // Beat sync toggle
-        beatSyncToggle.setColour (juce::ToggleButton::textColourId, TEXT_COLOR);
-        beatSyncToggle.setColour (juce::ToggleButton::tickColourId, TEXT_COLOR);
-        addChildComponent (beatSyncToggle);
-        beatSyncAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (parameters, paramId ("BeatSync", lfoIndex), beatSyncToggle);
-
-        // Manual BPM slider
-        bpmSlider.setSliderStyle (juce::Slider::LinearHorizontal);
-        bpmSlider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 50, 20);
-        bpmSlider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
-        bpmSlider.setColour (juce::Slider::textBoxBackgroundColourId, SECONDARY_COLOR);
-        bpmSlider.setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
-        bpmSlider.setTextValueSuffix (" BPM");
-        addChildComponent (bpmSlider);
-
-        bpmLabel.setText ("BPM", juce::dontSendNotification);
-        bpmLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
-        bpmLabel.attachToComponent (&bpmSlider, true);
-
-        bpmAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (parameters, "manualBpm", bpmSlider);
-
-        // Listen for tempo sync parameter changes
-        parameters.addParameterListener (paramId ("TempoSync", lfoIndex), this);
-
-        // Set initial visibility
-        const bool syncOn = *parameters.getRawParameterValue (paramId ("TempoSync", lfoIndex)) > 0.5f;
-        updateSyncVisibility (syncOn);
+        monoToggle = std::make_unique<CustomToggleComponent> (monoParam, "Mono");
+        addAndMakeVisible (*monoToggle);
     }
 
     addAndMakeVisible (sineButton);
@@ -104,42 +64,30 @@ LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorV
 LFOComponent::~LFOComponent()
 {
     lfoData->removeListener (this);
-    if (hasRateSlider)
-        apvts.removeParameterListener (paramId ("TempoSync", lfoIndex), this);
 }
 
 void LFOComponent::rebind (std::shared_ptr<LFOData> newData, int newLfoIndex)
 {
-    // Remove old listeners
     lfoData->removeListener (this);
-    if (hasRateSlider)
-        apvts.removeParameterListener (paramId ("TempoSync", lfoIndex), this);
 
-    // Reset all attachments (must be done before changing lfoIndex)
-    rateAttachment.reset();
-    tempoSyncAttachment.reset();
-    noteDivisionAttachment.reset();
-    beatSyncAttachment.reset();
-    // bpmAttachment stays — manualBpm is shared
-
-    // Swap data and index
     lfoData = std::move (newData);
     lfoIndex = newLfoIndex;
 
-    // Re-add listeners
     lfoData->addListener (this);
 
     if (hasRateSlider)
     {
-        // Recreate attachments with new parameter IDs
-        rateAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (apvts, paramId ("Rate", lfoIndex), rateSlider);
-        tempoSyncAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (apvts, paramId ("TempoSync", lfoIndex), tempoSyncToggle);
-        noteDivisionAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (apvts, paramId ("NoteDivision", lfoIndex), noteDivisionCombo);
-        beatSyncAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (apvts, paramId ("BeatSync", lfoIndex), beatSyncToggle);
+        auto* rateParam = apvts.getParameter (paramId ("Rate", lfoIndex));
+        auto* noteDivParam = dynamic_cast<juce::AudioParameterChoice*> (apvts.getParameter (paramId ("NoteDivision", lfoIndex)));
+        auto* tempoSyncParam = dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (paramId ("TempoSync", lfoIndex)));
+        auto* beatSyncParam = dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (paramId ("BeatSync", lfoIndex)));
+        auto* monoParam = dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (paramId ("Mono", lfoIndex)));
 
-        apvts.addParameterListener (paramId ("TempoSync", lfoIndex), this);
-        const bool syncOn = *apvts.getRawParameterValue (paramId ("TempoSync", lfoIndex)) > 0.5f;
-        updateSyncVisibility (syncOn);
+        rateComponent->rebind (rateParam, noteDivParam, tempoSyncParam);
+        bpmToggle->rebind (tempoSyncParam);
+        hostToggle->rebind (beatSyncParam);
+        hostToggle->setOpacityCallback ([tempoSyncParam]() { return tempoSyncParam->get(); });
+        monoToggle->rebind (monoParam);
     }
 
     repaint();
@@ -150,33 +98,13 @@ void LFOComponent::lfoDataChanged()
     repaint();
 }
 
-void LFOComponent::parameterChanged (const juce::String& parameterID, float newValue)
-{
-    if (parameterID == paramId ("TempoSync", lfoIndex))
-    {
-        const bool syncOn = newValue > 0.5f;
-        juce::MessageManager::callAsync ([this, syncOn]() { updateSyncVisibility (syncOn); });
-    }
-}
-
-void LFOComponent::updateSyncVisibility (bool tempoSyncOn)
-{
-    rateSlider.setVisible (!tempoSyncOn);
-    rateLabel.setVisible (!tempoSyncOn);
-    noteDivisionCombo.setVisible (tempoSyncOn);
-    beatSyncToggle.setVisible (tempoSyncOn);
-    bpmSlider.setVisible (tempoSyncOn);
-    bpmLabel.setVisible (tempoSyncOn);
-    resized();
-}
-
 // =====================================================================================
 // Coordinate conversion
 // =====================================================================================
 
 juce::Rectangle<float> LFOComponent::getGraphBounds() const
 {
-    const float controlSpace = hasRateSlider ? kSliderHeight * 2.0f : 0.0f;
+    const float controlSpace = hasRateSlider ? kSliderHeight : 0.0f;
     return { kMargin + kShapeStripWidth, kMargin,
         static_cast<float> (getWidth()) - 2.0f * kMargin - kShapeStripWidth,
         static_cast<float> (getHeight()) - controlSpace - 2.0f * kMargin };
@@ -368,34 +296,18 @@ void LFOComponent::resized()
     if (hasRateSlider)
     {
         auto area = getLocalBounds();
+        auto controlRow = area.removeFromBottom (static_cast<int> (kSliderHeight));
+        controlRow.removeFromLeft (static_cast<int> (kMargin + kShapeStripWidth));
 
-        // Bottom row 2: rate slider OR note division + beat lock
-        auto row2 = area.removeFromBottom (static_cast<int> (kSliderHeight));
-        row2.removeFromLeft (static_cast<int> (kMargin + kShapeStripWidth));
+        int totalWidth = controlRow.getWidth();
+        int rateWidth = static_cast<int> (totalWidth * 0.4f);
+        int remaining = totalWidth - rateWidth;
+        int toggleWidth = remaining / 3;
 
-        if (rateSlider.isVisible())
-        {
-            // Free Hz mode: [Rate label] [slider]
-            row2.removeFromLeft (40); // space for "Rate" label
-            rateSlider.setBounds (row2);
-        }
-        else
-        {
-            // Tempo sync mode: [note division combo] [beat lock toggle]
-            noteDivisionCombo.setBounds (row2.removeFromLeft (row2.getWidth() / 2));
-            beatSyncToggle.setBounds (row2);
-        }
-
-        // Bottom row 1: sync toggle + BPM slider (when synced)
-        auto row1 = area.removeFromBottom (static_cast<int> (kSliderHeight));
-        row1.removeFromLeft (static_cast<int> (kMargin + kShapeStripWidth));
-        tempoSyncToggle.setBounds (row1.removeFromLeft (70));
-
-        if (bpmSlider.isVisible())
-        {
-            row1.removeFromLeft (35); // space for "BPM" label
-            bpmSlider.setBounds (row1);
-        }
+        rateComponent->setBounds (controlRow.removeFromLeft (rateWidth).reduced (2));
+        bpmToggle->setBounds (controlRow.removeFromLeft (toggleWidth).reduced (2));
+        hostToggle->setBounds (controlRow.removeFromLeft (toggleWidth).reduced (2));
+        monoToggle->setBounds (controlRow.reduced (2));
     }
 }
 
