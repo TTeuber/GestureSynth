@@ -9,7 +9,9 @@ MySynthVoice::MySynthVoice (
     std::atomic<float>* velocityRawOut,
     std::atomic<float>* keyboardRawOut,
     std::atomic<float>* modWheelRawOut,
-    std::atomic<float>* pitchBendRawOut)
+    std::atomic<float>* pitchBendRawOut,
+    std::atomic<float>* aftertouchRawOut,
+    std::atomic<float>* expressionRawOut)
     : parameters (p),
       modTree (mt),
       env1ptr (std::move (ampEnvPtr)),
@@ -17,7 +19,9 @@ MySynthVoice::MySynthVoice (
       velocityRawOutput (velocityRawOut),
       keyboardRawOutput (keyboardRawOut),
       modWheelRawOutput (modWheelRawOut),
-      pitchBendRawOutput (pitchBendRawOut)
+      pitchBendRawOutput (pitchBendRawOut),
+      aftertouchRawOutput (aftertouchRawOut),
+      expressionRawOutput (expressionRawOut)
 {
     for (int i = 0; i < 4; ++i)
         if (lfoData[i])

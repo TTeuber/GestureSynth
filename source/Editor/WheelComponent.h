@@ -10,9 +10,8 @@
 class ModWheelComponent final : public juce::Component, private juce::Timer
 {
 public:
-    ModWheelComponent (PluginProcessor& p, ModulationModeState* modState)
+    ModWheelComponent (PluginProcessor& p, ModulationModeState*)
         : processor (p),
-          modModeState (modState),
           modWheelRawPtr (p.getSynth().getModWheelRawPtr())
     {
         startTimerHz (30);
@@ -21,13 +20,6 @@ public:
     void paint (juce::Graphics& g) override
     {
         auto bounds = getLocalBounds().toFloat();
-
-        // Crosshair button at top
-        float crosshairSize = juce::jmin (bounds.getWidth(), 24.0f);
-        auto crosshairArea = bounds.removeFromTop (crosshairSize);
-        drawCrosshair (g, crosshairArea);
-
-        bounds.removeFromTop (2.0f);
 
         // Track
         float trackWidth = bounds.getWidth() * 0.7f;
@@ -54,27 +46,6 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
-        auto bounds = getLocalBounds().toFloat();
-        float crosshairSize = juce::jmin (bounds.getWidth(), 24.0f);
-
-        if (e.y < crosshairSize)
-        {
-            // Clicked on crosshair
-            if (modModeState != nullptr)
-            {
-                if (!modModeState->isModulationMode())
-                {
-                    modModeState->setTargetSource ("modWheel");
-                    modModeState->setMode (ModulationModeState::Mode::Modulation);
-                }
-                else
-                {
-                    modModeState->setTargetSource ("modWheel");
-                }
-            }
-            return;
-        }
-
         isDragging = true;
         updateValueFromMouse (e);
     }
@@ -106,32 +77,14 @@ public:
     }
 
 private:
-    void drawCrosshair (juce::Graphics& g, juce::Rectangle<float> area)
-    {
-        float cx = area.getCentreX();
-        float cy = area.getCentreY();
-        float r = juce::jmin (area.getWidth(), area.getHeight()) * 0.35f;
-
-        bool isTarget = modModeState != nullptr
-            && modModeState->isModulationMode()
-            && modModeState->getTargetSourceID() == "modWheel";
-
-        g.setColour (isTarget ? MOD_COLOR : TEXT_COLOR.withAlpha (0.6f));
-        g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.5f);
-        g.drawLine (cx - r - 2, cy, cx + r + 2, cy, 1.2f);
-        g.drawLine (cx, cy - r - 2, cx, cy + r + 2, 1.2f);
-    }
-
     void updateValueFromMouse (const juce::MouseEvent& e)
     {
         auto bounds = getLocalBounds().toFloat();
-        float crosshairSize = juce::jmin (bounds.getWidth(), 24.0f);
-        auto trackBounds = bounds.withTrimmedTop (crosshairSize + 2.0f);
 
-        float thumbHeight = trackBounds.getHeight() * 0.15f;
-        float usableHeight = trackBounds.getHeight() - thumbHeight;
+        float thumbHeight = bounds.getHeight() * 0.15f;
+        float usableHeight = bounds.getHeight() - thumbHeight;
 
-        float relY = static_cast<float> (e.y) - trackBounds.getY() - thumbHeight * 0.5f;
+        float relY = static_cast<float> (e.y) - bounds.getY() - thumbHeight * 0.5f;
         float rawVal = 1.0f - juce::jlimit (0.0f, 1.0f, relY / usableHeight);
 
         if (e.mods.isShiftDown())
@@ -145,7 +98,6 @@ private:
     }
 
     PluginProcessor& processor;
-    ModulationModeState* modModeState = nullptr;
     std::atomic<float>* modWheelRawPtr = nullptr;
     float currentValue = 0.0f;
     bool isDragging = false;

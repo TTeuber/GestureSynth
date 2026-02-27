@@ -43,6 +43,38 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
     addAndMakeVisible (pitchWheel);
     addAndMakeVisible (keyboard);
 
+    // MW / AT / EXP tabs — select only sets mod target source, no content panel
+    mwTab.setup ("MW", "modWheel", modModeState, [this]
+    {
+        if (modModeState != nullptr)
+        {
+            modModeState->setTargetSource ("modWheel");
+            if (!modModeState->isModulationMode())
+                modModeState->setMode (ModulationModeState::Mode::Modulation);
+        }
+    });
+    atTab.setup ("AT", "aftertouch", modModeState, [this]
+    {
+        if (modModeState != nullptr)
+        {
+            modModeState->setTargetSource ("aftertouch");
+            if (!modModeState->isModulationMode())
+                modModeState->setMode (ModulationModeState::Mode::Modulation);
+        }
+    });
+    expTab.setup ("EXP", "expression", modModeState, [this]
+    {
+        if (modModeState != nullptr)
+        {
+            modModeState->setTargetSource ("expression");
+            if (!modModeState->isModulationMode())
+                modModeState->setMode (ModulationModeState::Mode::Modulation);
+        }
+    });
+    addAndMakeVisible (mwTab);
+    addAndMakeVisible (atTab);
+    addAndMakeVisible (expTab);
+
     const juce::StringArray lfoIDs = { "lfo1", "lfo2", "lfo3", "lfo4" };
     const juce::StringArray envIDs = { "env1", "env2", "env3", "env4" };
 
@@ -117,6 +149,9 @@ void MainTabContent::modulationModeChanged (ModulationModeState::Mode)
         lfoTabs[i].repaint();
         envTabs[i].repaint();
     }
+    mwTab.repaint();
+    atTab.repaint();
+    expTab.repaint();
     velTab.repaint();
     keyTab.repaint();
     modWheel.repaint();
@@ -130,6 +165,9 @@ void MainTabContent::targetSourceChanged (const juce::String&)
         lfoTabs[i].repaint();
         envTabs[i].repaint();
     }
+    mwTab.repaint();
+    atTab.repaint();
+    expTab.repaint();
     velTab.repaint();
     keyTab.repaint();
     modWheel.repaint();
@@ -193,25 +231,25 @@ void MainTabContent::resized()
     lfoComponent.setBounds (row3.removeFromLeft (contentHalf).reduced (5));
     adsrGraph.setBounds (row3.reduced (5));
 
-    // Split tab strip between LFO and ENV
+    // Split tab strip between left (MW + LFO + AT + EXP) and right (ENV + Vel + Key)
     int halfWidth = buttonRow.getWidth() / 2;
-    auto lfoTabArea = buttonRow.removeFromLeft (halfWidth);
-    auto envTabArea = buttonRow;
+    auto leftTabArea = buttonRow.removeFromLeft (halfWidth);
+    auto rightTabArea = buttonRow;
 
-    // LFO tabs
-    int lfoTabWidth = juce::jmin (75, lfoTabArea.getWidth() / 4);
+    // Left side: MW (1) + LFO (4) + AT (1) + EXP (1) = 7 tabs
+    int leftTabWidth = leftTabArea.getWidth() / 7;
+    mwTab.setBounds (leftTabArea.removeFromLeft (leftTabWidth));
     for (int i = 0; i < 4; ++i)
-        lfoTabs[i].setBounds (lfoTabArea.removeFromLeft (lfoTabWidth));
+        lfoTabs[i].setBounds (leftTabArea.removeFromLeft (leftTabWidth));
+    atTab.setBounds (leftTabArea.removeFromLeft (leftTabWidth));
+    expTab.setBounds (leftTabArea);
 
-    // ENV tabs
-    int envTabWidth = juce::jmin (75, envTabArea.getWidth() / 4);
+    // Right side: ENV (4) + Vel + Key = 6 tabs
+    int rightTabWidth = rightTabArea.getWidth() / 6;
     for (int i = 0; i < 4; ++i)
-        envTabs[i].setBounds (envTabArea.removeFromLeft (envTabWidth));
-
-    // Vel/Key tabs at the end of the button row
-    int kvTabWidth = juce::jmin (75, envTabArea.getWidth() / 2);
-    velTab.setBounds (envTabArea.removeFromLeft (kvTabWidth));
-    keyTab.setBounds (envTabArea.removeFromLeft (kvTabWidth));
+        envTabs[i].setBounds (rightTabArea.removeFromLeft (rightTabWidth));
+    velTab.setBounds (rightTabArea.removeFromLeft (rightTabWidth));
+    keyTab.setBounds (rightTabArea);
 }
 
 // =============================================================================

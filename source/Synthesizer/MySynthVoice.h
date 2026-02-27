@@ -2,6 +2,8 @@
 
 // #include "AntiAliasOscillator.h"
 #include "../Modulation/KeyboardSource.h"
+#include "../Modulation/AftertouchSource.h"
+#include "../Modulation/ExpressionSource.h"
 #include "../Modulation/ModWheelSource.h"
 #include "../Modulation/VelocitySource.h"
 #include "../Modulation/Modulation.h"
@@ -28,7 +30,8 @@ class MySynthVoice final : public juce::SynthesiserVoice, public juce::ValueTree
 public:
     MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData,
                   std::atomic<float>* velocityRawOut = nullptr, std::atomic<float>* keyboardRawOut = nullptr,
-                  std::atomic<float>* modWheelRawOut = nullptr, std::atomic<float>* pitchBendRawOut = nullptr);
+                  std::atomic<float>* modWheelRawOut = nullptr, std::atomic<float>* pitchBendRawOut = nullptr,
+                  std::atomic<float>* aftertouchRawOut = nullptr, std::atomic<float>* expressionRawOut = nullptr);
     void addNodeToMatrix (const juce::ValueTree& childNode);
 
     void parameterChanged (const juce::String& parameterID, float newValue) override;
@@ -58,6 +61,19 @@ public:
             if (modWheelRawOutput != nullptr)
                 modWheelRawOutput->store (newControllerValue / 127.0f, std::memory_order_relaxed);
         }
+        else if (controllerNumber == 11)
+        {
+            expressionSource.setValue (newControllerValue / 127.0f);
+            if (expressionRawOutput != nullptr)
+                expressionRawOutput->store (newControllerValue / 127.0f, std::memory_order_relaxed);
+        }
+    }
+
+    void aftertouchChanged (int newAftertouchValue) override
+    {
+        aftertouchSource.setValue (newAftertouchValue / 127.0f);
+        if (aftertouchRawOutput != nullptr)
+            aftertouchRawOutput->store (newAftertouchValue / 127.0f, std::memory_order_relaxed);
     }
 
     void renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
@@ -146,6 +162,8 @@ private:
     std::array<juce::dsp::StateVariableTPTFilter<float>, 2> hpFilters;
 
     ModWheelSource modWheelSource;
+    AftertouchSource aftertouchSource;
+    ExpressionSource expressionSource;
     VelocitySource velocitySource;
     KeyboardSource keyboardSource;
     StaticParameter velocityCurveParam = StaticParameter (parameters.getParameter ("velocityCurve"));
@@ -252,6 +270,8 @@ private:
         { adsr3.getID(), &adsr3 },
         { adsr4.getID(), &adsr4 },
         { modWheelSource.getID(), &modWheelSource },
+        { aftertouchSource.getID(), &aftertouchSource },
+        { expressionSource.getID(), &expressionSource },
         { velocitySource.getID(), &velocitySource },
         { keyboardSource.getID(), &keyboardSource },
     };
@@ -277,6 +297,8 @@ private:
     std::atomic<float>* keyboardRawOutput = nullptr;
     std::atomic<float>* modWheelRawOutput = nullptr;
     std::atomic<float>* pitchBendRawOutput = nullptr;
+    std::atomic<float>* aftertouchRawOutput = nullptr;
+    std::atomic<float>* expressionRawOutput = nullptr;
 
     // Cache of source/dest per slot for correct removal on property change
     std::array<std::pair<juce::String, juce::String>, 16> slotCache;

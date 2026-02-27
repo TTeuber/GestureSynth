@@ -43,6 +43,8 @@ public:
     std::atomic<float>* getKeyboardRawPtr() { return &currentKeyboardRaw; }
     std::atomic<float>* getModWheelRawPtr() { return &currentModWheelRaw; }
     std::atomic<float>* getPitchBendRawPtr() { return &currentPitchBendRaw; }
+    std::atomic<float>* getAftertouchRawPtr() { return &currentAftertouchRaw; }
+    std::atomic<float>* getExpressionRawPtr() { return &currentExpressionRaw; }
 
 private:
     juce::AudioProcessorValueTreeState& parameters;
@@ -95,4 +97,6 @@ private:
     std::atomic<float> currentKeyboardRaw { 0.0f };
     std::atomic<float> currentModWheelRaw { 0.0f };
     std::atomic<float> currentPitchBendRaw { 8192.0f };
+    std::atomic<float> currentAftertouchRaw { 0.0f };
+    std::atomic<float> currentExpressionRaw { 0.0f };
 };

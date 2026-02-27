@@ -160,6 +160,7 @@ private:
 
     void selectKeyVel (int index);
 
+    ModSourceTab mwTab, atTab, expTab;
     ModSourceTab lfoTabs[4];
     ModSourceTab envTabs[4];
     ModSourceTab velTab, keyTab;
