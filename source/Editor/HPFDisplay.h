@@ -45,14 +45,9 @@ private:
     // Actual parameter value
     float cutoffFrequency = 20.0f;
 
-    // For control point
-    juce::Point<float> controlPoint;
-    const float controlPointRadius = 8.0f;
     bool isDragging = false;
-
-    // For fine control
-    juce::Point<float> dragStartPosition;
-    float dragStartDisplayX = 0.0f;
+    int dragStartX = 0;
+    float dragStartCutoff = 0.0f;
 
     // Display frequency mapping (x=0 -> 20Hz, x=1 -> 3kHz)
     static constexpr double kDisplayMinFreq = 20.0;
@@ -79,12 +74,6 @@ private:
 
     // Static version for parameterized drawing
     static double computeHPGainDb (double freq, double cutoffFreqHz);
-
-    void updateControlPointPosition();
-
-    bool isMouseOverControlPoint (const juce::Point<int>& mousePosition) const;
-
-    void drawControlPoint (juce::Graphics& g) const;
 
     void drawParameterValues (juce::Graphics& g) const;
 

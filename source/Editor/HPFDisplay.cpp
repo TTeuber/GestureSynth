@@ -35,7 +35,6 @@ void HPFDisplay::paint (juce::Graphics& g)
 {
     g.fillAll (SECONDARY_COLOR);
 
-    drawControlPoint (g);
     drawParameterValues (g);
     drawFrequencyPath (g);
     drawModModeOverlay (g);
@@ -43,7 +42,6 @@ void HPFDisplay::paint (juce::Graphics& g)
 
 void HPFDisplay::resized()
 {
-    updateControlPointPosition();
 }
 
 void HPFDisplay::mouseDown (const juce::MouseEvent& e)
@@ -92,11 +90,11 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
         return;
     }
 
-    if (isMouseOverControlPoint (e.getPosition()))
+    if (hpfEnabled)
     {
         isDragging = true;
-        dragStartPosition = e.position;
-        dragStartDisplayX = static_cast<float> (freqToDisplayX (cutoffFrequency));
+        dragStartX = e.x;
+        dragStartCutoff = normalizedCutoff;
 
         if (undoManager != nullptr)
             undoManager->beginNewTransaction();
@@ -122,25 +120,8 @@ void HPFDisplay::mouseDrag (const juce::MouseEvent& e)
 
     if (isDragging)
     {
-        const juce::Point<float> pos = e.position;
-        const bool fineControl = e.mods.isShiftDown();
-
-        float newCutoff;
-
-        if (fineControl)
-        {
-            constexpr float sensitivity = 0.1f;
-            const float xOffset = (pos.x - dragStartPosition.x) * sensitivity;
-            const float displayX = juce::jlimit (0.0f, 1.0f, dragStartDisplayX + xOffset / getWidth());
-            double freq = juce::jlimit (20.0, 3000.0, displayXToFreq (displayX));
-            newCutoff = static_cast<float> (cutoffParam->getNormalisableRange().convertTo0to1 (static_cast<float> (freq)));
-        }
-        else
-        {
-            double freq = displayXToFreq (static_cast<double> (pos.x) / getWidth());
-            freq = juce::jlimit (20.0, 3000.0, freq);
-            newCutoff = static_cast<float> (cutoffParam->getNormalisableRange().convertTo0to1 (static_cast<float> (freq)));
-        }
+        float horizontalDelta = (e.position.x - static_cast<float> (dragStartX)) / static_cast<float> (getWidth());
+        float newCutoff = juce::jlimit (0.0f, 1.0f, dragStartCutoff + horizontalDelta);
 
         if (cutoffParam)
             cutoffParam->setValueNotifyingHost (newCutoff);
@@ -174,7 +155,6 @@ void HPFDisplay::parameterChanged (const juce::String& parameterID, float newVal
         updateParameterValues();
 
         juce::MessageManager::callAsync ([this] {
-            updateControlPointPosition();
             repaint();
         });
     }
@@ -195,7 +175,6 @@ void HPFDisplay::updateParameterValues()
         cutoffFrequency = cutoffParam->getNormalisableRange().convertFrom0to1 (normalizedCutoff);
     }
 
-    updateControlPointPosition();
 }
 
 void HPFDisplay::drawFrequencyPath (juce::Graphics& g) const
@@ -254,39 +233,6 @@ double HPFDisplay::computeHPGainDb (double freq, double cutoffFreqHz)
     return 2.0 * 20.0 * std::log10 (gain);
 }
 
-void HPFDisplay::updateControlPointPosition()
-{
-    controlPoint.x = static_cast<float> (freqToDisplayX (cutoffFrequency)) * static_cast<float> (getWidth());
-    // Place control point on the curve at the cutoff frequency
-    const double dBAtCutoff = getHPGainDb (cutoffFrequency);
-    controlPoint.y = getHeight() / 2.0f - static_cast<float> (dBAtCutoff) * getHeight() / 50.0f;
-}
-
-bool HPFDisplay::isMouseOverControlPoint (const juce::Point<int>& mousePosition) const
-{
-    const float distance = mousePosition.getDistanceFrom (juce::Point<int> (
-        static_cast<int> (controlPoint.x),
-        static_cast<int> (controlPoint.y)));
-
-    return distance <= controlPointRadius * 1.5f;
-}
-
-void HPFDisplay::drawControlPoint (juce::Graphics& g) const
-{
-    g.setColour (hpfEnabled ? juce::Colours::white : juce::Colours::grey);
-    g.drawEllipse (controlPoint.x - controlPointRadius,
-        controlPoint.y - controlPointRadius,
-        controlPointRadius * 2.0f,
-        controlPointRadius * 2.0f,
-        2.0f);
-
-    g.setColour (hpfEnabled ? (isDragging ? juce::Colours::orange : juce::Colours::grey) : juce::Colours::black);
-    g.fillEllipse (controlPoint.x - (controlPointRadius - 2.0f),
-        controlPoint.y - (controlPointRadius - 2.0f),
-        (controlPointRadius - 2.0f) * 2.0f,
-        (controlPointRadius - 2.0f) * 2.0f);
-}
-
 void HPFDisplay::drawParameterValues (juce::Graphics& g) const
 {
     g.setColour (hpfEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
@@ -299,13 +245,6 @@ void HPFDisplay::drawParameterValues (juce::Graphics& g) const
         freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
 
     g.drawText ("HPF: " + freqText, 5, getHeight() - 25, getWidth() - 10, 20, juce::Justification::bottomLeft, true);
-
-    if (isDragging)
-    {
-        g.setFont (12.0f);
-        g.setColour (juce::Colours::lightgrey);
-        g.drawText ("Hold Shift for fine control", 5, getHeight() - 40, getWidth() - 10, 20, juce::Justification::bottomLeft, true);
-    }
 }
 
 void HPFDisplay::drawHPFCurveAt (juce::Graphics& g, float cutoffFreqHz,

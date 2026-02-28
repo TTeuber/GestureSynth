@@ -51,10 +51,7 @@ private:
     float cutoffFrequency = 1000.0f;
     float resonance = 0.71f;
 
-    // For control point
-    juce::Point<float> controlPoint;
     juce::Path filterResponsePath;
-    const float controlPointRadius = 8.0f;
     bool isDragging = false;
 
     // For fine control
@@ -89,12 +86,6 @@ private:
     // Computes the gain in dB for a single first-order low-pass filter stage
     static double computeFirstOrderStage (const double freq, const double cutoffFreq);
 
-    void updateControlPointPosition();
-
-    bool isMouseOverControlPoint (const juce::Point<int>& mousePosition) const;
-
-    void drawControlPoint (juce::Graphics& g) const;
-
     void drawParameterValues (juce::Graphics& g) const;
 
     juce::UndoManager* undoManager = nullptr;
@@ -118,6 +109,23 @@ private:
     int modDragStartY = 0;
 
     void drawModModeOverlay (juce::Graphics& g) const;
+
+    // Axis-locking dead zone (normal / shift+mod drag)
+    bool cutoffEngaged = false;
+    bool resonanceEngaged = false;
+    int cutoffRefX = 0;
+    int resonanceRefY = 0;
+    float initialCutoffValue = 0.0f;
+    float initialResonanceValue = 0.0f;
+
+    // Axis-locking dead zone (mod drag)
+    bool modCutoffEngaged = false;
+    bool modResonanceEngaged = false;
+    int modCutoffRefX = 0;
+    int modResonanceRefY = 0;
+
+    static constexpr int kPrimaryThreshold = 4;
+    static constexpr int kSecondaryThreshold = 12;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FilterDisplay)
 };

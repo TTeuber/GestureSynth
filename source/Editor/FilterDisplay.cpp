@@ -48,9 +48,6 @@ void FilterDisplay::paint (juce::Graphics& g)
     // Fill background
     g.fillAll (SECONDARY_COLOR);
 
-    // Draw control point
-    drawControlPoint (g);
-
     // Draw parameter values
     drawParameterValues (g);
 
@@ -65,8 +62,6 @@ void FilterDisplay::paint (juce::Graphics& g)
 }
 void FilterDisplay::resized()
 {
-    // Update calculations for a new size
-    updateControlPointPosition();
 }
 
 void FilterDisplay::mouseDown (const juce::MouseEvent& e)
@@ -125,28 +120,20 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
                 resonanceParam->beginChangeGesture();
             if (gestureCount != nullptr)
                 ++(*gestureCount);
+            cutoffEngaged = false;
+            resonanceEngaged = false;
             return;
         }
 
-        auto sourceID = modModeState->getTargetSourceID();
-
-        int cutoffSlot = modModeState->getOrCreateSlot (sourceID, "filterFrequency");
-        if (cutoffSlot < 0)
-            return;
-        int resSlot = modModeState->getOrCreateSlot (sourceID, "filterResonance");
-        if (resSlot < 0)
-            return;
-
-        modDragInitialCutoffDepth = modModeState->getDepth (sourceID, "filterFrequency");
-        modDragInitialResDepth = modModeState->getDepth (sourceID, "filterResonance");
         modDragStartX = e.x;
         modDragStartY = e.y;
         isModDragging = true;
+        modCutoffEngaged = false;
+        modResonanceEngaged = false;
         return;
     }
 
-    // Check if the mouse is near the control point
-    if (isMouseOverControlPoint (e.getPosition()))
+    if (filterEnabled)
     {
         isDragging = true;
         dragStartPosition = e.position;
@@ -161,6 +148,8 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
             resonanceParam->beginChangeGesture();
         if (gestureCount != nullptr)
             ++(*gestureCount);
+        cutoffEngaged = false;
+        resonanceEngaged = false;
     }
 }
 void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
@@ -168,40 +157,86 @@ void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
     if (isModDragging && modModeState != nullptr)
     {
         auto sourceID = modModeState->getTargetSourceID();
+        const int absX = std::abs (e.x - modDragStartX);
+        const int absY = std::abs (e.y - modDragStartY);
 
-        float hDelta = static_cast<float> (e.x - modDragStartX) / static_cast<float> (getWidth());
-        float vDelta = static_cast<float> (modDragStartY - e.y) / static_cast<float> (getHeight());
+        const bool wasModCutoffEngaged = modCutoffEngaged;
+        const bool wasModResonanceEngaged = modResonanceEngaged;
+        const bool wasModEitherEngaged = wasModCutoffEngaged || wasModResonanceEngaged;
 
-        float newCutoffDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialCutoffDepth + hDelta);
-        float newResDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialResDepth + vDelta);
+        if (!wasModCutoffEngaged
+            && absX >= (wasModEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
+        {
+            int slot = modModeState->getOrCreateSlot (sourceID, "filterFrequency");
+            if (slot >= 0)
+            {
+                modCutoffEngaged = true;
+                modCutoffRefX = e.x;
+                modDragInitialCutoffDepth = modModeState->getDepth (sourceID, "filterFrequency");
+            }
+        }
+        if (!wasModResonanceEngaged
+            && absY >= (wasModEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
+        {
+            int slot = modModeState->getOrCreateSlot (sourceID, "filterResonance");
+            if (slot >= 0)
+            {
+                modResonanceEngaged = true;
+                modResonanceRefY = e.y;
+                modDragInitialResDepth = modModeState->getDepth (sourceID, "filterResonance");
+            }
+        }
 
-        modModeState->setDepth (sourceID, "filterFrequency", newCutoffDepth);
-        modModeState->setDepth (sourceID, "filterResonance", newResDepth);
+        if (modCutoffEngaged)
+        {
+            float hDelta = static_cast<float> (e.x - modCutoffRefX) / static_cast<float> (getWidth());
+            float newCutoffDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialCutoffDepth + hDelta);
+            modModeState->setDepth (sourceID, "filterFrequency", newCutoffDepth);
+        }
+        if (modResonanceEngaged)
+        {
+            float vDelta = static_cast<float> (modResonanceRefY - e.y) / static_cast<float> (getHeight());
+            float newResDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialResDepth + vDelta);
+            modModeState->setDepth (sourceID, "filterResonance", newResDepth);
+        }
+
         repaint();
         return;
     }
 
     if (isDragging)
     {
-        // Direct control - map position directly to parameter values
-        const juce::Point<float> pos = e.position;
+        const int absX = std::abs (static_cast<int> (e.position.x - dragStartPosition.x));
+        const int absY = std::abs (static_cast<int> (e.position.y - dragStartPosition.y));
 
-        // Convert mouse x through log display mapping to frequency, then to normalized param value
-        double displayX = static_cast<double> (pos.x) / getWidth();
-        double freq = displayXToFreq (displayX);
-        freq = juce::jlimit (cutoffParam->getNormalisableRange().start,
-                             cutoffParam->getNormalisableRange().end, static_cast<float> (freq));
-        float newCutoff = static_cast<float> (cutoffParam->getNormalisableRange().convertTo0to1 (static_cast<float> (freq)));
+        const bool wasCutoffEngaged = cutoffEngaged;
+        const bool wasResonanceEngaged = resonanceEngaged;
+        const bool wasEitherEngaged = wasCutoffEngaged || wasResonanceEngaged;
 
-        float newResonance = juce::jlimit (0.0f, 1.0f, 1.0f - pos.y / getHeight());
-
-        if (cutoffParam && resonanceParam)
+        if (!wasCutoffEngaged && absX >= (wasEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
         {
-            cutoffParam->setValueNotifyingHost (newCutoff);
-            resonanceParam->setValueNotifyingHost (newResonance);
+            cutoffEngaged = true;
+            cutoffRefX = static_cast<int> (e.position.x);
+            initialCutoffValue = normalizedCutoff;
+        }
+        if (!wasResonanceEngaged && absY >= (wasEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
+        {
+            resonanceEngaged = true;
+            resonanceRefY = static_cast<int> (e.position.y);
+            initialResonanceValue = normalizedResonance;
         }
 
-        // Update the display
+        if (cutoffEngaged && cutoffParam)
+        {
+            float horizontalDelta = (e.position.x - static_cast<float> (cutoffRefX)) / static_cast<float> (getWidth());
+            cutoffParam->setValueNotifyingHost (juce::jlimit (0.0f, 1.0f, initialCutoffValue + horizontalDelta));
+        }
+        if (resonanceEngaged && resonanceParam)
+        {
+            float verticalDelta = (static_cast<float> (resonanceRefY) - e.position.y) / static_cast<float> (getHeight());
+            resonanceParam->setValueNotifyingHost (juce::jlimit (0.0f, 1.0f, initialResonanceValue + verticalDelta));
+        }
+
         repaint();
     }
 }
@@ -235,7 +270,6 @@ void FilterDisplay::parameterChanged (const juce::String& parameterID, float new
 
         // Update UI on the message thread
         juce::MessageManager::callAsync ([this] {
-            updateControlPointPosition();
             repaint();
         });
     }
@@ -259,7 +293,6 @@ void FilterDisplay::updateParameterValues()
         resonance = resonanceParam->getNormalisableRange().convertFrom0to1 (normalizedResonance);
     }
 
-    updateControlPointPosition();
 }
 
 void FilterDisplay::drawFrequencyPath (juce::Graphics& g) const
@@ -347,38 +380,7 @@ double FilterDisplay::computeFirstOrderStage (const double freq, const double cu
     return 20.0 * std::log10 (gain); // Convert to dB
 }
 
-void FilterDisplay::updateControlPointPosition()
-{
-    // Convert frequency to display x using logarithmic mapping
-    controlPoint.x = static_cast<float> (freqToDisplayX (cutoffFrequency)) * static_cast<float> (getWidth());
-    controlPoint.y = (1.0f - normalizedResonance) * static_cast<float> (getHeight());
-}
-bool FilterDisplay::isMouseOverControlPoint (const juce::Point<int>& mousePosition) const
-{
-    // Calculate distance from mouse to control point
-    const float distance = mousePosition.getDistanceFrom (juce::Point<int> (
-        static_cast<int> (controlPoint.x),
-        static_cast<int> (controlPoint.y)));
 
-    return distance <= controlPointRadius * 1.5f; // slightly larger than the visual radius for easier grabbing
-}
-void FilterDisplay::drawControlPoint (juce::Graphics& g) const
-{
-    // Draw outer circle
-    g.setColour (filterEnabled ? juce::Colours::white : juce::Colours::grey);
-    g.drawEllipse (controlPoint.x - controlPointRadius,
-        controlPoint.y - controlPointRadius,
-        controlPointRadius * 2.0f,
-        controlPointRadius * 2.0f,
-        2.0f);
-
-    // Draw the inner circle
-    g.setColour (filterEnabled ? (isDragging ? juce::Colours::orange : juce::Colours::grey) : juce::Colours::black);
-    g.fillEllipse (controlPoint.x - (controlPointRadius - 2.0f),
-        controlPoint.y - (controlPointRadius - 2.0f),
-        (controlPointRadius - 2.0f) * 2.0f,
-        (controlPointRadius - 2.0f) * 2.0f);
-}
 void FilterDisplay::drawParameterValues (juce::Graphics& g) const
 {
     g.setColour (filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
@@ -397,13 +399,6 @@ void FilterDisplay::drawParameterValues (juce::Graphics& g) const
     // Draw resonance text
     g.drawText ("Resonance: " + juce::String (resonance, 2), getWidth() / 2 + 5, 5, getWidth() / 2 - 10, 20, juce::Justification::topRight, true);
 
-    // Draw a shift key hint when dragging
-    if (isDragging)
-    {
-        g.setFont (12.0f);
-        g.setColour (juce::Colours::lightgrey);
-        g.drawText ("Hold Shift for fine control", 5, getHeight() - 40, getWidth() - 10, 20, juce::Justification::bottomLeft, true);
-    }
 }
 
 void FilterDisplay::timerCallback()
