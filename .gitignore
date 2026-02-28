@@ -32,3 +32,5 @@ packaging/Output/*
 TODO.md
 docs/*.md
 .claude
+
+worktrees/

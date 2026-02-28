@@ -1,0 +1,1 @@
+"cmake-build-relwithdebinfo/SynthDemo_artefacts/RelWithDebInfo/Standalone/Demo Synth.app/Contents/MacOS/Demo Synth"
