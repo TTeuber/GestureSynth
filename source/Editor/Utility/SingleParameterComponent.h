@@ -174,6 +174,11 @@ public:
             if (slot < 0)
                 return;
 
+            if (auto* um = modModeState->getUndoManager())
+                um->beginNewTransaction();
+            if (gestureCount != nullptr)
+                ++(*gestureCount);
+
             modDragInitialDepth = modModeState->getDepth (sourceID, paramDestID);
             mouseDownY = e.y;
             isModDragging = true;
@@ -229,6 +234,8 @@ public:
     {
         if (isModDragging)
         {
+            if (gestureCount != nullptr)
+                --(*gestureCount);
             isModDragging = false;
             return;
         }

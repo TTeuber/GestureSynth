@@ -187,6 +187,11 @@ public:
 
             modDragSourceID = modModeState->getTargetSourceID();
 
+            if (auto* um = modModeState->getUndoManager())
+                um->beginNewTransaction();
+            if (gestureCount != nullptr)
+                ++(*gestureCount);
+
             mouseDownX = e.x;
             mouseDownY = e.y;
             isModDragging = true;
@@ -310,6 +315,8 @@ public:
     {
         if (isModDragging)
         {
+            if (gestureCount != nullptr)
+                --(*gestureCount);
             isModDragging = false;
             return;
         }

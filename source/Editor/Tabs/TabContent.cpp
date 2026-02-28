@@ -282,7 +282,7 @@ void KeyboardTabContent::resized()
 // =============================================================================
 
 ModulationTabContent::ModulationTabContent (PluginProcessor& p)
-    : matrixComponent (p.modTree, p.modSourceOutputs.data())
+    : matrixComponent (p.modTree, p.modSourceOutputs.data(), &p.undoManager, &p.activeGestureCount)
 {
     addAndMakeVisible (matrixComponent);
 }

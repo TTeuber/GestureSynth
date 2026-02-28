@@ -84,6 +84,11 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
         if (slot < 0)
             return;
 
+        if (undoManager != nullptr)
+            undoManager->beginNewTransaction();
+        if (gestureCount != nullptr)
+            ++(*gestureCount);
+
         modDragInitialDepth = modModeState->getDepth (sourceID, "hpfFrequency");
         modDragStartX = e.x;
         isModDragging = true;
@@ -135,6 +140,8 @@ void HPFDisplay::mouseUp (const juce::MouseEvent& e)
     juce::ignoreUnused (e);
     if (isModDragging)
     {
+        if (gestureCount != nullptr)
+            --(*gestureCount);
         isModDragging = false;
         return;
     }

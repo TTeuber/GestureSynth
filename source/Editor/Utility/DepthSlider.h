@@ -55,12 +55,15 @@ public:
     {
         if (e.getNumberOfClicks() >= 2)
         {
+            if (onDragStart) onDragStart();
             setValue (0.0f);
+            if (onDragEnd) onDragEnd();
             return;
         }
         mouseDownX = e.x;
         initialValue = value;
         isDragging = true;
+        if (onDragStart) onDragStart();
     }
 
     void mouseDrag (const juce::MouseEvent& e) override
@@ -75,6 +78,8 @@ public:
 
     void mouseUp (const juce::MouseEvent&) override
     {
+        if (isDragging && onDragEnd)
+            onDragEnd();
         isDragging = false;
     }
 
@@ -115,6 +120,8 @@ public:
     }
 
     std::function<void()> onValueChange;
+    std::function<void()> onDragStart;
+    std::function<void()> onDragEnd;
 
 private:
     float value = 0.0f;

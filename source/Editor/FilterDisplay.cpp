@@ -125,6 +125,11 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
             return;
         }
 
+        if (undoManager != nullptr)
+            undoManager->beginNewTransaction();
+        if (gestureCount != nullptr)
+            ++(*gestureCount);
+
         modDragStartX = e.x;
         modDragStartY = e.y;
         isModDragging = true;
@@ -245,6 +250,8 @@ void FilterDisplay::mouseUp (const juce::MouseEvent& e)
     juce::ignoreUnused (e);
     if (isModDragging)
     {
+        if (gestureCount != nullptr)
+            --(*gestureCount);
         isModDragging = false;
         return;
     }

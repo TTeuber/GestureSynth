@@ -114,17 +114,23 @@ public:
 
         if (button == 0) // bipolar
         {
+            if (auto* um = modModeState->getUndoManager())
+                um->beginNewTransaction();
             modModeState->toggleBipolar (entry.sourceID, entry.destID);
             repaint();
         }
         else if (button == 1) // bypass
         {
+            if (auto* um = modModeState->getUndoManager())
+                um->beginNewTransaction();
             bool current = modModeState->isBypassed (entry.sourceID, entry.destID);
             modModeState->setBypassed (entry.sourceID, entry.destID, !current);
             repaint();
         }
         else if (button == 2) // clear
         {
+            if (auto* um = modModeState->getUndoManager())
+                um->beginNewTransaction();
             modModeState->clearSlot (entry.sourceID, entry.destID);
             if (auto* callout = findParentComponentOfClass<juce::CallOutBox>())
                 callout->dismiss();

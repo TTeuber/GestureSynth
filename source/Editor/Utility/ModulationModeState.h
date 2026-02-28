@@ -55,6 +55,10 @@ public:
     void setModTree (juce::ValueTree* tree) { modTree = tree; }
     juce::ValueTree* getModTree() const { return modTree; }
 
+    // --- UndoManager (set by PluginEditor) ---
+    void setUndoManager (juce::UndoManager* um) { undoManager = um; }
+    juce::UndoManager* getUndoManager() const { return undoManager; }
+
     // --- modTree slot helpers ---
 
     // Find slot index with matching source and dest (-1 if not found)
@@ -98,12 +102,12 @@ public:
         if (idx >= 0 && modTree != nullptr)
         {
             auto child = modTree->getChild (idx);
-            child.setProperty ("source", sourceID, nullptr);
-            child.setProperty ("destination", destID, nullptr);
+            child.setProperty ("source", sourceID, undoManager);
+            child.setProperty ("destination", destID, undoManager);
 
             // LFOs and keyboard are bipolar by default
             if (sourceID.startsWith ("lfo") || sourceID == "keyboard")
-                child.setProperty ("isBipolar", true, nullptr);
+                child.setProperty ("isBipolar", true, undoManager);
         }
         return idx;
     }
@@ -120,7 +124,7 @@ public:
     {
         int idx = findSlotIndex (sourceID, destID);
         if (idx >= 0 && modTree != nullptr)
-            modTree->getChild (idx).setProperty ("depth", depth, nullptr);
+            modTree->getChild (idx).setProperty ("depth", depth, undoManager);
     }
 
     bool isBipolar (const juce::String& sourceID, const juce::String& destID) const
@@ -143,7 +147,7 @@ public:
     {
         int idx = findSlotIndex (sourceID, destID);
         if (idx >= 0 && modTree != nullptr)
-            modTree->getChild (idx).setProperty ("bypassed", bypassed, nullptr);
+            modTree->getChild (idx).setProperty ("bypassed", bypassed, undoManager);
     }
 
     void toggleBipolar (const juce::String& sourceID, const juce::String& destID)
@@ -153,7 +157,7 @@ public:
         {
             auto child = modTree->getChild (idx);
             bool current = static_cast<bool> (child.getProperty ("isBipolar"));
-            child.setProperty ("isBipolar", !current, nullptr);
+            child.setProperty ("isBipolar", !current, undoManager);
         }
     }
 
@@ -163,11 +167,11 @@ public:
         if (idx >= 0 && modTree != nullptr)
         {
             auto child = modTree->getChild (idx);
-            child.setProperty ("source", "None", nullptr);
-            child.setProperty ("destination", "None", nullptr);
-            child.setProperty ("depth", 0.0f, nullptr);
-            child.setProperty ("isBipolar", false, nullptr);
-            child.setProperty ("bypassed", false, nullptr);
+            child.setProperty ("source", "None", undoManager);
+            child.setProperty ("destination", "None", undoManager);
+            child.setProperty ("depth", 0.0f, undoManager);
+            child.setProperty ("isBipolar", false, undoManager);
+            child.setProperty ("bypassed", false, undoManager);
         }
     }
 
@@ -175,5 +179,6 @@ private:
     Mode currentMode = Mode::Normal;
     juce::String targetSourceID { "lfo1" };
     juce::ValueTree* modTree = nullptr;
+    juce::UndoManager* undoManager = nullptr;
     juce::ListenerList<Listener> listeners;
 };

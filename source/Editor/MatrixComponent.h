@@ -9,8 +9,9 @@
 class MatrixComponent final : public juce::Component, public juce::ValueTree::Listener, public juce::Timer
 {
 public:
-    explicit MatrixComponent (juce::ValueTree& mt, std::atomic<float>* srcOutputs = nullptr)
-        : modTree (mt), sourceOutputs (srcOutputs)
+    explicit MatrixComponent (juce::ValueTree& mt, std::atomic<float>* srcOutputs = nullptr,
+        juce::UndoManager* um = nullptr, std::atomic<int>* gc = nullptr)
+        : modTree (mt), sourceOutputs (srcOutputs), undoManager (um), gestureCount (gc)
     {
         modTree.addListener (this);
 
@@ -62,44 +63,68 @@ public:
             // Wire callbacks
             row.sourceBox.onChange = [this, i]()
             {
+                if (undoManager != nullptr)
+                    undoManager->beginNewTransaction();
                 auto selectedSource = PluginProcessor::modSourceIDs[rows[i].sourceBox.getSelectedId() - 1];
-                modTree.getChild (i).setProperty ("source", selectedSource, nullptr);
+                modTree.getChild (i).setProperty ("source", selectedSource, undoManager);
+            };
+
+            row.depthSlider.onDragStart = [this]()
+            {
+                if (undoManager != nullptr)
+                    undoManager->beginNewTransaction();
+                if (gestureCount != nullptr)
+                    ++(*gestureCount);
+            };
+
+            row.depthSlider.onDragEnd = [this]()
+            {
+                if (gestureCount != nullptr)
+                    --(*gestureCount);
             };
 
             row.depthSlider.onValueChange = [this, i]()
             {
-                modTree.getChild (i).setProperty ("depth", rows[i].depthSlider.getValue(), nullptr);
+                modTree.getChild (i).setProperty ("depth", rows[i].depthSlider.getValue(), undoManager);
             };
 
             row.bipolarButton.onClick = [this, i]()
             {
+                if (undoManager != nullptr)
+                    undoManager->beginNewTransaction();
                 auto& btn = rows[i].bipolarButton;
                 btn.setBipolar (!btn.isBipolar());
                 rows[i].depthSlider.setBipolar (btn.isBipolar());
-                modTree.getChild (i).setProperty ("isBipolar", btn.isBipolar(), nullptr);
+                modTree.getChild (i).setProperty ("isBipolar", btn.isBipolar(), undoManager);
             };
 
             row.destBox.onChange = [this, i]()
             {
+                if (undoManager != nullptr)
+                    undoManager->beginNewTransaction();
                 auto selectedDest = PluginProcessor::modDestIDs[rows[i].destBox.getSelectedId() - 1];
-                modTree.getChild (i).setProperty ("destination", selectedDest, nullptr);
+                modTree.getChild (i).setProperty ("destination", selectedDest, undoManager);
             };
 
             row.bypassButton.onClick = [this, i]()
             {
+                if (undoManager != nullptr)
+                    undoManager->beginNewTransaction();
                 auto child = modTree.getChild (i);
                 bool current = static_cast<bool> (child.getProperty ("bypassed"));
-                child.setProperty ("bypassed", !current, nullptr);
+                child.setProperty ("bypassed", !current, undoManager);
             };
 
             row.clearButton.onClick = [this, i]()
             {
+                if (undoManager != nullptr)
+                    undoManager->beginNewTransaction();
                 auto child = modTree.getChild (i);
-                child.setProperty ("source", "None", nullptr);
-                child.setProperty ("destination", "None", nullptr);
-                child.setProperty ("depth", 0.0f, nullptr);
-                child.setProperty ("isBipolar", false, nullptr);
-                child.setProperty ("bypassed", false, nullptr);
+                child.setProperty ("source", "None", undoManager);
+                child.setProperty ("destination", "None", undoManager);
+                child.setProperty ("depth", 0.0f, undoManager);
+                child.setProperty ("isBipolar", false, undoManager);
+                child.setProperty ("bypassed", false, undoManager);
             };
         }
 
@@ -212,6 +237,8 @@ public:
 private:
     juce::ValueTree& modTree;
     std::atomic<float>* sourceOutputs = nullptr;
+    juce::UndoManager* undoManager = nullptr;
+    std::atomic<int>* gestureCount = nullptr;
     juce::TooltipWindow tooltipWindow { this, 500 };
 
     // ---------------------------------------------------------------------------------

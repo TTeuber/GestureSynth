@@ -6,6 +6,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 {
     // Set up modulation mode state
     modModeState.setModTree (&processorRef.modTree);
+    modModeState.setUndoManager (&processorRef.undoManager);
     modModeState.addListener (this);
 
     // Mode label — child of contentWrapper
