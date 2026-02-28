@@ -100,6 +100,10 @@ public:
             auto child = modTree->getChild (idx);
             child.setProperty ("source", sourceID, nullptr);
             child.setProperty ("destination", destID, nullptr);
+
+            // LFOs and keyboard are bipolar by default
+            if (sourceID.startsWith ("lfo") || sourceID == "keyboard")
+                child.setProperty ("isBipolar", true, nullptr);
         }
         return idx;
     }
