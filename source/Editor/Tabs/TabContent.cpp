@@ -71,6 +71,9 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
                 modModeState->setMode (ModulationModeState::Mode::Modulation);
         }
     });
+    mwTab.setCompactMode (true);
+    atTab.setCompactMode (true);
+    expTab.setCompactMode (true);
     addAndMakeVisible (mwTab);
     addAndMakeVisible (atTab);
     addAndMakeVisible (expTab);
@@ -222,34 +225,27 @@ void MainTabContent::resized()
     detuneComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
     hpfDisplay.setBounds (row2.reduced (5));
 
-    // Row 3: LFO | ADSR (full width), then 30px tab strip at bottom
+    // Row 3: LFO | ADSR (split full width), 30px tab strip at bottom
     auto row3 = area;
-    auto buttonRow = row3.removeFromBottom (30);
+    auto buttonRow = row3.removeFromBottom (30).reduced (5, 0);
 
-    // LFO component | ADSR graph (split full width)
     int contentHalf = row3.getWidth() / 2;
     lfoComponent.setBounds (row3.removeFromLeft (contentHalf).reduced (5));
     adsrGraph.setBounds (row3.reduced (5));
 
-    // Split tab strip between left (MW + LFO + AT + EXP) and right (ENV + Vel + Key)
-    int halfWidth = buttonRow.getWidth() / 2;
-    auto leftTabArea = buttonRow.removeFromLeft (halfWidth);
-    auto rightTabArea = buttonRow;
+    // Tab strip: MW, AT, EXP (narrow) | LFO 1-4 | ENV 1-4 | Vel, Key (narrow)
+    int tabWidth = buttonRow.getWidth() / 11;
+    int narrowTab = 3 * tabWidth / 5;
 
-    // Left side: MW (1) + LFO (4) + AT (1) + EXP (1) = 7 tabs
-    int leftTabWidth = leftTabArea.getWidth() / 7;
-    mwTab.setBounds (leftTabArea.removeFromLeft (leftTabWidth));
+    mwTab.setBounds (buttonRow.removeFromLeft (narrowTab).reduced (1, 0));
+    atTab.setBounds (buttonRow.removeFromLeft (narrowTab).reduced (1, 0));
+    expTab.setBounds (buttonRow.removeFromLeft (narrowTab).reduced (1, 0));
     for (int i = 0; i < 4; ++i)
-        lfoTabs[i].setBounds (leftTabArea.removeFromLeft (leftTabWidth));
-    atTab.setBounds (leftTabArea.removeFromLeft (leftTabWidth));
-    expTab.setBounds (leftTabArea);
-
-    // Right side: ENV (4) + Vel + Key = 6 tabs
-    int rightTabWidth = rightTabArea.getWidth() / 6;
+        lfoTabs[i].setBounds (buttonRow.removeFromLeft (tabWidth).reduced (1, 0));
     for (int i = 0; i < 4; ++i)
-        envTabs[i].setBounds (rightTabArea.removeFromLeft (rightTabWidth));
-    velTab.setBounds (rightTabArea.removeFromLeft (rightTabWidth));
-    keyTab.setBounds (rightTabArea);
+        envTabs[i].setBounds (buttonRow.removeFromLeft (tabWidth).reduced (1, 0));
+    velTab.setBounds (buttonRow.removeFromLeft (narrowTab).reduced (1, 0));
+    keyTab.setBounds (buttonRow.removeFromLeft (narrowTab).reduced (1, 0));
 }
 
 // =============================================================================

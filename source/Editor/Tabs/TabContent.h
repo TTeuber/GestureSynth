@@ -44,6 +44,8 @@ public:
     bool isSelected() const { return selected; }
     const juce::String& getSourceID() const { return sourceID; }
 
+    void setCompactMode (bool compact) { compactMode = compact; }
+
     void paint (juce::Graphics& g) override
     {
         auto bounds = getLocalBounds().toFloat();
@@ -55,26 +57,57 @@ public:
             g.setColour (SECONDARY_COLOR);
         g.fillRoundedRectangle (bounds, 3.0f);
 
-        // Crosshair icon on the left
-        const float iconSize = 16.0f;
-        auto iconArea = bounds.withWidth (iconSize + 8).reduced (4.0f);
-        float cx = iconArea.getCentreX();
-        float cy = iconArea.getCentreY();
-        float r = iconSize * 0.35f;
-
         bool isTarget = modModeState != nullptr
             && modModeState->isModulationMode()
             && modModeState->getTargetSourceID() == sourceID;
 
-        g.setColour (isTarget ? MOD_COLOR : TEXT_COLOR.withAlpha (0.6f));
-        g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.5f);
-        g.drawLine (cx - r - 2, cy, cx + r + 2, cy, 1.2f);
-        g.drawLine (cx, cy - r - 2, cx, cy + r + 2, 1.2f);
+        if (compactMode && !hovered)
+        {
+            // Compact default: text only, centered
+            g.setColour (isTarget ? MOD_COLOR : (selected ? juce::Colours::black : TEXT_COLOR));
+            g.setFont (13.0f);
+            g.drawText (text, bounds, juce::Justification::centred, true);
+        }
+        else if (compactMode && hovered)
+        {
+            // Compact hovered: crosshair only, centered
+            float cx = bounds.getCentreX();
+            float cy = bounds.getCentreY();
+            float r = 16.0f * 0.35f;
 
-        // Text label
-        g.setColour (selected ? juce::Colours::black : TEXT_COLOR);
-        g.setFont (13.0f);
-        g.drawText (text, bounds.withTrimmedLeft (iconSize + 8), juce::Justification::centred, true);
+            g.setColour (isTarget ? MOD_COLOR : TEXT_COLOR.withAlpha (0.6f));
+            g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.5f);
+            g.drawLine (cx - r - 2, cy, cx + r + 2, cy, 1.2f);
+            g.drawLine (cx, cy - r - 2, cx, cy + r + 2, 1.2f);
+        }
+        else
+        {
+            // Normal: crosshair left, text right
+            const float iconSize = 16.0f;
+            auto iconArea = bounds.withWidth (iconSize + 8).reduced (4.0f);
+            float cx = iconArea.getCentreX();
+            float cy = iconArea.getCentreY();
+            float r = iconSize * 0.35f;
+
+            g.setColour (isTarget ? MOD_COLOR : TEXT_COLOR.withAlpha (0.6f));
+            g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.5f);
+            g.drawLine (cx - r - 2, cy, cx + r + 2, cy, 1.2f);
+            g.drawLine (cx, cy - r - 2, cx, cy + r + 2, 1.2f);
+
+            g.setColour (selected ? juce::Colours::black : TEXT_COLOR);
+            g.setFont (13.0f);
+            g.drawText (text, bounds.withTrimmedLeft (iconSize + 8), juce::Justification::centred, true);
+        }
+    }
+
+    void mouseEnter (const juce::MouseEvent&) override
+    {
+        if (compactMode) { hovered = true; repaint(); }
+    }
+
+    void mouseExit (const juce::MouseEvent&) override
+    {
+        if (compactMode) { hovered = false; repaint(); }
     }
 
     void mouseUp (const juce::MouseEvent& e) override
@@ -82,8 +115,8 @@ public:
         if (!getLocalBounds().contains (e.x, e.y))
             return;
 
-        // Check if click was on the crosshair area
-        bool clickedCrosshair = e.x < 24;
+        // In compact mode, the whole tab acts as crosshair when hovered
+        bool clickedCrosshair = compactMode ? hovered : (e.x < 24);
 
         if (modModeState != nullptr)
         {
@@ -98,7 +131,11 @@ public:
             }
             if (modModeState->isModulationMode())
             {
-                // In mod mode: clicking any part changes target and selects tab
+                if (clickedCrosshair && modModeState->getTargetSourceID() == sourceID)
+                {
+                    modModeState->setMode (ModulationModeState::Mode::Normal);
+                    return;
+                }
                 modModeState->setTargetSource (sourceID);
                 if (selectCallback)
                     selectCallback();
@@ -117,6 +154,8 @@ private:
     ModulationModeState* modModeState = nullptr;
     std::function<void()> selectCallback;
     bool selected = false;
+    bool compactMode = false;
+    bool hovered = false;
 };
 
 // =============================================================================
