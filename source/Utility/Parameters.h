@@ -102,6 +102,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (make_unique<AudioParameterBool> (ParameterID ("legatoOn", 1), "Legato", false));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("gateMode", 1), "Gate Mode", false));
     layout.add (make_unique<Parameter> (ParameterID ("pitchBendRange", 1), "Pitch Bend Range", Normalize (1.0f, 12.0f, 1.0f), 2.0f));
+    layout.add (make_unique<AudioParameterChoice> (ParameterID ("voiceCount", 1), "Voice Count",
+        juce::StringArray { "2", "3", "4", "5", "6", "8", "12", "16" }, 5));
 
     // ================================================================================================================================================
     // Envelope Parameters

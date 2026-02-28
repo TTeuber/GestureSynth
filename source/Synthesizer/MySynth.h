@@ -28,6 +28,8 @@ public:
     float getFilterResonance() const { return filterResonance; }
 
     void updateParameters (const TempoInfo& tempoInfo);
+    void setVoiceCount (int count);
+    void prepareVoices (double sampleRate, int samplesPerBlock, int numChannels);
     template <class Func>
     void applyToAllVoices (Func&& function);
 
@@ -80,6 +82,11 @@ private:
     float manualBpm = 120.0f;
 
     float portamentoTime = 0.0f;
+    int currentVoiceCount = 8;
+
+    double preparedSampleRate = 0.0;
+    int preparedSamplesPerBlock = 0;
+    int preparedNumChannels = 0;
 
     int lastMidiNote = -1;
     float lastNoteFrequency = 0.0f;
@@ -92,6 +99,9 @@ private:
 
     std::shared_ptr<MyADSR*> ampEnvPtr = std::make_shared<MyADSR*>();
     std::shared_ptr<MyADSR*> filterEnvPtr = std::make_shared<MyADSR*>();
+
+    std::shared_ptr<PitchTracker> pitchTracker;
+    std::array<std::shared_ptr<LFOData>, 4>* lfoDataPtr = nullptr;
 
     std::atomic<float> currentVelocityRaw { 0.0f };
     std::atomic<float> currentKeyboardRaw { 0.0f };

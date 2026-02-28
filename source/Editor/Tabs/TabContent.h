@@ -19,6 +19,7 @@
 #include "../ChorusMixComponent.h"
 #include "../NoiseComponent.h"
 #include "../PortamentoComponent.h"
+#include "../Utility/CustomToggleComponent.h"
 #include "../Utility/ModulationModeState.h"
 #include "../Utility/SingleParameterComponent.h"
 #include "../VolumeComponent.h"
@@ -159,6 +160,173 @@ private:
 };
 
 // =============================================================================
+// PitchBendRangeControl: drag-to-adjust pitch bend range inline display
+// =============================================================================
+class PitchBendRangeControl final : public juce::Component,
+                                     private juce::AudioProcessorParameter::Listener
+{
+public:
+    explicit PitchBendRangeControl (juce::RangedAudioParameter* param)
+        : param (param)
+    {
+        jassert (param != nullptr);
+        param->addListener (this);
+    }
+
+    ~PitchBendRangeControl() override
+    {
+        if (param != nullptr)
+            param->removeListener (this);
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        auto bounds = getLocalBounds().toFloat();
+
+        // Label on left
+        auto labelArea = bounds.removeFromLeft (bounds.getWidth() * 0.6f);
+        g.setColour (TEXT_COLOR);
+        g.setFont (11.0f);
+        g.drawText ("Pitch Bend", labelArea, juce::Justification::centredRight, true);
+
+        // Number in rounded rect on right
+        auto numArea = bounds.reduced (2.0f, 2.0f);
+        g.setColour (SECONDARY_COLOR);
+        g.fillRoundedRectangle (numArea, 4.0f);
+        g.setColour (TEXT_COLOR);
+        g.drawRoundedRectangle (numArea, 4.0f, 1.0f);
+        g.setFont (12.0f);
+        int val = static_cast<int> (param->convertFrom0to1 (param->getValue()));
+        g.drawText (juce::String (val), numArea, juce::Justification::centred, true);
+    }
+
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        isDragging = true;
+        dragStartY = static_cast<float> (e.y);
+        dragStartValue = static_cast<int> (param->convertFrom0to1 (param->getValue()));
+        param->beginChangeGesture();
+    }
+
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        if (!isDragging) return;
+        float deltaY = dragStartY - static_cast<float> (e.y);
+        int steps = static_cast<int> (deltaY / 20.0f);
+        int newRange = juce::jlimit (1, 12, dragStartValue + steps);
+        float normalised = param->convertTo0to1 (static_cast<float> (newRange));
+        param->setValueNotifyingHost (normalised);
+    }
+
+    void mouseUp (const juce::MouseEvent&) override
+    {
+        if (isDragging)
+        {
+            param->endChangeGesture();
+            isDragging = false;
+        }
+    }
+
+    juce::MouseCursor getMouseCursor() override
+    {
+        return juce::MouseCursor::UpDownResizeCursor;
+    }
+
+private:
+    void parameterValueChanged (int, float) override
+    {
+        juce::MessageManager::callAsync ([this] { repaint(); });
+    }
+    void parameterGestureChanged (int, bool) override {}
+
+    juce::RangedAudioParameter* param = nullptr;
+    bool isDragging = false;
+    float dragStartY = 0.0f;
+    int dragStartValue = 0;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchBendRangeControl)
+};
+
+// =============================================================================
+// VoiceCountControl: click-to-select voice count via popup menu
+// =============================================================================
+class VoiceCountControl final : public juce::Component,
+                                 private juce::AudioProcessorParameter::Listener
+{
+public:
+    explicit VoiceCountControl (juce::AudioParameterChoice* param)
+        : param (param)
+    {
+        jassert (param != nullptr);
+        param->addListener (this);
+    }
+
+    ~VoiceCountControl() override
+    {
+        if (param != nullptr)
+            param->removeListener (this);
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        auto bounds = getLocalBounds().toFloat();
+
+        // Label on left
+        auto labelArea = bounds.removeFromLeft (bounds.getWidth() * 0.5f);
+        g.setColour (TEXT_COLOR);
+        g.setFont (11.0f);
+        g.drawText ("Voices", labelArea, juce::Justification::centredRight, true);
+
+        // Number in rounded rect on right
+        auto numArea = bounds.reduced (2.0f, 2.0f);
+        g.setColour (SECONDARY_COLOR);
+        g.fillRoundedRectangle (numArea, 4.0f);
+        g.setColour (TEXT_COLOR);
+        g.drawRoundedRectangle (numArea, 4.0f, 1.0f);
+        g.setFont (12.0f);
+        g.drawText (param->getCurrentValueAsText(), numArea, juce::Justification::centred, true);
+    }
+
+    void mouseUp (const juce::MouseEvent& e) override
+    {
+        if (!getLocalBounds().contains (e.x, e.y))
+            return;
+
+        juce::PopupMenu menu;
+        const auto& choices = param->choices;
+        for (int i = 0; i < choices.size(); ++i)
+            menu.addItem (i + 1, choices[i], true, i == param->getIndex());
+
+        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this),
+            [this] (int result)
+            {
+                if (result > 0)
+                {
+                    param->beginChangeGesture();
+                    param->setValueNotifyingHost (param->convertTo0to1 (static_cast<float> (result - 1)));
+                    param->endChangeGesture();
+                }
+            });
+    }
+
+    juce::MouseCursor getMouseCursor() override
+    {
+        return juce::MouseCursor::PointingHandCursor;
+    }
+
+private:
+    void parameterValueChanged (int, float) override
+    {
+        juce::MessageManager::callAsync ([this] { repaint(); });
+    }
+    void parameterGestureChanged (int, bool) override {}
+
+    juce::AudioParameterChoice* param = nullptr;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VoiceCountControl)
+};
+
+// =============================================================================
 // Main Tab: Filter, Chorus, Vibrato, Waveform, Sub Osc, Detune, HPF, LFO, ADSR
 // =============================================================================
 class MainTabContent final : public juce::Component, public ModulationModeState::Listener
@@ -206,6 +374,13 @@ private:
     int activeLfoIndex = 0;
     int activeEnvIndex = 0;
     int activeKeyVelTab = 0;
+
+    // Bottom control row
+    PitchBendRangeControl pitchBendRangeControl;
+    VoiceCountControl voiceCountControl;
+    CustomToggleComponent monoToggle;
+    CustomToggleComponent legatoToggle;
+    CustomToggleComponent gateToggle;
 };
 
 // =============================================================================

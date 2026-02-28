@@ -23,7 +23,12 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
       keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr()),
       modWheel (p, modState),
       pitchWheel (p),
-      keyboard (p.keyboardState)
+      keyboard (p.keyboardState),
+      pitchBendRangeControl (p.parameters.getParameter ("pitchBendRange")),
+      voiceCountControl (dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter ("voiceCount"))),
+      monoToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("monoOn")), "Mono"),
+      legatoToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("legatoOn")), "Legato"),
+      gateToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("gateMode")), "Gate")
 {
     addAndMakeVisible (waveformComponent);
     addAndMakeVisible (filterDisplay);
@@ -42,6 +47,11 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
     addAndMakeVisible (modWheel);
     addAndMakeVisible (pitchWheel);
     addAndMakeVisible (keyboard);
+    addAndMakeVisible (pitchBendRangeControl);
+    addAndMakeVisible (voiceCountControl);
+    addAndMakeVisible (monoToggle);
+    addAndMakeVisible (legatoToggle);
+    addAndMakeVisible (gateToggle);
 
     // MW / AT / EXP tabs — select only sets mod target source, no content panel
     mwTab.setup ("MW", "modWheel", modModeState, [this]
@@ -189,7 +199,7 @@ void MainTabContent::resized()
     auto bottomHeight = area.getHeight() * 22 / 100;
     auto bottomRow = area.removeFromBottom (bottomHeight);
 
-    // Bottom row: ModWheel | PitchWheel | Keyboard | [Vel/Key tabs + KeyVel]
+    // Bottom row: ModWheel | PitchWheel | Keyboard + controls | [Vel/Key tabs + KeyVel]
     int wheelWidth = juce::jmax (36, bottomRow.getHeight() / 3);
     auto wheelsArea = bottomRow.removeFromLeft (wheelWidth * 2 + 4);
     modWheel.setBounds (wheelsArea.removeFromLeft (wheelWidth).reduced (2));
@@ -200,7 +210,23 @@ void MainTabContent::resized()
     auto kvColumn = bottomRow.removeFromRight (kvWidth);
     keyVelComponent.setBounds (kvColumn.reduced (5));
 
-    // Keyboard fills between wheels and KeyVel
+    // Control row below keyboard
+    constexpr int controlRowHeight = 28;
+    auto controlRow = bottomRow.removeFromBottom (controlRowHeight);
+
+    // Layout: [PitchBend] [Voices] [Mono] [Legato] [Gate]
+    int controlWidth = controlRow.getWidth();
+    int pbWidth = controlWidth * 25 / 100;
+    int vcWidth = controlWidth * 20 / 100;
+    int toggleWidth = (controlWidth - pbWidth - vcWidth) / 3;
+
+    pitchBendRangeControl.setBounds (controlRow.removeFromLeft (pbWidth).reduced (2, 2));
+    voiceCountControl.setBounds (controlRow.removeFromLeft (vcWidth).reduced (2, 2));
+    monoToggle.setBounds (controlRow.removeFromLeft (toggleWidth).reduced (4, 3));
+    legatoToggle.setBounds (controlRow.removeFromLeft (toggleWidth).reduced (4, 3));
+    gateToggle.setBounds (controlRow.reduced (4, 3));
+
+    // Keyboard fills remaining space above controls
     keyboard.setBounds (bottomRow.reduced (2));
 
     auto rowHeight = area.getHeight() * 3 / 10;

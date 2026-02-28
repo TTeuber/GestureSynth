@@ -105,14 +105,7 @@ void PluginProcessor::prepareToPlay (const double sampleRate, const int samplesP
 
     chorus.prepare (spec);
 
-    synth.setCurrentPlaybackSampleRate (sampleRate);
-    for (int i = 0; i < synth.getNumVoices(); ++i)
-    {
-        if (auto* voice = dynamic_cast<MySynthVoice*> (synth.getVoice (i)))
-        {
-            voice->prepare (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
-        }
-    }
+    synth.prepareVoices (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
 
     // Report oversampling latency to the host so it can compensate for audio/MIDI sync
     if (auto* voice = dynamic_cast<MySynthVoice*> (synth.getVoice (0)))

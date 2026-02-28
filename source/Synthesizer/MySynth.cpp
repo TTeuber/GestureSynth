@@ -1,6 +1,6 @@
 #include "MySynth.h"
 
-MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData) : parameters (p), modTree (mt)
+MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData) : parameters (p), modTree (mt), pitchTracker (pt), lfoDataPtr (&lfoData)
 {
     clearVoices();
     for (int i = 0; i < 8; ++i)
@@ -11,6 +11,56 @@ MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, st
     clearSounds();
     addSound (new MySynthSound());
 }
+
+void MySynth::prepareVoices (double sampleRate, int samplesPerBlock, int numChannels)
+{
+    preparedSampleRate = sampleRate;
+    preparedSamplesPerBlock = samplesPerBlock;
+    preparedNumChannels = numChannels;
+
+    setCurrentPlaybackSampleRate (sampleRate);
+
+    for (int i = 0; i < getNumVoices(); ++i)
+    {
+        if (auto* voice = dynamic_cast<MySynthVoice*> (getVoice (i)))
+            voice->prepare (sampleRate, samplesPerBlock, numChannels);
+    }
+}
+
+void MySynth::setVoiceCount (int count)
+{
+    if (count == currentVoiceCount)
+        return;
+
+    const juce::ScopedLock sl (lock);
+
+    // Stop all voices and clear held notes
+    allNotesOff (0, false);
+    heldNotes.clear();
+    lastMidiNote = -1;
+
+    clearVoices();
+    for (int i = 0; i < count; ++i)
+        addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pitchTracker, *lfoDataPtr,
+            &currentVelocityRaw, &currentKeyboardRaw, &currentModWheelRaw,
+            &currentPitchBendRaw, &currentAftertouchRaw, &currentExpressionRaw));
+
+    monoVoice = dynamic_cast<MySynthVoice*> (voices.getUnchecked (0));
+    currentVoiceCount = count;
+
+    // Prepare new voices with stored audio settings
+    if (preparedSampleRate > 0.0)
+        prepareVoices (preparedSampleRate, preparedSamplesPerBlock, preparedNumChannels);
+
+    // Reset cached parameter values so updateParameters() re-applies everything
+    masterVolume = -1.0f;
+    noiseLevel = -1.0f;
+    filterCutoff = -1.0f;
+    filterResonance = -1.0f;
+    portamentoTime = -1.0f;
+    vibratoOn = false;
+}
+
 void MySynth::updateParameter (float& currentValue, const float newValue, const std::function<void (float)>& setterFunction)
 {
     if (currentValue != newValue)
@@ -133,6 +183,13 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
 
     monoMode = *parameters.getRawParameterValue ("monoOn") > 0.5f;
     legatoMode = *parameters.getRawParameterValue ("legatoOn") > 0.5f;
+
+    // Voice count
+    static constexpr int voiceCountChoices[] = { 2, 3, 4, 5, 6, 8, 12, 16 };
+    const int voiceIdx = static_cast<int> (*parameters.getRawParameterValue ("voiceCount"));
+    const int newVoiceCount = voiceCountChoices[juce::jlimit (0, 7, voiceIdx)];
+    if (newVoiceCount != currentVoiceCount)
+        setVoiceCount (newVoiceCount);
 
     const bool newVibratoOn = *parameters.getRawParameterValue ("vibratoOn") > 0.5f;
     if (vibratoOn != newVibratoOn)
