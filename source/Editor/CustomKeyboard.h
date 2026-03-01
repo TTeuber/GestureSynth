@@ -116,7 +116,7 @@ public:
         if (note >= 0)
         {
             currentNote = note;
-            keyboardState.noteOn (midiChannel, note, 0.8f);
+            keyboardState.noteOn (midiChannel, note, getVelocityForPosition (e.position));
             repaint();
         }
     }
@@ -130,7 +130,7 @@ public:
                 keyboardState.noteOff (midiChannel, currentNote, 0.0f);
             currentNote = note;
             if (note >= 0)
-                keyboardState.noteOn (midiChannel, note, 0.8f);
+                keyboardState.noteOn (midiChannel, note, getVelocityForPosition (e.position));
             repaint();
         }
     }
@@ -213,6 +213,19 @@ private:
     void timerCallback() override
     {
         repaint();
+    }
+
+    float getVelocityForPosition (juce::Point<float> pos) const
+    {
+        const float height = static_cast<float> (getHeight());
+        const float blackKeyHeight = height * 0.62f;
+
+        // If click is within the black-key zone, scale to black key height;
+        // otherwise scale to the full component height (white keys).
+        const float keyHeight = (pos.y < blackKeyHeight) ? blackKeyHeight : height;
+        const float velocity = pos.y / keyHeight;
+
+        return juce::jlimit (0.1f, 1.0f, velocity);
     }
 
     static bool isBlackKey (int midiNote)
