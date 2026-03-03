@@ -417,6 +417,39 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     manualBpmLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
     manualBpmLabel.setJustificationType (juce::Justification::centred);
     addAndMakeVisible (manualBpmLabel);
+
+    // Reverb sliders
+    auto setupReverbSlider = [this] (juce::Slider& slider)
+    {
+        slider.setSliderStyle (juce::Slider::LinearHorizontal);
+        slider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 60, 20);
+        slider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
+        slider.setColour (juce::Slider::textBoxBackgroundColourId, SECONDARY_COLOR);
+        slider.setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+        addAndMakeVisible (slider);
+    };
+
+    setupReverbSlider (reverbDecaySlider);
+    setupReverbSlider (reverbSizeSlider);
+    setupReverbSlider (reverbDampingSlider);
+    setupReverbSlider (reverbBassMultSlider);
+    setupReverbSlider (reverbModRateSlider);
+    setupReverbSlider (reverbModDepthSlider);
+    setupReverbSlider (reverbDiffusionSlider);
+    setupReverbSlider (reverbPreDelaySlider);
+    setupReverbSlider (reverbWidthSlider);
+    setupReverbSlider (reverbMixSlider);
+
+    reverbDecayAttachment     = std::make_unique<SliderAttachment> (p.parameters, "reverbDecay", reverbDecaySlider);
+    reverbSizeAttachment      = std::make_unique<SliderAttachment> (p.parameters, "reverbSize", reverbSizeSlider);
+    reverbDampingAttachment   = std::make_unique<SliderAttachment> (p.parameters, "reverbDamping", reverbDampingSlider);
+    reverbBassMultAttachment  = std::make_unique<SliderAttachment> (p.parameters, "reverbBassMult", reverbBassMultSlider);
+    reverbModRateAttachment   = std::make_unique<SliderAttachment> (p.parameters, "reverbModRate", reverbModRateSlider);
+    reverbModDepthAttachment  = std::make_unique<SliderAttachment> (p.parameters, "reverbModDepth", reverbModDepthSlider);
+    reverbDiffusionAttachment = std::make_unique<SliderAttachment> (p.parameters, "reverbDiffusion", reverbDiffusionSlider);
+    reverbPreDelayAttachment  = std::make_unique<SliderAttachment> (p.parameters, "reverbPreDelay", reverbPreDelaySlider);
+    reverbWidthAttachment     = std::make_unique<SliderAttachment> (p.parameters, "reverbWidth", reverbWidthSlider);
+    reverbMixAttachment       = std::make_unique<SliderAttachment> (p.parameters, "reverbMix", reverbMixSlider);
 }
 
 void ExperimentTabContent::paint (juce::Graphics& g)
@@ -428,6 +461,29 @@ void ExperimentTabContent::paint (juce::Graphics& g)
     g.drawText ("Voice Mode", getLocalBounds().removeFromTop (40), juce::Justification::centred);
     g.drawText ("Pitch Bend", getLocalBounds().withTop (120).removeFromTop (30), juce::Justification::centred);
     g.drawText ("Manual BPM", getLocalBounds().withTop (210).removeFromTop (30), juce::Justification::centred);
+
+    // Reverb section header
+    g.setFont (18.0f);
+    g.drawText ("Reverb", getLocalBounds().withTop (280).removeFromTop (30), juce::Justification::centred);
+
+    // Reverb slider labels (left column)
+    g.setFont (12.0f);
+    int reverbTop = 310;
+    int sliderH = 24;
+    int spacing = 4;
+    int labelW = 80;
+    int leftX = getWidth() / 2 - 240;
+    int rightX = getWidth() / 2 + 10;
+
+    const char* leftLabels[] = { "Decay", "Size", "Damping", "Bass Mult", "Mod Rate" };
+    const char* rightLabels[] = { "Mod Depth", "Diffusion", "Pre-Delay", "Width", "Mix" };
+
+    for (int i = 0; i < 5; ++i)
+    {
+        int y = reverbTop + i * (sliderH + spacing);
+        g.drawText (leftLabels[i], leftX, y, labelW, sliderH, juce::Justification::centredRight);
+        g.drawText (rightLabels[i], rightX, y, labelW, sliderH, juce::Justification::centredRight);
+    }
 }
 
 void ExperimentTabContent::resized()
@@ -448,4 +504,23 @@ void ExperimentTabContent::resized()
     area.removeFromTop (30); // space for "Manual BPM" header
     auto bpmArea = area.removeFromTop (30).withSizeKeepingCentre (250, 30);
     manualBpmSlider.setBounds (bpmArea);
+
+    // Reverb sliders: 2 columns of 5, below existing controls
+    int reverbTop = 310;
+    int sliderH = 24;
+    int spacing = 4;
+    int labelW = 80;
+    int sliderW = 150;
+    int leftX = getWidth() / 2 - 240 + labelW + 5;
+    int rightX = getWidth() / 2 + 10 + labelW + 5;
+
+    juce::Slider* leftSliders[] = { &reverbDecaySlider, &reverbSizeSlider, &reverbDampingSlider, &reverbBassMultSlider, &reverbModRateSlider };
+    juce::Slider* rightSliders[] = { &reverbModDepthSlider, &reverbDiffusionSlider, &reverbPreDelaySlider, &reverbWidthSlider, &reverbMixSlider };
+
+    for (int i = 0; i < 5; ++i)
+    {
+        int y = reverbTop + i * (sliderH + spacing);
+        leftSliders[i]->setBounds (leftX, y, sliderW, sliderH);
+        rightSliders[i]->setBounds (rightX, y, sliderW, sliderH);
+    }
 }

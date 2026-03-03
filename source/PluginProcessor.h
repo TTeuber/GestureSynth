@@ -3,6 +3,7 @@
 #include "Modulation/LFOData.h"
 #include "Modulation/Modulation.h"
 #include "Processor/Chorus.h"
+#include "Processor/Reverb.h"
 #include "Synthesizer/MySynth.h"
 #include "Utility/Parameters.h"
 #include "Utility/PitchTracker.h"
@@ -108,6 +109,7 @@ private:
 
     MySynth synth;
     JuneChorus chorus { parameters };
+    Reverb reverb;
 
     double lastProcessingTimeMs;
     double maxAllowedProcessingTimeMs;

@@ -453,6 +453,10 @@ private:
     juce::Slider manualBpmSlider;
     juce::Label manualBpmLabel { {}, "Manual BPM" };
 
+    // Reverb sliders
+    juce::Slider reverbDecaySlider, reverbSizeSlider, reverbDampingSlider, reverbBassMultSlider, reverbModRateSlider;
+    juce::Slider reverbModDepthSlider, reverbDiffusionSlider, reverbPreDelaySlider, reverbWidthSlider, reverbMixSlider;
+
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     std::unique_ptr<ButtonAttachment> monoAttachment;
@@ -460,4 +464,10 @@ private:
     std::unique_ptr<ButtonAttachment> gateModeAttachment;
     std::unique_ptr<SliderAttachment> pitchBendRangeAttachment;
     std::unique_ptr<SliderAttachment> manualBpmAttachment;
+
+    // Reverb attachments
+    std::unique_ptr<SliderAttachment> reverbDecayAttachment, reverbSizeAttachment, reverbDampingAttachment;
+    std::unique_ptr<SliderAttachment> reverbBassMultAttachment, reverbModRateAttachment, reverbModDepthAttachment;
+    std::unique_ptr<SliderAttachment> reverbDiffusionAttachment, reverbPreDelayAttachment;
+    std::unique_ptr<SliderAttachment> reverbWidthAttachment, reverbMixAttachment;
 };

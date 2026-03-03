@@ -97,6 +97,29 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (std::move (portamentoTime));
 
     // ================================================================================================================================================
+    // Reverb Parameters
+    layout.add (std::make_unique<Parameter> (ParameterID ("reverbDecay", 1), "Reverb Decay",
+        Normalize (0.3f, 30.0f, 0.01f, 0.35f), 2.5f));
+    layout.add (std::make_unique<Parameter> (ParameterID ("reverbSize", 1), "Reverb Size",
+        Normalize (0.25f, 2.0f, 0.01f), 1.0f));
+    layout.add (std::make_unique<Parameter> (ParameterID ("reverbDamping", 1), "Reverb Damping",
+        Normalize (1000.0f, 16000.0f, 10.0f, 0.5f), 6000.0f));
+    layout.add (std::make_unique<Parameter> (ParameterID ("reverbBassMult", 1), "Reverb Bass Mult",
+        Normalize (0.5f, 2.0f, 0.01f), 1.0f));
+    layout.add (std::make_unique<Parameter> (ParameterID ("reverbModRate", 1), "Reverb Mod Rate",
+        Normalize (0.1f, 5.0f, 0.01f, 0.5f), 1.0f));
+    layout.add (std::make_unique<Parameter> (ParameterID ("reverbModDepth", 1), "Reverb Mod Depth",
+        Normalize (0.0f, 1.0f, 0.01f), 0.3f));
+    layout.add (std::make_unique<Parameter> (ParameterID ("reverbDiffusion", 1), "Reverb Diffusion",
+        Normalize (0.0f, 1.0f, 0.01f), 0.7f));
+    layout.add (std::make_unique<Parameter> (ParameterID ("reverbPreDelay", 1), "Reverb Pre-Delay",
+        Normalize (0.0f, 300.0f, 1.0f), 20.0f));
+    layout.add (std::make_unique<Parameter> (ParameterID ("reverbWidth", 1), "Reverb Width",
+        Normalize (0.0f, 1.0f, 0.01f), 1.0f));
+    layout.add (std::make_unique<Parameter> (ParameterID ("reverbMix", 1), "Reverb Mix",
+        Normalize (0.0f, 1.0f, 0.01f), 0.35f));
+
+    // ================================================================================================================================================
     // Voice Mode Parameters
     layout.add (make_unique<AudioParameterBool> (ParameterID ("monoOn", 1), "Mono Mode", false));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("legatoOn", 1), "Legato", false));

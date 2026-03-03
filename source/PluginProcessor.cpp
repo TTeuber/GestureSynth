@@ -68,7 +68,7 @@ bool PluginProcessor::isMidiEffect() const
 
 double PluginProcessor::getTailLengthSeconds() const
 {
-    return 0.01;
+    return 30.0;
 }
 
 int PluginProcessor::getNumPrograms()
@@ -104,6 +104,7 @@ void PluginProcessor::prepareToPlay (const double sampleRate, const int samplesP
     juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (getMainBusNumOutputChannels()) };
 
     chorus.prepare (spec);
+    reverb.prepare (spec);
 
     synth.prepareVoices (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
 
@@ -203,6 +204,18 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     }
 
     chorus.process (buffer);
+
+    reverb.process (buffer,
+        *parameters.getRawParameterValue ("reverbDecay"),
+        *parameters.getRawParameterValue ("reverbSize"),
+        *parameters.getRawParameterValue ("reverbDamping"),
+        *parameters.getRawParameterValue ("reverbBassMult"),
+        *parameters.getRawParameterValue ("reverbModRate"),
+        *parameters.getRawParameterValue ("reverbModDepth"),
+        *parameters.getRawParameterValue ("reverbDiffusion"),
+        *parameters.getRawParameterValue ("reverbPreDelay"),
+        *parameters.getRawParameterValue ("reverbWidth"),
+        *parameters.getRawParameterValue ("reverbMix"));
 
     // Soft-clip the output to tame peaks from polyphonic voice summing
     // Uses Padé approximant of tanh: x*(27+x²)/(27+9x²), accurate to ~1% for |x|<3
