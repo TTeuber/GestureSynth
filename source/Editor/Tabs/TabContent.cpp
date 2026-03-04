@@ -379,32 +379,6 @@ void EffectsTabContent::resized()
 
 ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
 {
-    monoToggle.setColour (juce::ToggleButton::textColourId, TEXT_COLOR);
-    monoToggle.setColour (juce::ToggleButton::tickColourId, TEXT_COLOR);
-    addAndMakeVisible (monoToggle);
-    monoAttachment = std::make_unique<ButtonAttachment> (p.parameters, "monoOn", monoToggle);
-
-    legatoToggle.setColour (juce::ToggleButton::textColourId, TEXT_COLOR);
-    legatoToggle.setColour (juce::ToggleButton::tickColourId, TEXT_COLOR);
-    addAndMakeVisible (legatoToggle);
-    legatoAttachment = std::make_unique<ButtonAttachment> (p.parameters, "legatoOn", legatoToggle);
-
-    gateModeToggle.setColour (juce::ToggleButton::textColourId, TEXT_COLOR);
-    gateModeToggle.setColour (juce::ToggleButton::tickColourId, TEXT_COLOR);
-    addAndMakeVisible (gateModeToggle);
-    gateModeAttachment = std::make_unique<ButtonAttachment> (p.parameters, "gateMode", gateModeToggle);
-
-    pitchBendRangeSlider.setSliderStyle (juce::Slider::IncDecButtons);
-    pitchBendRangeSlider.setTextBoxStyle (juce::Slider::TextBoxLeft, false, 40, 24);
-    pitchBendRangeSlider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
-    pitchBendRangeSlider.setColour (juce::Slider::textBoxOutlineColourId, SECONDARY_COLOR);
-    addAndMakeVisible (pitchBendRangeSlider);
-    pitchBendRangeAttachment = std::make_unique<SliderAttachment> (p.parameters, "pitchBendRange", pitchBendRangeSlider);
-
-    pitchBendRangeLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
-    pitchBendRangeLabel.setJustificationType (juce::Justification::centred);
-    addAndMakeVisible (pitchBendRangeLabel);
-
     manualBpmSlider.setSliderStyle (juce::Slider::LinearHorizontal);
     manualBpmSlider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 60, 24);
     manualBpmSlider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
@@ -458,17 +432,15 @@ void ExperimentTabContent::paint (juce::Graphics& g)
 
     g.setColour (TEXT_COLOR);
     g.setFont (18.0f);
-    g.drawText ("Voice Mode", getLocalBounds().removeFromTop (40), juce::Justification::centred);
-    g.drawText ("Pitch Bend", getLocalBounds().withTop (120).removeFromTop (30), juce::Justification::centred);
-    g.drawText ("Manual BPM", getLocalBounds().withTop (210).removeFromTop (30), juce::Justification::centred);
+    g.drawText ("Manual BPM", getLocalBounds().removeFromTop (40), juce::Justification::centred);
 
     // Reverb section header
     g.setFont (18.0f);
-    g.drawText ("Reverb", getLocalBounds().withTop (280).removeFromTop (30), juce::Justification::centred);
+    g.drawText ("Reverb", getLocalBounds().withTop (100).removeFromTop (30), juce::Justification::centred);
 
     // Reverb slider labels (left column)
     g.setFont (12.0f);
-    int reverbTop = 310;
+    int reverbTop = 130;
     int sliderH = 24;
     int spacing = 4;
     int labelW = 80;
@@ -491,22 +463,11 @@ void ExperimentTabContent::resized()
     auto area = getLocalBounds();
     area.removeFromTop (50);
 
-    auto toggleArea = area.removeFromTop (90).withSizeKeepingCentre (200, 90);
-    monoToggle.setBounds (toggleArea.removeFromTop (30));
-    legatoToggle.setBounds (toggleArea.removeFromTop (30));
-    gateModeToggle.setBounds (toggleArea.removeFromTop (30));
-
-    area.removeFromTop (30); // space for "Pitch Bend" header
-    auto sliderArea = area.removeFromTop (30).withSizeKeepingCentre (200, 30);
-    pitchBendRangeLabel.setBounds (sliderArea.removeFromTop (0)); // label is drawn via paint()
-    pitchBendRangeSlider.setBounds (sliderArea);
-
-    area.removeFromTop (30); // space for "Manual BPM" header
     auto bpmArea = area.removeFromTop (30).withSizeKeepingCentre (250, 30);
     manualBpmSlider.setBounds (bpmArea);
 
     // Reverb sliders: 2 columns of 5, below existing controls
-    int reverbTop = 310;
+    int reverbTop = 130;
     int sliderH = 24;
     int spacing = 4;
     int labelW = 80;

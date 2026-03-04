@@ -109,7 +109,7 @@ private:
 
     MySynth synth;
     JuneChorus chorus { parameters };
-    Reverb reverb;
+    Reverb reverb { parameters };
 
     double lastProcessingTimeMs;
     double maxAllowedProcessingTimeMs;

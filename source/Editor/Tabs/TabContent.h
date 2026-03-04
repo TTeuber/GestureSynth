@@ -443,13 +443,6 @@ public:
     void paint (juce::Graphics& g) override;
 
 private:
-    juce::ToggleButton monoToggle { "Mono" };
-    juce::ToggleButton legatoToggle { "Legato" };
-    juce::ToggleButton gateModeToggle { "Gate Mode" };
-
-    juce::Slider pitchBendRangeSlider;
-    juce::Label pitchBendRangeLabel { {}, "Pitch Bend Range" };
-
     juce::Slider manualBpmSlider;
     juce::Label manualBpmLabel { {}, "Manual BPM" };
 
@@ -457,12 +450,7 @@ private:
     juce::Slider reverbDecaySlider, reverbSizeSlider, reverbDampingSlider, reverbBassMultSlider, reverbModRateSlider;
     juce::Slider reverbModDepthSlider, reverbDiffusionSlider, reverbPreDelaySlider, reverbWidthSlider, reverbMixSlider;
 
-    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
-    std::unique_ptr<ButtonAttachment> monoAttachment;
-    std::unique_ptr<ButtonAttachment> legatoAttachment;
-    std::unique_ptr<ButtonAttachment> gateModeAttachment;
-    std::unique_ptr<SliderAttachment> pitchBendRangeAttachment;
     std::unique_ptr<SliderAttachment> manualBpmAttachment;
 
     // Reverb attachments

@@ -1,11 +1,55 @@
 #pragma once
+#include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 #include <array>
 #include <cmath>
 
-class Reverb
+class Reverb : public juce::AudioProcessorValueTreeState::Listener
 {
 public:
+    explicit Reverb (juce::AudioProcessorValueTreeState& p)
+        : parameters (p)
+    {
+        parameters.addParameterListener ("reverbDecay", this);
+        parameters.addParameterListener ("reverbSize", this);
+        parameters.addParameterListener ("reverbDamping", this);
+        parameters.addParameterListener ("reverbBassMult", this);
+        parameters.addParameterListener ("reverbModRate", this);
+        parameters.addParameterListener ("reverbModDepth", this);
+        parameters.addParameterListener ("reverbDiffusion", this);
+        parameters.addParameterListener ("reverbPreDelay", this);
+        parameters.addParameterListener ("reverbWidth", this);
+        parameters.addParameterListener ("reverbMix", this);
+    }
+
+    ~Reverb() override
+    {
+        parameters.removeParameterListener ("reverbDecay", this);
+        parameters.removeParameterListener ("reverbSize", this);
+        parameters.removeParameterListener ("reverbDamping", this);
+        parameters.removeParameterListener ("reverbBassMult", this);
+        parameters.removeParameterListener ("reverbModRate", this);
+        parameters.removeParameterListener ("reverbModDepth", this);
+        parameters.removeParameterListener ("reverbDiffusion", this);
+        parameters.removeParameterListener ("reverbPreDelay", this);
+        parameters.removeParameterListener ("reverbWidth", this);
+        parameters.removeParameterListener ("reverbMix", this);
+    }
+
+    void parameterChanged (const juce::String& parameterID, float newValue) override
+    {
+        if (parameterID == "reverbDecay")        decay.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == "reverbSize")    size.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == "reverbDamping") dampingFreq.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == "reverbBassMult") bassMult.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == "reverbModRate")  modRate.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == "reverbModDepth") modDepth.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == "reverbDiffusion") diffusion.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == "reverbPreDelay")  preDelayMs.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == "reverbWidth")     width.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == "reverbMix")       mix.store (newValue, std::memory_order_relaxed);
+    }
+
     void prepare (const juce::dsp::ProcessSpec& spec)
     {
         sampleRate = spec.sampleRate;
@@ -78,24 +122,33 @@ public:
         dcBlockR.setCutoffFrequency (10.0f);
     }
 
-    void process (juce::AudioBuffer<float>& buffer,
-                  float decay, float size, float dampingFreq, float bassMult,
-                  float modRate, float modDepth, float diffusion, float preDelayMs,
-                  float width, float mix)
+    void process (juce::AudioBuffer<float>& buffer)
     {
         juce::ScopedNoDenormals noDenormals;
 
         if (buffer.getNumChannels() < 2) return;
+
+        // Load atomic parameters once per block
+        const float localDecay      = decay.load (std::memory_order_relaxed);
+        const float localSize       = size.load (std::memory_order_relaxed);
+        const float localDamping    = dampingFreq.load (std::memory_order_relaxed);
+        const float localBassMult   = bassMult.load (std::memory_order_relaxed);
+        const float localModRate    = modRate.load (std::memory_order_relaxed);
+        const float localModDepth   = modDepth.load (std::memory_order_relaxed);
+        const float localDiffusion  = diffusion.load (std::memory_order_relaxed);
+        const float localPreDelay   = preDelayMs.load (std::memory_order_relaxed);
+        const float localWidth      = width.load (std::memory_order_relaxed);
+        const float localMix        = mix.load (std::memory_order_relaxed);
 
         auto* leftChannel  = buffer.getWritePointer (0);
         auto* rightChannel = buffer.getWritePointer (1);
         const int numSamples = buffer.getNumSamples();
 
         // Update pre-delay
-        preDelay.setDelay (static_cast<float> (preDelayMs / 1000.0f * sampleRate));
+        preDelay.setDelay (static_cast<float> (localPreDelay / 1000.0f * sampleRate));
 
         // Clamp damping to Nyquist
-        float clampedDamping = std::min (dampingFreq, static_cast<float> (sampleRate * 0.49));
+        float clampedDamping = std::min (localDamping, static_cast<float> (sampleRate * 0.49));
         for (int i = 0; i < 16; ++i)
             dampingFilters[i].setCutoffFrequency (clampedDamping);
 
@@ -104,21 +157,21 @@ public:
         std::array<float, 16> fbLow {};
         for (int i = 0; i < 16; ++i)
         {
-            float delayTimeSec = (baseDelayMs[i] * size) / 1000.0f;
-            fbHigh[i] = std::pow (10.0f, -3.0f * delayTimeSec / std::max (decay, 0.01f));
-            fbLow[i]  = std::pow (10.0f, -3.0f * delayTimeSec / std::max (decay * bassMult, 0.01f));
+            float delayTimeSec = (baseDelayMs[i] * localSize) / 1000.0f;
+            fbHigh[i] = std::pow (10.0f, -3.0f * delayTimeSec / std::max (localDecay, 0.01f));
+            fbLow[i]  = std::pow (10.0f, -3.0f * delayTimeSec / std::max (localDecay * localBassMult, 0.01f));
         }
 
         // Precompute LFO increments per line
         std::array<float, 16> lfoInc {};
         for (int i = 0; i < 16; ++i)
         {
-            float freq = modRate * (0.7f + 0.4f * static_cast<float> (i) / 15.0f);
+            float freq = localModRate * (0.7f + 0.4f * static_cast<float> (i) / 15.0f);
             lfoInc[i] = 2.0f * static_cast<float> (M_PI) * freq / static_cast<float> (sampleRate);
         }
 
         const float inputScale = 1.0f / 4.0f; // 1/sqrt(16) = 0.25
-        const float diffGain = diffusion * 0.75f;
+        const float diffGain = localDiffusion * 0.75f;
 
         for (int n = 0; n < numSamples; ++n)
         {
@@ -139,8 +192,8 @@ public:
             std::array<float, 16> delayReads {};
             for (int i = 0; i < 16; ++i)
             {
-                float baseDelaySamp = (baseDelayMs[i] * size / 1000.0f) * static_cast<float> (sampleRate);
-                float modDepthSamp = modDepth * 0.01f * baseDelaySamp;
+                float baseDelaySamp = (baseDelayMs[i] * localSize / 1000.0f) * static_cast<float> (sampleRate);
+                float modDepthSamp = localModDepth * 0.01f * baseDelaySamp;
                 float mod = std::sin (lfoPhase[i]) * modDepthSamp;
                 lfoPhase[i] += lfoInc[i];
                 if (lfoPhase[i] >= 2.0f * static_cast<float> (M_PI))
@@ -206,17 +259,30 @@ public:
             // 9. Mid/side stereo width
             float mid  = (outL + outR) * 0.5f;
             float side = (outL - outR) * 0.5f;
-            side *= width;
+            side *= localWidth;
             outL = mid + side;
             outR = mid - side;
 
             // 10. Wet/dry mix
-            leftChannel[n]  = leftChannel[n]  * (1.0f - mix) + outL * mix;
-            rightChannel[n] = rightChannel[n] * (1.0f - mix) + outR * mix;
+            leftChannel[n]  = leftChannel[n]  * (1.0f - localMix) + outL * localMix;
+            rightChannel[n] = rightChannel[n] * (1.0f - localMix) + outR * localMix;
         }
     }
 
 private:
+    juce::AudioProcessorValueTreeState& parameters;
+
+    std::atomic<float> decay { 0.5f };
+    std::atomic<float> size { 0.5f };
+    std::atomic<float> dampingFreq { 6000.0f };
+    std::atomic<float> bassMult { 1.0f };
+    std::atomic<float> modRate { 0.5f };
+    std::atomic<float> modDepth { 0.0f };
+    std::atomic<float> diffusion { 0.7f };
+    std::atomic<float> preDelayMs { 0.0f };
+    std::atomic<float> width { 1.0f };
+    std::atomic<float> mix { 0.0f };
+
     double sampleRate = 44100.0;
 
     //==========================================================================

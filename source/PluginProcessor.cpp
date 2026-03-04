@@ -205,17 +205,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     chorus.process (buffer);
 
-    reverb.process (buffer,
-        *parameters.getRawParameterValue ("reverbDecay"),
-        *parameters.getRawParameterValue ("reverbSize"),
-        *parameters.getRawParameterValue ("reverbDamping"),
-        *parameters.getRawParameterValue ("reverbBassMult"),
-        *parameters.getRawParameterValue ("reverbModRate"),
-        *parameters.getRawParameterValue ("reverbModDepth"),
-        *parameters.getRawParameterValue ("reverbDiffusion"),
-        *parameters.getRawParameterValue ("reverbPreDelay"),
-        *parameters.getRawParameterValue ("reverbWidth"),
-        *parameters.getRawParameterValue ("reverbMix"));
+    reverb.process (buffer);
 
     // Soft-clip the output to tame peaks from polyphonic voice summing
     // Uses Padé approximant of tanh: x*(27+x²)/(27+9x²), accurate to ~1% for |x|<3
