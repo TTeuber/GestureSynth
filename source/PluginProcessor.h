@@ -2,13 +2,12 @@
 
 #include "Modulation/LFOData.h"
 #include "Modulation/Modulation.h"
-#include "Processor/BBDDelay.h"
-#include "Processor/Chorus.h"
-#include "Processor/Reverb.h"
+#include "Processor/EffectsChain.h"
 #include "Synthesizer/MySynth.h"
 #include "Utility/Parameters.h"
 #include "Utility/PitchTracker.h"
 #include "Utility/TempoInfo.h"
+#include "Utility/WaveformCapture.h"
 #include <array>
 #include <functional>
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -30,7 +29,7 @@ public:
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
 
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-    bool getWaveformData (float* dest, int maxSamples);
+    WaveformCapture waveformCapture;
 
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
@@ -59,10 +58,6 @@ public:
     juce::AudioProcessorValueTreeState parameters { *this, &undoManager, "parameters", createLayout() };
 
     juce::ValueTree modTree { "modTree" };
-
-    static constexpr int kWaveBufferSize = 4096;
-    std::array<float, kWaveBufferSize> waveData {};
-    std::atomic<int> waveWritePos { 0 };
 
     std::array<std::atomic<float>, 16> modSourceOutputs {};
 
@@ -109,9 +104,7 @@ private:
     juce::MidiBuffer midiBuffer;
 
     MySynth synth;
-    JuneChorus chorus { parameters };
-    BBDDelay bbdDelay { parameters };
-    Reverb reverb { parameters };
+    EffectsChain effectsChain { parameters };
 
     double lastProcessingTimeMs;
     double maxAllowedProcessingTimeMs;

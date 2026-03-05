@@ -73,17 +73,18 @@ public:
         }
 
         // Snapshot the circular buffer
-        const int wp = processor.waveWritePos.load (std::memory_order_acquire);
-        std::array<float, PluginProcessor::kWaveBufferSize> buf {};
-        for (int i = 0; i < PluginProcessor::kWaveBufferSize; ++i)
-            buf[static_cast<size_t> (i)] = processor.waveData[static_cast<size_t> (i)];
+        auto& capture = processor.waveformCapture;
+        const int wp = capture.writePos.load (std::memory_order_acquire);
+        std::array<float, WaveformCapture::kBufferSize> buf {};
+        for (int i = 0; i < WaveformCapture::kBufferSize; ++i)
+            buf[static_cast<size_t> (i)] = capture.buffer[static_cast<size_t> (i)];
 
         // Calculate display window: ~2 periods
         const auto samplesPerPeriod = static_cast<int> (std::ceil (sampleRate / static_cast<double> (freq)));
         int numPeriods = 2;
 
         // If 2 periods don't fit in the buffer, halve until they do
-        while (numPeriods > 0 && samplesPerPeriod * numPeriods + samplesPerPeriod > PluginProcessor::kWaveBufferSize)
+        while (numPeriods > 0 && samplesPerPeriod * numPeriods + samplesPerPeriod > WaveformCapture::kBufferSize)
             numPeriods /= 2;
 
         if (numPeriods <= 0 || samplesPerPeriod <= 0)
@@ -98,7 +99,7 @@ public:
 
         // Total samples we need to look back from write head
         const int totalNeeded = windowSamples + searchMargin;
-        if (totalNeeded > PluginProcessor::kWaveBufferSize)
+        if (totalNeeded > WaveformCapture::kBufferSize)
         {
             displaySamples = 0;
             repaint();
@@ -106,7 +107,7 @@ public:
         }
 
         // Search start index in the circular buffer
-        const int searchStart = (wp - totalNeeded + PluginProcessor::kWaveBufferSize) % PluginProcessor::kWaveBufferSize;
+        const int searchStart = (wp - totalNeeded + WaveformCapture::kBufferSize) % WaveformCapture::kBufferSize;
 
         // Find rising zero-crossing in the search margin
         int triggerIdx = -1;
@@ -124,15 +125,15 @@ public:
 
             for (int i = 0; i < searchMargin; ++i)
             {
-                const int idx = (searchStart + i) % PluginProcessor::kWaveBufferSize;
-                const int idxNext = (searchStart + i + 1) % PluginProcessor::kWaveBufferSize;
+                const int idx = (searchStart + i) % WaveformCapture::kBufferSize;
+                const int idxNext = (searchStart + i + 1) % WaveformCapture::kBufferSize;
                 if (buf[static_cast<size_t> (idx)] <= 0.0f && buf[static_cast<size_t> (idxNext)] > 0.0f)
                 {
-                    const int candidate = (searchStart + i + 1) % PluginProcessor::kWaveBufferSize;
+                    const int candidate = (searchStart + i + 1) % WaveformCapture::kBufferSize;
                     float score = 0.0f;
                     for (int j = 0; j < scoreLen; ++j)
                     {
-                        const int si = (candidate + j) % PluginProcessor::kWaveBufferSize;
+                        const int si = (candidate + j) % WaveformCapture::kBufferSize;
                         score += buf[static_cast<size_t> (si)];
                     }
                     if (score > bestScore)
@@ -147,11 +148,11 @@ public:
         {
             for (int i = 0; i < searchMargin; ++i)
             {
-                const int idx = (searchStart + i) % PluginProcessor::kWaveBufferSize;
-                const int idxNext = (searchStart + i + 1) % PluginProcessor::kWaveBufferSize;
+                const int idx = (searchStart + i) % WaveformCapture::kBufferSize;
+                const int idxNext = (searchStart + i + 1) % WaveformCapture::kBufferSize;
                 if (buf[static_cast<size_t> (idx)] <= 0.0f && buf[static_cast<size_t> (idxNext)] > 0.0f)
                 {
-                    triggerIdx = (searchStart + i + 1) % PluginProcessor::kWaveBufferSize;
+                    triggerIdx = (searchStart + i + 1) % WaveformCapture::kBufferSize;
                     break;
                 }
             }
@@ -159,13 +160,13 @@ public:
 
         // Fallback: no trigger found, use untriggered display from end of search margin
         if (triggerIdx < 0)
-            triggerIdx = (searchStart + searchMargin) % PluginProcessor::kWaveBufferSize;
+            triggerIdx = (searchStart + searchMargin) % WaveformCapture::kBufferSize;
 
         // Copy display window into displayBuffer
         displaySamples = windowSamples;
         for (int i = 0; i < windowSamples; ++i)
         {
-            const int idx = (triggerIdx + i) % PluginProcessor::kWaveBufferSize;
+            const int idx = (triggerIdx + i) % WaveformCapture::kBufferSize;
             displayBuffer[static_cast<size_t> (i)] = buf[static_cast<size_t> (idx)];
         }
 
@@ -178,6 +179,6 @@ private:
     juce::AudioParameterBool* subOnParam = nullptr;
     juce::RangedAudioParameter* subLevelParam = nullptr;
 
-    std::array<float, PluginProcessor::kWaveBufferSize> displayBuffer {};
+    std::array<float, WaveformCapture::kBufferSize> displayBuffer {};
     int displaySamples = 0;
 };

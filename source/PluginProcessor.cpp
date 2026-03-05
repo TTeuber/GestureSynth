@@ -103,9 +103,7 @@ void PluginProcessor::prepareToPlay (const double sampleRate, const int samplesP
 {
     juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (getMainBusNumOutputChannels()) };
 
-    chorus.prepare (spec);
-    bbdDelay.prepare (spec);
-    reverb.prepare (spec);
+    effectsChain.prepare (spec);
 
     synth.prepareVoices (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
 
@@ -195,34 +193,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     synth.resetOutputsIfIdle();
 
-    // Apply modulated chorus depth/rate from mod matrix (last-voice-wins)
-    // modDestOutputs stores normalized 0-1 values; convert to actual parameter range
-    {
-        auto* depthParam = parameters.getParameter ("chorusDepth");
-        auto* rateParam = parameters.getParameter ("chorusRate");
-        chorus.setDepth (depthParam->convertFrom0to1 (modDestOutputs[12].load (std::memory_order_relaxed)));
-        chorus.setRate (rateParam->convertFrom0to1 (modDestOutputs[13].load (std::memory_order_relaxed)));
-    }
-
-    chorus.process (buffer);
-
-    bbdDelay.setTempoInfo (tempoInfo.bpm, tempoInfo.hostTempoAvailable);
-    bbdDelay.process (buffer);
-
-    reverb.process (buffer);
-
-    // Soft-clip the output to tame peaks from polyphonic voice summing
-    // Uses Padé approximant of tanh: x*(27+x²)/(27+9x²), accurate to ~1% for |x|<3
-    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-    {
-        auto* samples = buffer.getWritePointer (ch);
-        for (int i = 0; i < buffer.getNumSamples(); ++i)
-        {
-            const float x = samples[i];
-            const float x2 = x * x;
-            samples[i] = juce::jlimit (-1.0f, 1.0f, x * (27.0f + x2) / (27.0f + 9.0f * x2));
-        }
-    }
+    effectsChain.process (buffer, tempoInfo, modDestOutputs);
 
     // Oscilloscope waveform capture
     for (int i = 0; i < synth.getNumVoices(); ++i)
@@ -234,15 +205,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 std::array<float, 1024> tempVoiceData {};
                 const int samplesRead = voice->readWaveformData (tempVoiceData.data(), 1024);
                 if (samplesRead > 0)
-                {
-                    int wp = waveWritePos.load (std::memory_order_relaxed);
-                    for (int j = 0; j < samplesRead; ++j)
-                    {
-                        waveData[static_cast<size_t> (wp)] = tempVoiceData[static_cast<size_t> (j)];
-                        wp = (wp + 1) % kWaveBufferSize;
-                    }
-                    waveWritePos.store (wp, std::memory_order_release);
-                }
+                    waveformCapture.write (tempVoiceData.data(), samplesRead);
                 break;
             }
         }
@@ -258,24 +221,6 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     }
 }
 
-bool PluginProcessor::getWaveformData (float* dest, const int maxSamples)
-{
-    const int wp = waveWritePos.load (std::memory_order_acquire);
-    const int numToRead = juce::jmin (maxSamples, kWaveBufferSize);
-
-    // Read the most recent numToRead samples from the circular buffer
-    int readStart = (wp - numToRead + kWaveBufferSize) % kWaveBufferSize;
-    for (int i = 0; i < numToRead; ++i)
-    {
-        dest[i] = waveData[static_cast<size_t> ((readStart + i) % kWaveBufferSize)];
-    }
-
-    // Zero out the rest if we didn't fill the buffer
-    for (int i = numToRead; i < maxSamples; ++i)
-        dest[i] = 0.0f;
-
-    return true;
-}
 //==============================================================================
 bool PluginProcessor::hasEditor() const
 {
