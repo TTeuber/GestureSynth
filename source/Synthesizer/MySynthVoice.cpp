@@ -28,14 +28,14 @@ MySynthVoice::MySynthVoice (
             lfos[i].setLFOData (lfoData[i]);
     modTree.addListener (this);
 
-    parameters.addParameterListener ("filterOn", this);
-    filterEnabled = *parameters.getRawParameterValue ("filterOn") > 0.5f;
+    parameters.addParameterListener (ParamIDs::filterOn, this);
+    filterEnabled = *parameters.getRawParameterValue (ParamIDs::filterOn) > 0.5f;
 
-    parameters.addParameterListener ("hpfOn", this);
-    hpfEnabled = *parameters.getRawParameterValue ("hpfOn") > 0.5f;
+    parameters.addParameterListener (ParamIDs::hpfOn, this);
+    hpfEnabled = *parameters.getRawParameterValue (ParamIDs::hpfOn) > 0.5f;
 
-    parameters.addParameterListener ("gateMode", this);
-    gateMode = *parameters.getRawParameterValue ("gateMode") > 0.5f;
+    parameters.addParameterListener (ParamIDs::gateMode, this);
+    gateMode = *parameters.getRawParameterValue (ParamIDs::gateMode) > 0.5f;
 
     // Initialize the mod destinations
     // Currently this is how the current value is updated when there are no mod sources
@@ -120,7 +120,7 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     velocitySource.setCurve (velocityCurveParam.getValue());
     keyboardSource.setCurve (keyboardCurveParam.getValue());
 
-    const float pitchBendRange = *parameters.getRawParameterValue ("pitchBendRange");
+    const float pitchBendRange = *parameters.getRawParameterValue (ParamIDs::pitchBendRange);
     const float pitchBendMultiplier = std::pow (2.0f, pitchBendRange * pitchBendValue / 12.0f);
     juneOscillator.setFrequency (frequency * vibrato.getFrequencyMultiplier (numSamples) * pitchBendMultiplier);
     juneOscillator.processBlock (block);
@@ -225,7 +225,7 @@ float MySynthVoice::frequencyToPhaseIncrement (const float frequency) const
 
 void MySynthVoice::parameterChanged (const juce::String& parameterID, float newValue)
 {
-    if (parameterID == "filterOn")
+    if (parameterID == ParamIDs::filterOn)
     {
         const bool wasEnabled = filterEnabled;
         filterEnabled = newValue > 0.5f;
@@ -234,7 +234,7 @@ void MySynthVoice::parameterChanged (const juce::String& parameterID, float newV
         if (filterEnabled && !wasEnabled)
             filter.reset();
     }
-    else if (parameterID == "hpfOn")
+    else if (parameterID == ParamIDs::hpfOn)
     {
         const bool wasEnabled = hpfEnabled;
         hpfEnabled = newValue > 0.5f;
@@ -243,7 +243,7 @@ void MySynthVoice::parameterChanged (const juce::String& parameterID, float newV
             for (auto& hpf : hpFilters)
                 hpf.reset();
     }
-    else if (parameterID == "gateMode")
+    else if (parameterID == ParamIDs::gateMode)
     {
         gateMode = newValue > 0.5f;
     }

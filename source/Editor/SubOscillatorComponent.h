@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Utility/DualParameterComponent.h"
+#include "../Utility/Parameters.h"
 
 class SubOscillatorComponent : public DualParameterComponent, private juce::Timer
 {
@@ -26,9 +27,9 @@ public:
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : DualParameterComponent (
-              apvts.getParameter ("subOsc"),
-              apvts.getParameter ("subOscWave"),
-              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("subOn")),
+              apvts.getParameter (ParamIDs::subOsc),
+              apvts.getParameter (ParamIDs::subOscWave),
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::subOn)),
               undoManager,
               gestureCount,
               modModeState,

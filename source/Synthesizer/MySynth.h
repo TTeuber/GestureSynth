@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Modulation/LFOData.h"
+#include "../Utility/Parameters.h"
 #include "../Utility/PitchTracker.h"
 #include "../Utility/TempoInfo.h"
 #include "../Utility/TempoSyncUtils.h"
@@ -14,18 +15,9 @@ class MySynth final : public juce::Synthesiser
 {
 public:
     explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData);
-    static void updateParameter (float& currentValue, float newValue, const std::function<void (float)>& setterFunction);
 
     void noteOn (int midiChannel, int midiNoteNumber, float velocity) override;
     void noteOff (int midiChannel, int midiNoteNumber, float velocity, bool allowTailOff) override;
-
-    float getVolume() const { return masterVolume; }
-
-    float getFilterCutoff() const { return filterCutoff; }
-
-    float getFilterEnvelopeAmount() const { return filterEnvelopeAmount; }
-
-    float getFilterResonance() const { return filterResonance; }
 
     void updateParameters (const TempoInfo& tempoInfo);
     void setVoiceCount (int count);
@@ -52,36 +44,37 @@ private:
     juce::AudioProcessorValueTreeState& parameters;
     juce::ValueTree& modTree;
 
-    float masterVolume = 0.0f;
-    float noiseLevel = 0.0f;
-    float filterCutoff = 0.0f;
-    float filterEnvelopeAmount = 0.0f;
-    float filterResonance = 0.0f;
+    // APVTS atomic pointers — cached once, read directly from APVTS atomics
+    std::atomic<float>* volumeParam           = nullptr;
+    std::atomic<float>* noiseLevelParam       = nullptr;
+    std::atomic<float>* filterCutoffParam     = nullptr;
+    std::atomic<float>* filterResonanceParam  = nullptr;
+    std::atomic<float>* portamentoTimeParam   = nullptr;
+    std::atomic<float>* vibratoOnParam        = nullptr;
+    std::atomic<float>* monoOnParam           = nullptr;
+    std::atomic<float>* legatoOnParam         = nullptr;
+    std::atomic<float>* voiceCountParam       = nullptr;
+    std::atomic<float>* manualBpmParam        = nullptr;
 
-    float ampAttack = 0.0f;
-    float ampAttackCurve = 1.0f;
-    float ampDecay = 0.0f;
-    float ampDecayCurve = 1.0f;
-    float ampSustain = 0.0f;
-    float ampRelease = 0.0f;
-    float ampReleaseCurve = 1.0f;
+    struct LFOParamPtrs
+    {
+        std::atomic<float>* rate          = nullptr;
+        std::atomic<float>* tempoSync     = nullptr;
+        std::atomic<float>* noteDivision  = nullptr;
+        std::atomic<float>* beatSync      = nullptr;
+        std::atomic<float>* mono          = nullptr;
+    };
+    std::array<LFOParamPtrs, 4> lfoParams {};
 
-    float filterAttack = 0.0f;
-    float filterAttackCurve = 1.0f;
-    float filterDecay = 0.0f;
-    float filterDecayCurve = 1.0f;
-    float filterSustain = 0.0f;
-    float filterRelease = 0.0f;
-    float filterReleaseCurve = 1.0f;
+    // Previous-value cache for change detection (only stores last-applied values)
+    float prevVolume          = -1.0f;
+    float prevNoiseLevel      = -1.0f;
+    float prevFilterCutoff    = -1.0f;
+    float prevFilterResonance = -1.0f;
+    float prevPortamentoTime  = -1.0f;
+    bool  prevVibratoOn       = false;
+    std::array<float, 4> prevLfoRates = { -1.0f, -1.0f, -1.0f, -1.0f };
 
-    std::array<float, 4> lfoRates = { 1.0f, 1.0f, 1.0f, 1.0f };
-    std::array<bool, 4> lfoTempoSync = { false, false, false, false };
-    std::array<int, 4> lfoNoteDivision = { 6, 6, 6, 6 };
-    std::array<bool, 4> lfoBeatSync = { false, false, false, false };
-    std::array<bool, 4> lfoMono = { false, false, false, false };
-    float manualBpm = 120.0f;
-
-    float portamentoTime = 0.0f;
     int currentVoiceCount = 8;
 
     double preparedSampleRate = 0.0;
@@ -94,8 +87,6 @@ private:
     MySynthVoice* monoVoice = nullptr;
     bool monoMode = false;
     bool legatoMode = false;
-
-    bool vibratoOn = false;
 
     std::shared_ptr<MyADSR*> ampEnvPtr = std::make_shared<MyADSR*>();
     std::shared_ptr<MyADSR*> filterEnvPtr = std::make_shared<MyADSR*>();

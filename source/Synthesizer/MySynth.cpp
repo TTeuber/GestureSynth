@@ -2,6 +2,27 @@
 
 MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData) : parameters (p), modTree (mt), pitchTracker (pt), lfoDataPtr (&lfoData)
 {
+    // Cache APVTS atomic pointers (stable for lifetime of APVTS)
+    volumeParam          = parameters.getRawParameterValue (ParamIDs::volume);
+    noiseLevelParam      = parameters.getRawParameterValue (ParamIDs::noiseLevel);
+    filterCutoffParam    = parameters.getRawParameterValue (ParamIDs::filterFrequency);
+    filterResonanceParam = parameters.getRawParameterValue (ParamIDs::filterResonance);
+    portamentoTimeParam  = parameters.getRawParameterValue (ParamIDs::portamentoTime);
+    vibratoOnParam       = parameters.getRawParameterValue (ParamIDs::vibratoOn);
+    monoOnParam          = parameters.getRawParameterValue (ParamIDs::monoOn);
+    legatoOnParam        = parameters.getRawParameterValue (ParamIDs::legatoOn);
+    voiceCountParam      = parameters.getRawParameterValue (ParamIDs::voiceCount);
+    manualBpmParam       = parameters.getRawParameterValue (ParamIDs::manualBpm);
+
+    for (int i = 0; i < 4; ++i)
+    {
+        lfoParams[i].rate         = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "Rate"));
+        lfoParams[i].tempoSync    = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "TempoSync"));
+        lfoParams[i].noteDivision = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "NoteDivision"));
+        lfoParams[i].beatSync     = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "BeatSync"));
+        lfoParams[i].mono         = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "Mono"));
+    }
+
     clearVoices();
     for (int i = 0; i < 8; ++i)
         addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pt, lfoData, &currentVelocityRaw, &currentKeyboardRaw, &currentModWheelRaw, &currentPitchBendRaw, &currentAftertouchRaw, &currentExpressionRaw));
@@ -52,104 +73,84 @@ void MySynth::setVoiceCount (int count)
     if (preparedSampleRate > 0.0)
         prepareVoices (preparedSampleRate, preparedSamplesPerBlock, preparedNumChannels);
 
-    // Reset cached parameter values so updateParameters() re-applies everything
-    masterVolume = -1.0f;
-    noiseLevel = -1.0f;
-    filterCutoff = -1.0f;
-    filterResonance = -1.0f;
-    portamentoTime = -1.0f;
-    vibratoOn = false;
+    // Reset previous-value cache so updateParameters() re-applies everything
+    prevVolume = -1.0f;
+    prevNoiseLevel = -1.0f;
+    prevFilterCutoff = -1.0f;
+    prevFilterResonance = -1.0f;
+    prevPortamentoTime = -1.0f;
+    prevVibratoOn = false;
 }
 
-void MySynth::updateParameter (float& currentValue, const float newValue, const std::function<void (float)>& setterFunction)
-{
-    if (currentValue != newValue)
-    {
-        currentValue = newValue;
-        setterFunction (currentValue);
-    }
-}
-/**
- * Updates all synth parameters by checking for changes in the AudioProcessorValueTreeState.
- * This function handles the synchronization of various synth parameters including:
- * - Volume and filter settings
- * When a parameter change is detected, it applies the new value to all voices in the synth.
- */
 void MySynth::updateParameters (const TempoInfo& tempoInfo)
 {
-    const float newVolume = *parameters.getRawParameterValue ("volume");
-    if (masterVolume != newVolume)
+    const float newVolume = volumeParam->load();
+    if (prevVolume != newVolume)
     {
-        masterVolume = newVolume;
+        prevVolume = newVolume;
         applyToAllVoices ([newVolume] (MySynthVoice* voice) { voice->setVolume (newVolume); });
     }
 
-    const float newNoiseLevel = *parameters.getRawParameterValue ("noiseLevel");
-    if (noiseLevel != newNoiseLevel)
+    const float newNoiseLevel = noiseLevelParam->load();
+    if (prevNoiseLevel != newNoiseLevel)
     {
-        noiseLevel = newNoiseLevel;
+        prevNoiseLevel = newNoiseLevel;
         applyToAllVoices ([newNoiseLevel] (MySynthVoice* voice) { voice->setNoiseLevel (newNoiseLevel); });
     }
 
-    const float newFilterCutoff = *parameters.getRawParameterValue ("filterFrequency");
-    if (filterCutoff != newFilterCutoff)
+    const float newFilterCutoff = filterCutoffParam->load();
+    if (prevFilterCutoff != newFilterCutoff)
     {
-        filterCutoff = newFilterCutoff;
+        prevFilterCutoff = newFilterCutoff;
         applyToAllVoices ([newFilterCutoff] (MySynthVoice* voice) { voice->setFilterCutoff (newFilterCutoff); });
     }
 
-    const float newFilterResonance = *parameters.getRawParameterValue ("filterResonance");
-    if (filterResonance != newFilterResonance)
+    const float newFilterResonance = filterResonanceParam->load();
+    if (prevFilterResonance != newFilterResonance)
     {
-        filterResonance = newFilterResonance;
+        prevFilterResonance = newFilterResonance;
         applyToAllVoices ([newFilterResonance] (MySynthVoice* voice) { voice->setFilterResonance (newFilterResonance); });
     }
 
     // LFO rates: tempo sync or free Hz — for all 4 LFOs
-    const float newManualBpm = *parameters.getRawParameterValue ("manualBpm");
-    manualBpm = newManualBpm;
+    const float newManualBpm = manualBpmParam->load();
 
     for (int li = 0; li < 4; ++li)
     {
-        auto s = std::to_string (li + 1);
-        const bool newTempoSync = *parameters.getRawParameterValue ("lfo" + s + "TempoSync") > 0.5f;
-        const int newNoteDivision = static_cast<int> (*parameters.getRawParameterValue ("lfo" + s + "NoteDivision"));
-        const bool newBeatSync = *parameters.getRawParameterValue ("lfo" + s + "BeatSync") > 0.5f;
+        const bool newTempoSync = lfoParams[li].tempoSync->load() > 0.5f;
+        const int newNoteDivision = static_cast<int> (lfoParams[li].noteDivision->load());
+        const bool newBeatSync = lfoParams[li].beatSync->load() > 0.5f;
 
-        lfoTempoSync[li] = newTempoSync;
-        lfoNoteDivision[li] = newNoteDivision;
-        lfoBeatSync[li] = newBeatSync;
-
-        if (lfoTempoSync[li])
+        if (newTempoSync)
         {
-            const double effectiveBpm = tempoInfo.hostTempoAvailable ? tempoInfo.bpm : static_cast<double> (manualBpm);
-            const float syncedRate = static_cast<float> (TempoSync::noteDivisionToHz (effectiveBpm, lfoNoteDivision[li]));
+            const double effectiveBpm = tempoInfo.hostTempoAvailable ? tempoInfo.bpm : static_cast<double> (newManualBpm);
+            const float syncedRate = static_cast<float> (TempoSync::noteDivisionToHz (effectiveBpm, newNoteDivision));
 
-            if (lfoRates[li] != syncedRate)
+            if (prevLfoRates[li] != syncedRate)
             {
-                lfoRates[li] = syncedRate;
+                prevLfoRates[li] = syncedRate;
                 applyToAllVoices ([li, syncedRate] (MySynthVoice* voice) { voice->setLFORate (li, syncedRate); });
             }
 
-            if (lfoBeatSync[li] && tempoInfo.isPlaying)
+            if (newBeatSync && tempoInfo.isPlaying)
             {
-                const float phase = static_cast<float> (std::fmod (tempoInfo.ppqPosition / TempoSync::beatsPerCycle[lfoNoteDivision[li]], 1.0));
+                const float phase = static_cast<float> (std::fmod (tempoInfo.ppqPosition / TempoSync::beatsPerCycle[newNoteDivision], 1.0));
                 applyToAllVoices ([li, phase] (MySynthVoice* voice) { voice->setLFOPhase (li, phase); });
             }
         }
         else
         {
-            const float newLfoRate = *parameters.getRawParameterValue ("lfo" + s + "Rate");
-            if (lfoRates[li] != newLfoRate)
+            const float newLfoRate = lfoParams[li].rate->load();
+            if (prevLfoRates[li] != newLfoRate)
             {
-                lfoRates[li] = newLfoRate;
+                prevLfoRates[li] = newLfoRate;
                 applyToAllVoices ([li, newLfoRate] (MySynthVoice* voice) { voice->setLFORate (li, newLfoRate); });
             }
         }
 
         // Mono LFO: copy oldest active voice's phase to all others
-        lfoMono[li] = *parameters.getRawParameterValue ("lfo" + s + "Mono") > 0.5f;
-        if (lfoMono[li])
+        const bool isMono = lfoParams[li].mono->load() > 0.5f;
+        if (isMono)
         {
             MySynthVoice* oldest = nullptr;
             uint64_t oldestOrder = UINT64_MAX;
@@ -174,27 +175,27 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
         }
     }
 
-    const float newPortamentoTime = *parameters.getRawParameterValue ("portamentoTime");
-    if (portamentoTime != newPortamentoTime)
+    const float newPortamentoTime = portamentoTimeParam->load();
+    if (prevPortamentoTime != newPortamentoTime)
     {
-        portamentoTime = newPortamentoTime;
+        prevPortamentoTime = newPortamentoTime;
         applyToAllVoices ([newPortamentoTime] (MySynthVoice* voice) { voice->setPortamentoTime (newPortamentoTime); });
     }
 
-    monoMode = *parameters.getRawParameterValue ("monoOn") > 0.5f;
-    legatoMode = *parameters.getRawParameterValue ("legatoOn") > 0.5f;
+    monoMode = monoOnParam->load() > 0.5f;
+    legatoMode = legatoOnParam->load() > 0.5f;
 
     // Voice count
     static constexpr int voiceCountChoices[] = { 2, 3, 4, 5, 6, 8, 12, 16 };
-    const int voiceIdx = static_cast<int> (*parameters.getRawParameterValue ("voiceCount"));
+    const int voiceIdx = static_cast<int> (voiceCountParam->load());
     const int newVoiceCount = voiceCountChoices[juce::jlimit (0, 7, voiceIdx)];
     if (newVoiceCount != currentVoiceCount)
         setVoiceCount (newVoiceCount);
 
-    const bool newVibratoOn = *parameters.getRawParameterValue ("vibratoOn") > 0.5f;
-    if (vibratoOn != newVibratoOn)
+    const bool newVibratoOn = vibratoOnParam->load() > 0.5f;
+    if (prevVibratoOn != newVibratoOn)
     {
-        vibratoOn = newVibratoOn;
+        prevVibratoOn = newVibratoOn;
         applyToAllVoices ([newVibratoOn] (MySynthVoice* voice) { voice->setVibratoEnabled (newVibratoOn); });
     }
 }

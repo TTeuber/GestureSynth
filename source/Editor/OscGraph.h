@@ -8,6 +8,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "Utility/DualParameterComponent.h"
+#include "../Utility/Parameters.h"
 
 // First Derived Class (WaveformComponent)
 class WaveformComponent final : public DualParameterComponent, private juce::Timer
@@ -28,9 +29,9 @@ public:
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : DualParameterComponent (
-              apvts.getParameter ("oscWaveform"),
-              apvts.getParameter ("pulseWidth"),
-              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("oscOn")),
+              apvts.getParameter (ParamIDs::oscWaveform),
+              apvts.getParameter (ParamIDs::pulseWidth),
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::oscOn)),
               undoManager,
               gestureCount,
               modModeState,

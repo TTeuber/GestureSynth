@@ -1,4 +1,5 @@
 #include "TabContent.h"
+#include "../../Utility/Parameters.h"
 
 // =============================================================================
 // MainTabContent
@@ -7,28 +8,28 @@
 MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modState)
     : processor (p),
       modModeState (modState),
-      waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[4], &p.modDestOutputs[5], modState, "oscWaveform", "pulseWidth"),
+      waveformComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[4], &p.modDestOutputs[5], modState, ParamIDs::oscWaveform, ParamIDs::pulseWidth),
       filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[0], &p.modDestOutputs[1], modState),
       hpfDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, modState),
-      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[8], &p.modDestOutputs[9], modState, "subOsc", "subOscWave"),
-      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[6], &p.modDestOutputs[7], modState, "oscDetune", "oscWidth"),
-      chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[12], &p.modDestOutputs[13], modState, "chorusDepth", "chorusRate"),
-      vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[10], &p.modDestOutputs[11], modState, "vibratoDepth", "vibratoRate"),
-      volumeComponent (p.parameters.getParameter ("volume"), &p.undoManager, &p.activeGestureCount, modState),
-      noiseComponent (p.parameters.getParameter ("noiseLevel"), &p.undoManager, &p.activeGestureCount, modState),
-      chorusMixComponent (p.parameters.getParameter ("chorusMix"), &p.undoManager, &p.activeGestureCount, modState),
-      portamentoComponent (p.parameters.getParameter ("portamentoTime"), &p.undoManager, &p.activeGestureCount, modState),
+      subOscillatorComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[8], &p.modDestOutputs[9], modState, ParamIDs::subOsc, ParamIDs::subOscWave),
+      detuneComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[6], &p.modDestOutputs[7], modState, ParamIDs::oscDetune, ParamIDs::oscWidth),
+      chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[12], &p.modDestOutputs[13], modState, ParamIDs::chorusDepth, ParamIDs::chorusRate),
+      vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[10], &p.modDestOutputs[11], modState, ParamIDs::vibratoDepth, ParamIDs::vibratoRate),
+      volumeComponent (p.parameters.getParameter (ParamIDs::volume), &p.undoManager, &p.activeGestureCount, modState),
+      noiseComponent (p.parameters.getParameter (ParamIDs::noiseLevel), &p.undoManager, &p.activeGestureCount, modState),
+      chorusMixComponent (p.parameters.getParameter (ParamIDs::chorusMix), &p.undoManager, &p.activeGestureCount, modState),
+      portamentoComponent (p.parameters.getParameter (ParamIDs::portamentoTime), &p.undoManager, &p.activeGestureCount, modState),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
-      adsrGraph (p.parameters, "env1Attack", "env1AttackCurve", "env1Decay", "env1DecayCurve", "env1Sustain", "env1Release", "env1ReleaseCurve", p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount),
+      adsrGraph (p.parameters, ParamIDs::envParamID (1, "Attack"), ParamIDs::envParamID (1, "AttackCurve"), ParamIDs::envParamID (1, "Decay"), ParamIDs::envParamID (1, "DecayCurve"), ParamIDs::envParamID (1, "Sustain"), ParamIDs::envParamID (1, "Release"), ParamIDs::envParamID (1, "ReleaseCurve"), p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount),
       keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, modState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr()),
       modWheel (p, modState),
       pitchWheel (p),
       keyboard (p.keyboardState),
-      pitchBendRangeControl (p.parameters.getParameter ("pitchBendRange")),
-      voiceCountControl (dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter ("voiceCount"))),
-      monoToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("monoOn")), "Mono"),
-      legatoToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("legatoOn")), "Legato"),
-      gateToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("gateMode")), "Gate")
+      pitchBendRangeControl (p.parameters.getParameter (ParamIDs::pitchBendRange)),
+      voiceCountControl (dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::voiceCount))),
+      monoToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::monoOn)), "Mono"),
+      legatoToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::legatoOn)), "Legato"),
+      gateToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::gateMode)), "Gate")
 {
     addAndMakeVisible (waveformComponent);
     addAndMakeVisible (filterDisplay);
@@ -134,16 +135,16 @@ void MainTabContent::selectEnv (int index)
     activeEnvIndex = index;
     for (int i = 0; i < 4; ++i)
         envTabs[i].setSelected (i == index);
-    auto s = std::to_string (index + 1);
+    int envNum = index + 1;
     auto adsrPtr = (index == 0) ? processor.getSynth().getAmpADSRPtr() : std::make_shared<MyADSR*> (nullptr);
     adsrGraph.rebind (
-        "env" + s + "Attack",
-        "env" + s + "AttackCurve",
-        "env" + s + "Decay",
-        "env" + s + "DecayCurve",
-        "env" + s + "Sustain",
-        "env" + s + "Release",
-        "env" + s + "ReleaseCurve",
+        ParamIDs::envParamID (envNum, "Attack"),
+        ParamIDs::envParamID (envNum, "AttackCurve"),
+        ParamIDs::envParamID (envNum, "Decay"),
+        ParamIDs::envParamID (envNum, "DecayCurve"),
+        ParamIDs::envParamID (envNum, "Sustain"),
+        ParamIDs::envParamID (envNum, "Release"),
+        ParamIDs::envParamID (envNum, "ReleaseCurve"),
         adsrPtr);
 }
 
@@ -331,10 +332,10 @@ EffectsTabContent::EffectsTabContent (PluginProcessor& p)
     : filterDisplay (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[0], &p.modDestOutputs[1]),
       chorusComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[12], &p.modDestOutputs[13]),
       vibratoComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &p.modDestOutputs[10], &p.modDestOutputs[11]),
-      volumeComponent (p.parameters.getParameter ("volume"), &p.undoManager, &p.activeGestureCount),
-      noiseComponent (p.parameters.getParameter ("noiseLevel"), &p.undoManager, &p.activeGestureCount),
-      chorusMixComponent (p.parameters.getParameter ("chorusMix"), &p.undoManager, &p.activeGestureCount),
-      portamentoComponent (p.parameters.getParameter ("portamentoTime"), &p.undoManager, &p.activeGestureCount)
+      volumeComponent (p.parameters.getParameter (ParamIDs::volume), &p.undoManager, &p.activeGestureCount),
+      noiseComponent (p.parameters.getParameter (ParamIDs::noiseLevel), &p.undoManager, &p.activeGestureCount),
+      chorusMixComponent (p.parameters.getParameter (ParamIDs::chorusMix), &p.undoManager, &p.activeGestureCount),
+      portamentoComponent (p.parameters.getParameter (ParamIDs::portamentoTime), &p.undoManager, &p.activeGestureCount)
 {
     addAndMakeVisible (filterDisplay);
     addAndMakeVisible (chorusComponent);
@@ -386,7 +387,7 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     manualBpmSlider.setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
     manualBpmSlider.setTextValueSuffix (" BPM");
     addAndMakeVisible (manualBpmSlider);
-    manualBpmAttachment = std::make_unique<SliderAttachment> (p.parameters, "manualBpm", manualBpmSlider);
+    manualBpmAttachment = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::manualBpm, manualBpmSlider);
 
     manualBpmLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
     manualBpmLabel.setJustificationType (juce::Justification::centred);
@@ -414,16 +415,16 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     setupReverbSlider (reverbWidthSlider);
     setupReverbSlider (reverbMixSlider);
 
-    reverbDecayAttachment     = std::make_unique<SliderAttachment> (p.parameters, "reverbDecay", reverbDecaySlider);
-    reverbSizeAttachment      = std::make_unique<SliderAttachment> (p.parameters, "reverbSize", reverbSizeSlider);
-    reverbDampingAttachment   = std::make_unique<SliderAttachment> (p.parameters, "reverbDamping", reverbDampingSlider);
-    reverbBassMultAttachment  = std::make_unique<SliderAttachment> (p.parameters, "reverbBassMult", reverbBassMultSlider);
-    reverbModRateAttachment   = std::make_unique<SliderAttachment> (p.parameters, "reverbModRate", reverbModRateSlider);
-    reverbModDepthAttachment  = std::make_unique<SliderAttachment> (p.parameters, "reverbModDepth", reverbModDepthSlider);
-    reverbDiffusionAttachment = std::make_unique<SliderAttachment> (p.parameters, "reverbDiffusion", reverbDiffusionSlider);
-    reverbPreDelayAttachment  = std::make_unique<SliderAttachment> (p.parameters, "reverbPreDelay", reverbPreDelaySlider);
-    reverbWidthAttachment     = std::make_unique<SliderAttachment> (p.parameters, "reverbWidth", reverbWidthSlider);
-    reverbMixAttachment       = std::make_unique<SliderAttachment> (p.parameters, "reverbMix", reverbMixSlider);
+    reverbDecayAttachment     = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbDecay, reverbDecaySlider);
+    reverbSizeAttachment      = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbSize, reverbSizeSlider);
+    reverbDampingAttachment   = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbDamping, reverbDampingSlider);
+    reverbBassMultAttachment  = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbBassMult, reverbBassMultSlider);
+    reverbModRateAttachment   = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbModRate, reverbModRateSlider);
+    reverbModDepthAttachment  = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbModDepth, reverbModDepthSlider);
+    reverbDiffusionAttachment = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbDiffusion, reverbDiffusionSlider);
+    reverbPreDelayAttachment  = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbPreDelay, reverbPreDelaySlider);
+    reverbWidthAttachment     = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbWidth, reverbWidthSlider);
+    reverbMixAttachment       = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbMix, reverbMixSlider);
 
     // Delay sliders
     auto setupDelaySlider = [this] (juce::Slider& slider)
@@ -446,30 +447,30 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     setupDelaySlider (delayModDepthSlider);
     setupDelaySlider (delayDiffusionSlider);
 
-    delayTimeAttachment       = std::make_unique<SliderAttachment> (p.parameters, "delayTime", delayTimeSlider);
-    delayFeedbackAttachment   = std::make_unique<SliderAttachment> (p.parameters, "delayFeedback", delayFeedbackSlider);
-    delayMixAttachment        = std::make_unique<SliderAttachment> (p.parameters, "delayMix", delayMixSlider);
-    delayLowpassAttachment    = std::make_unique<SliderAttachment> (p.parameters, "delayLowpass", delayLowpassSlider);
-    delayHighpassAttachment   = std::make_unique<SliderAttachment> (p.parameters, "delayHighpass", delayHighpassSlider);
-    delaySaturationAttachment = std::make_unique<SliderAttachment> (p.parameters, "delaySaturation", delaySaturationSlider);
-    delayModRateAttachment    = std::make_unique<SliderAttachment> (p.parameters, "delayModRate", delayModRateSlider);
-    delayModDepthAttachment   = std::make_unique<SliderAttachment> (p.parameters, "delayModDepth", delayModDepthSlider);
-    delayDiffusionAttachment  = std::make_unique<SliderAttachment> (p.parameters, "delayDiffusion", delayDiffusionSlider);
+    delayTimeAttachment       = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::delayTime, delayTimeSlider);
+    delayFeedbackAttachment   = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::delayFeedback, delayFeedbackSlider);
+    delayMixAttachment        = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::delayMix, delayMixSlider);
+    delayLowpassAttachment    = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::delayLowpass, delayLowpassSlider);
+    delayHighpassAttachment   = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::delayHighpass, delayHighpassSlider);
+    delaySaturationAttachment = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::delaySaturation, delaySaturationSlider);
+    delayModRateAttachment    = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::delayModRate, delayModRateSlider);
+    delayModDepthAttachment   = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::delayModDepth, delayModDepthSlider);
+    delayDiffusionAttachment  = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::delayDiffusion, delayDiffusionSlider);
 
     // Delay note division combo box
     delayNoteDivisionCombo.setColour (juce::ComboBox::backgroundColourId, SECONDARY_COLOR);
     delayNoteDivisionCombo.setColour (juce::ComboBox::textColourId, TEXT_COLOR);
     delayNoteDivisionCombo.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
     addAndMakeVisible (delayNoteDivisionCombo);
-    delayNoteDivisionAttachment = std::make_unique<ComboBoxAttachment> (p.parameters, "delayNoteDivision", delayNoteDivisionCombo);
+    delayNoteDivisionAttachment = std::make_unique<ComboBoxAttachment> (p.parameters, ParamIDs::delayNoteDivision, delayNoteDivisionCombo);
 
     // Delay toggles
     delayTempoSyncToggle = std::make_unique<CustomToggleComponent> (
-        dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("delayTempoSync")), "Sync");
+        dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync)), "Sync");
     addAndMakeVisible (*delayTempoSyncToggle);
 
     delayPingPongToggle = std::make_unique<CustomToggleComponent> (
-        dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("delayPingPong")), "Ping Pong");
+        dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayPingPong)), "Ping Pong");
     addAndMakeVisible (*delayPingPongToggle);
 }
 

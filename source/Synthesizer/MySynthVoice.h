@@ -12,6 +12,7 @@
 #include "../Processor/JuneOscillator.h"
 #include "../Processor/Vibrato.h"
 #include "../Utility/MyParameter.h"
+#include "../Utility/Parameters.h"
 #include "../Utility/PitchTracker.h"
 
 #include <array>
@@ -136,12 +137,12 @@ private:
     juce::ValueTree& modTree;
     ModMatrix modMatrix;
 
-    DynamicParameter pulseWidth = DynamicParameter (parameters.getParameter ("pulseWidth"));
-    DynamicParameter oscWaveform = DynamicParameter (parameters.getParameter ("oscWaveform"));
-    DynamicParameter oscDetune = DynamicParameter (parameters.getParameter ("oscDetune"));
-    DynamicParameter oscWidth = DynamicParameter (parameters.getParameter ("oscWidth"));
-    DynamicParameter subOsc = DynamicParameter (parameters.getParameter ("subOsc"));
-    DynamicParameter subOscWave = DynamicParameter (parameters.getParameter ("subOscWave"));
+    DynamicParameter pulseWidth = DynamicParameter (parameters.getParameter (ParamIDs::pulseWidth));
+    DynamicParameter oscWaveform = DynamicParameter (parameters.getParameter (ParamIDs::oscWaveform));
+    DynamicParameter oscDetune = DynamicParameter (parameters.getParameter (ParamIDs::oscDetune));
+    DynamicParameter oscWidth = DynamicParameter (parameters.getParameter (ParamIDs::oscWidth));
+    DynamicParameter subOsc = DynamicParameter (parameters.getParameter (ParamIDs::subOsc));
+    DynamicParameter subOscWave = DynamicParameter (parameters.getParameter (ParamIDs::subOscWave));
     JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth, oscWaveform, oscDetune, oscWidth, subOsc, subOscWave);
 
     std::array<MyLFO, 4> lfos = {
@@ -151,12 +152,12 @@ private:
         MyLFO { "lfo4", "LFO 4", 1.0f }
     };
 
-    DynamicParameter vibratoDepthParam = DynamicParameter (parameters.getParameter ("vibratoDepth"));
-    DynamicParameter vibratoRateParam = DynamicParameter (parameters.getParameter ("vibratoRate"));
-    DynamicParameter chorusDepthParam = DynamicParameter (parameters.getParameter ("chorusDepth"));
-    DynamicParameter chorusRateParam = DynamicParameter (parameters.getParameter ("chorusRate"));
+    DynamicParameter vibratoDepthParam = DynamicParameter (parameters.getParameter (ParamIDs::vibratoDepth));
+    DynamicParameter vibratoRateParam = DynamicParameter (parameters.getParameter (ParamIDs::vibratoRate));
+    DynamicParameter chorusDepthParam = DynamicParameter (parameters.getParameter (ParamIDs::chorusDepth));
+    DynamicParameter chorusRateParam = DynamicParameter (parameters.getParameter (ParamIDs::chorusRate));
 
-    DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter ("fineTune"));
+    DynamicParameter fineTuneParam = DynamicParameter (parameters.getParameter (ParamIDs::fineTune));
 
     juce::dsp::StateVariableTPTFilter<float> filter = juce::dsp::StateVariableTPTFilter<float>();
     std::array<juce::dsp::StateVariableTPTFilter<float>, 2> hpFilters;
@@ -166,8 +167,8 @@ private:
     ExpressionSource expressionSource;
     VelocitySource velocitySource;
     KeyboardSource keyboardSource;
-    StaticParameter velocityCurveParam = StaticParameter (parameters.getParameter ("velocityCurve"));
-    StaticParameter keyboardCurveParam = StaticParameter (parameters.getParameter ("keyboardCurve"));
+    StaticParameter velocityCurveParam = StaticParameter (parameters.getParameter (ParamIDs::velocityCurve));
+    StaticParameter keyboardCurveParam = StaticParameter (parameters.getParameter (ParamIDs::keyboardCurve));
     float pitchBendValue = 0.0f;
 
     float frequency = 0.0f;
@@ -186,11 +187,11 @@ private:
     juce::Random noiseRandom;
     float velocity = 0.0f;
 
-    DynamicParameter filterCutoff = DynamicParameter (parameters.getParameter ("filterFrequency"));
-    DynamicParameter filterResonance = DynamicParameter (parameters.getParameter ("filterResonance"));
+    DynamicParameter filterCutoff = DynamicParameter (parameters.getParameter (ParamIDs::filterFrequency));
+    DynamicParameter filterResonance = DynamicParameter (parameters.getParameter (ParamIDs::filterResonance));
     bool filterEnabled = false;
 
-    DynamicParameter hpfCutoff = DynamicParameter (parameters.getParameter ("hpfFrequency"));
+    DynamicParameter hpfCutoff = DynamicParameter (parameters.getParameter (ParamIDs::hpfFrequency));
     bool hpfEnabled = false;
     bool gateMode = false;
     float gateAmp = 0.0f;

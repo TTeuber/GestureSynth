@@ -8,6 +8,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "Utility/DualParameterComponent.h"
+#include "../Utility/Parameters.h"
 
 class DetuneComponent final : public DualParameterComponent, private juce::Timer
 {
@@ -28,9 +29,9 @@ public:
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : DualParameterComponent (
-              apvts.getParameter ("oscDetune"),
-              apvts.getParameter ("oscWidth"),
-              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("detuneOn")),
+              apvts.getParameter (ParamIDs::oscDetune),
+              apvts.getParameter (ParamIDs::oscWidth),
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::detuneOn)),
               undoManager,
               gestureCount,
               modModeState,

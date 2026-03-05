@@ -85,7 +85,7 @@ public:
     };
 
     static inline const juce::StringArray modSourceIDs  = { "None", "env1", "env2", "env3", "env4", "lfo1", "lfo2", "lfo3", "lfo4", "modWheel", "aftertouch", "expression", "velocity", "keyboard" };
-    static inline const juce::StringArray modDestIDs    = { "None", "filterFrequency", "filterResonance", "hpfFrequency", "fineTune", "pulseWidth", "oscWaveform", "oscDetune", "oscWidth", "subOsc", "subOscWave", "vibratoDepth", "vibratoRate", "chorusDepth", "chorusRate" };
+    static inline const juce::StringArray modDestIDs    = { "None", ParamIDs::filterFrequency, ParamIDs::filterResonance, ParamIDs::hpfFrequency, ParamIDs::fineTune, ParamIDs::pulseWidth, ParamIDs::oscWaveform, ParamIDs::oscDetune, ParamIDs::oscWidth, ParamIDs::subOsc, ParamIDs::subOscWave, ParamIDs::vibratoDepth, ParamIDs::vibratoRate, ParamIDs::chorusDepth, ParamIDs::chorusRate };
 
     std::atomic<float> uiModWheelValue { -1.0f };
     std::atomic<int>   uiPitchBendValue { -1 };

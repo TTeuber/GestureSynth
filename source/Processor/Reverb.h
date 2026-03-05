@@ -3,6 +3,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <array>
 #include <cmath>
+#include "../Utility/Parameters.h"
 
 class Reverb : public juce::AudioProcessorValueTreeState::Listener
 {
@@ -10,44 +11,44 @@ public:
     explicit Reverb (juce::AudioProcessorValueTreeState& p)
         : parameters (p)
     {
-        parameters.addParameterListener ("reverbDecay", this);
-        parameters.addParameterListener ("reverbSize", this);
-        parameters.addParameterListener ("reverbDamping", this);
-        parameters.addParameterListener ("reverbBassMult", this);
-        parameters.addParameterListener ("reverbModRate", this);
-        parameters.addParameterListener ("reverbModDepth", this);
-        parameters.addParameterListener ("reverbDiffusion", this);
-        parameters.addParameterListener ("reverbPreDelay", this);
-        parameters.addParameterListener ("reverbWidth", this);
-        parameters.addParameterListener ("reverbMix", this);
+        parameters.addParameterListener (ParamIDs::reverbDecay, this);
+        parameters.addParameterListener (ParamIDs::reverbSize, this);
+        parameters.addParameterListener (ParamIDs::reverbDamping, this);
+        parameters.addParameterListener (ParamIDs::reverbBassMult, this);
+        parameters.addParameterListener (ParamIDs::reverbModRate, this);
+        parameters.addParameterListener (ParamIDs::reverbModDepth, this);
+        parameters.addParameterListener (ParamIDs::reverbDiffusion, this);
+        parameters.addParameterListener (ParamIDs::reverbPreDelay, this);
+        parameters.addParameterListener (ParamIDs::reverbWidth, this);
+        parameters.addParameterListener (ParamIDs::reverbMix, this);
     }
 
     ~Reverb() override
     {
-        parameters.removeParameterListener ("reverbDecay", this);
-        parameters.removeParameterListener ("reverbSize", this);
-        parameters.removeParameterListener ("reverbDamping", this);
-        parameters.removeParameterListener ("reverbBassMult", this);
-        parameters.removeParameterListener ("reverbModRate", this);
-        parameters.removeParameterListener ("reverbModDepth", this);
-        parameters.removeParameterListener ("reverbDiffusion", this);
-        parameters.removeParameterListener ("reverbPreDelay", this);
-        parameters.removeParameterListener ("reverbWidth", this);
-        parameters.removeParameterListener ("reverbMix", this);
+        parameters.removeParameterListener (ParamIDs::reverbDecay, this);
+        parameters.removeParameterListener (ParamIDs::reverbSize, this);
+        parameters.removeParameterListener (ParamIDs::reverbDamping, this);
+        parameters.removeParameterListener (ParamIDs::reverbBassMult, this);
+        parameters.removeParameterListener (ParamIDs::reverbModRate, this);
+        parameters.removeParameterListener (ParamIDs::reverbModDepth, this);
+        parameters.removeParameterListener (ParamIDs::reverbDiffusion, this);
+        parameters.removeParameterListener (ParamIDs::reverbPreDelay, this);
+        parameters.removeParameterListener (ParamIDs::reverbWidth, this);
+        parameters.removeParameterListener (ParamIDs::reverbMix, this);
     }
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
     {
-        if (parameterID == "reverbDecay")        decay.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "reverbSize")    size.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "reverbDamping") dampingFreq.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "reverbBassMult") bassMult.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "reverbModRate")  modRate.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "reverbModDepth") modDepth.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "reverbDiffusion") diffusion.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "reverbPreDelay")  preDelayMs.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "reverbWidth")     width.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "reverbMix")       mix.store (newValue, std::memory_order_relaxed);
+        if (parameterID == ParamIDs::reverbDecay)        decay.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::reverbSize)    size.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::reverbDamping) dampingFreq.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::reverbBassMult) bassMult.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::reverbModRate)  modRate.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::reverbModDepth) modDepth.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::reverbDiffusion) diffusion.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::reverbPreDelay)  preDelayMs.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::reverbWidth)     width.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::reverbMix)       mix.store (newValue, std::memory_order_relaxed);
     }
 
     void prepare (const juce::dsp::ProcessSpec& spec)

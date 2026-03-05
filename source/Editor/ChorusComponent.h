@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Utility/DualParameterComponent.h"
+#include "../Utility/Parameters.h"
 
 class ChorusComponent final : public DualParameterComponent, private juce::Timer
 {
@@ -26,9 +27,9 @@ public:
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : DualParameterComponent (
-              apvts.getParameter ("chorusDepth"),
-              apvts.getParameter ("chorusRate"),
-              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("chorusOn")),
+              apvts.getParameter (ParamIDs::chorusDepth),
+              apvts.getParameter (ParamIDs::chorusRate),
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::chorusOn)),
               undoManager,
               gestureCount,
               modModeState,

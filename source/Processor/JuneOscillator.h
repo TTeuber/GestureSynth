@@ -4,6 +4,7 @@
 
 #pragma once
 #include "../Utility/MyParameter.h"
+#include "../Utility/Parameters.h"
 #include <juce_dsp/juce_dsp.h>
 
 class JuneDCO final : public juce::AudioProcessorValueTreeState::Listener
@@ -14,30 +15,30 @@ public:
         : parameters (p), pulseWidth (pw), waveformMix (wf),
           detuneParam (dt), widthParam (ow), subOscParam (so), subOscWaveParam (sw)
     {
-        parameters.addParameterListener ("oscOn", this);
-        parameters.addParameterListener ("subOn", this);
-        parameters.addParameterListener ("detuneOn", this);
+        parameters.addParameterListener (ParamIDs::oscOn, this);
+        parameters.addParameterListener (ParamIDs::subOn, this);
+        parameters.addParameterListener (ParamIDs::detuneOn, this);
 
         reset();
     }
     ~JuneDCO() override
     {
-        parameters.removeParameterListener ("oscOn", this);
-        parameters.removeParameterListener ("subOn", this);
-        parameters.removeParameterListener ("detuneOn", this);
+        parameters.removeParameterListener (ParamIDs::oscOn, this);
+        parameters.removeParameterListener (ParamIDs::subOn, this);
+        parameters.removeParameterListener (ParamIDs::detuneOn, this);
     }
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
     {
-        if (parameterID == "oscOn")
+        if (parameterID == ParamIDs::oscOn)
         {
             oscillatorEnabled = newValue > 0.5f;
         }
-        else if (parameterID == "subOn")
+        else if (parameterID == ParamIDs::subOn)
         {
             subOscillatorEnabled = newValue > 0.5f;
         }
-        else if (parameterID == "detuneOn")
+        else if (parameterID == ParamIDs::detuneOn)
         {
             detuneEnabled = newValue > 0.5f;
         }

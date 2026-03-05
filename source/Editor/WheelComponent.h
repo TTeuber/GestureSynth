@@ -2,6 +2,7 @@
 
 #include "../PluginProcessor.h"
 #include "../Theme.h"
+#include "../Utility/Parameters.h"
 #include "Utility/ModulationModeState.h"
 
 // =============================================================================
@@ -113,7 +114,7 @@ public:
     explicit PitchWheelComponent (PluginProcessor& p)
         : processor (p),
           pitchBendRawPtr (p.getSynth().getPitchBendRawPtr()),
-          pitchBendRangeParam (p.parameters.getParameter ("pitchBendRange"))
+          pitchBendRangeParam (p.parameters.getParameter (ParamIDs::pitchBendRange))
     {
         if (pitchBendRangeParam != nullptr)
             pitchBendRangeParam->addListener (this);

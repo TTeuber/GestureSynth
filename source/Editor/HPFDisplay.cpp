@@ -3,6 +3,7 @@
 //
 
 #include "HPFDisplay.h"
+#include "../Utility/Parameters.h"
 
 HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
     juce::UndoManager* undoManager,
@@ -11,12 +12,12 @@ HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
     : apvts (apvts), undoManager (undoManager), gestureCount (gestureCount),
       modModeState (modModeState)
 {
-    this->apvts.addParameterListener ("hpfFrequency", this);
-    this->apvts.addParameterListener ("hpfOn", this);
+    this->apvts.addParameterListener (ParamIDs::hpfFrequency, this);
+    this->apvts.addParameterListener (ParamIDs::hpfOn, this);
 
-    cutoffParam = apvts.getParameter ("hpfFrequency");
+    cutoffParam = apvts.getParameter (ParamIDs::hpfFrequency);
 
-    auto* hpfOnParam = apvts.getParameter ("hpfOn");
+    auto* hpfOnParam = apvts.getParameter (ParamIDs::hpfOn);
     if (hpfOnParam != nullptr)
         hpfEnabled = hpfOnParam->getValue() > 0.5f;
 
@@ -27,8 +28,8 @@ HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
 
 HPFDisplay::~HPFDisplay()
 {
-    apvts.removeParameterListener ("hpfFrequency", this);
-    apvts.removeParameterListener ("hpfOn", this);
+    apvts.removeParameterListener (ParamIDs::hpfFrequency, this);
+    apvts.removeParameterListener (ParamIDs::hpfOn, this);
 }
 
 void HPFDisplay::paint (juce::Graphics& g)
@@ -52,10 +53,10 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
         && hpfEnabled)
     {
         auto sourceID = modModeState->getTargetSourceID();
-        if (modModeState->findSlotIndex (sourceID, "hpfFrequency") >= 0)
+        if (modModeState->findSlotIndex (sourceID, ParamIDs::hpfFrequency) >= 0)
         {
             showModulationContextMenu (this, modModeState,
-                { { cutoffParam->getName (15), sourceID, "hpfFrequency" } },
+                { { cutoffParam->getName (15), sourceID, ParamIDs::hpfFrequency } },
                 e.getScreenPosition());
             return;
         }
@@ -63,7 +64,7 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
 
     if (e.mods.isRightButtonDown())
     {
-        auto* hpfOnParam = apvts.getParameter ("hpfOn");
+        auto* hpfOnParam = apvts.getParameter (ParamIDs::hpfOn);
         if (hpfOnParam != nullptr)
         {
             if (undoManager != nullptr)
@@ -80,7 +81,7 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
     {
         auto sourceID = modModeState->getTargetSourceID();
 
-        int slot = modModeState->getOrCreateSlot (sourceID, "hpfFrequency");
+        int slot = modModeState->getOrCreateSlot (sourceID, ParamIDs::hpfFrequency);
         if (slot < 0)
             return;
 
@@ -89,7 +90,7 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
         if (gestureCount != nullptr)
             ++(*gestureCount);
 
-        modDragInitialDepth = modModeState->getDepth (sourceID, "hpfFrequency");
+        modDragInitialDepth = modModeState->getDepth (sourceID, ParamIDs::hpfFrequency);
         modDragStartX = e.x;
         isModDragging = true;
         return;
@@ -118,7 +119,7 @@ void HPFDisplay::mouseDrag (const juce::MouseEvent& e)
 
         float hDelta = static_cast<float> (e.x - modDragStartX) / static_cast<float> (getWidth());
         float newDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialDepth + hDelta);
-        modModeState->setDepth (sourceID, "hpfFrequency", newDepth);
+        modModeState->setDepth (sourceID, ParamIDs::hpfFrequency, newDepth);
         repaint();
         return;
     }
@@ -157,7 +158,7 @@ void HPFDisplay::mouseUp (const juce::MouseEvent& e)
 
 void HPFDisplay::parameterChanged (const juce::String& parameterID, float newValue)
 {
-    if (parameterID == "hpfFrequency")
+    if (parameterID == ParamIDs::hpfFrequency)
     {
         updateParameterValues();
 
@@ -165,7 +166,7 @@ void HPFDisplay::parameterChanged (const juce::String& parameterID, float newVal
             repaint();
         });
     }
-    else if (parameterID == "hpfOn")
+    else if (parameterID == ParamIDs::hpfOn)
     {
         hpfEnabled = newValue > 0.5f;
         juce::MessageManager::callAsync ([this] {
@@ -292,10 +293,10 @@ void HPFDisplay::drawModModeOverlay (juce::Graphics& g) const
         return;
 
     auto sourceID = modModeState->getTargetSourceID();
-    float depth = modModeState->getDepth (sourceID, "hpfFrequency");
+    float depth = modModeState->getDepth (sourceID, ParamIDs::hpfFrequency);
 
 
-    bool bipolar = modModeState->isBipolar (sourceID, "hpfFrequency");
+    bool bipolar = modModeState->isBipolar (sourceID, ParamIDs::hpfFrequency);
 
     // Convert modulated normalized cutoff to frequency
     float modNormCutoff = juce::jlimit (0.0f, 1.0f, normalizedCutoff + depth);

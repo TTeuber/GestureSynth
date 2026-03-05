@@ -3,6 +3,7 @@
 #include "../Utility/MyParameter.h"
 #include "../Utility/CurveUtils.h"
 #include "Modulation.h"
+#include "../Utility/Parameters.h"
 
 #include <juce_dsp/juce_dsp.h>
 #include <juce_graphics/juce_graphics.h>
@@ -49,13 +50,13 @@ public:
 
     MyADSR (const juce::AudioProcessorValueTreeState& p, const int i)
         : ModSource (juce::StringRef ("env" + std::to_string (i)), juce::StringRef ("Envelope " + std::to_string (i))),
-          attackTime (p.getParameter ("env" + std::to_string (i) + "Attack")),
-          decayTime (p.getParameter ("env" + std::to_string (i) + "Decay")),
-          sustainLevel (p.getParameter ("env" + std::to_string (i) + "Sustain")),
-          releaseTime (p.getParameter ("env" + std::to_string (i) + "Release")),
-          attackCurve (p.getParameter ("env" + std::to_string (i) + "AttackCurve")),
-          decayCurve (p.getParameter ("env" + std::to_string (i) + "DecayCurve")),
-          releaseCurve (p.getParameter ("env" + std::to_string (i) + "ReleaseCurve"))
+          attackTime (p.getParameter (ParamIDs::envParamID (i, "Attack"))),
+          decayTime (p.getParameter (ParamIDs::envParamID (i, "Decay"))),
+          sustainLevel (p.getParameter (ParamIDs::envParamID (i, "Sustain"))),
+          releaseTime (p.getParameter (ParamIDs::envParamID (i, "Release"))),
+          attackCurve (p.getParameter (ParamIDs::envParamID (i, "AttackCurve"))),
+          decayCurve (p.getParameter (ParamIDs::envParamID (i, "DecayCurve"))),
+          releaseCurve (p.getParameter (ParamIDs::envParamID (i, "ReleaseCurve")))
     {
         recalculateRates();
         attackTime.onUpdate ([this] { recalculateRates(); });

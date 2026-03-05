@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Utility/DualParameterComponent.h"
+#include "../Utility/Parameters.h"
 
 class VibratoComponent final : public DualParameterComponent, private juce::Timer
 {
@@ -25,9 +26,9 @@ public:
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : DualParameterComponent (
-              apvts.getParameter ("vibratoDepth"),
-              apvts.getParameter ("vibratoRate"),
-              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter ("vibratoOn")),
+              apvts.getParameter (ParamIDs::vibratoDepth),
+              apvts.getParameter (ParamIDs::vibratoRate),
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::vibratoOn)),
               undoManager,
               gestureCount,
               modModeState,

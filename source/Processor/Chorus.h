@@ -7,6 +7,7 @@
 #include <atomic>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
+#include "../Utility/Parameters.h"
 
 /**
  * JunoChorus - A class that mimics the classic Juno-6 chorus effect
@@ -36,37 +37,37 @@ public:
             phase[channel] = channel * 0.5f; // 180 degree offset between channels
         }
 
-        parameters.addParameterListener ("chorusMix", this);
-        parameters.addParameterListener ("chorusDepth", this);
-        parameters.addParameterListener ("chorusRate", this);
-        parameters.addParameterListener ("chorusOn", this);
+        parameters.addParameterListener (ParamIDs::chorusMix, this);
+        parameters.addParameterListener (ParamIDs::chorusDepth, this);
+        parameters.addParameterListener (ParamIDs::chorusRate, this);
+        parameters.addParameterListener (ParamIDs::chorusOn, this);
     }
 
     ~JuneChorus() override
     {
-        parameters.removeParameterListener ("chorusMix", this);
-        parameters.removeParameterListener ("chorusOn", this);
-        parameters.removeParameterListener ("chorusDepth", this);
-        parameters.removeParameterListener ("chorusRate", this);
+        parameters.removeParameterListener (ParamIDs::chorusMix, this);
+        parameters.removeParameterListener (ParamIDs::chorusOn, this);
+        parameters.removeParameterListener (ParamIDs::chorusDepth, this);
+        parameters.removeParameterListener (ParamIDs::chorusRate, this);
     }
 
     //==============================================================================
 
     void parameterChanged (const juce::String& parameterID, const float newValue) override
     {
-        if (parameterID == "chorusMix")
+        if (parameterID == ParamIDs::chorusMix)
         {
             mix.store (newValue, std::memory_order_relaxed);
         }
-        else if (parameterID == "chorusOn")
+        else if (parameterID == ParamIDs::chorusOn)
         {
             currentMode.store (newValue > 0.5f ? On : Off, std::memory_order_relaxed);
         }
-        else if (parameterID == "chorusDepth")
+        else if (parameterID == ParamIDs::chorusDepth)
         {
             depth.store (newValue, std::memory_order_relaxed);
         }
-        else if (parameterID == "chorusRate")
+        else if (parameterID == ParamIDs::chorusRate)
         {
             rate.store (newValue, std::memory_order_relaxed);
             phaseIncrement.store (newValue / sampleRate, std::memory_order_relaxed);

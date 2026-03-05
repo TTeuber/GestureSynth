@@ -7,6 +7,7 @@
 #include "../Theme.h"
 #include "LFORateComponent.h"
 #include "Utility/CustomToggleComponent.h"
+#include "../Utility/Parameters.h"
 
 class LFOComponent final : public juce::Component,
                            public LFOData::Listener
@@ -50,7 +51,7 @@ private:
 
     static juce::String paramId (const juce::String& base, int index)
     {
-        return "lfo" + juce::String (index) + base;
+        return ParamIDs::lfoParamID (index, base.toRawUTF8());
     }
 
     std::shared_ptr<LFOData> lfoData;

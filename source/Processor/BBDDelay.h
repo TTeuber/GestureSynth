@@ -3,6 +3,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <array>
 #include <cmath>
+#include "../Utility/Parameters.h"
 
 class BBDDelay : public juce::AudioProcessorValueTreeState::Listener
 {
@@ -10,50 +11,50 @@ public:
     explicit BBDDelay (juce::AudioProcessorValueTreeState& p)
         : parameters (p)
     {
-        parameters.addParameterListener ("delayTime", this);
-        parameters.addParameterListener ("delayTempoSync", this);
-        parameters.addParameterListener ("delayNoteDivision", this);
-        parameters.addParameterListener ("delayFeedback", this);
-        parameters.addParameterListener ("delayMix", this);
-        parameters.addParameterListener ("delayLowpass", this);
-        parameters.addParameterListener ("delayHighpass", this);
-        parameters.addParameterListener ("delaySaturation", this);
-        parameters.addParameterListener ("delayModRate", this);
-        parameters.addParameterListener ("delayModDepth", this);
-        parameters.addParameterListener ("delayPingPong", this);
-        parameters.addParameterListener ("delayDiffusion", this);
+        parameters.addParameterListener (ParamIDs::delayTime, this);
+        parameters.addParameterListener (ParamIDs::delayTempoSync, this);
+        parameters.addParameterListener (ParamIDs::delayNoteDivision, this);
+        parameters.addParameterListener (ParamIDs::delayFeedback, this);
+        parameters.addParameterListener (ParamIDs::delayMix, this);
+        parameters.addParameterListener (ParamIDs::delayLowpass, this);
+        parameters.addParameterListener (ParamIDs::delayHighpass, this);
+        parameters.addParameterListener (ParamIDs::delaySaturation, this);
+        parameters.addParameterListener (ParamIDs::delayModRate, this);
+        parameters.addParameterListener (ParamIDs::delayModDepth, this);
+        parameters.addParameterListener (ParamIDs::delayPingPong, this);
+        parameters.addParameterListener (ParamIDs::delayDiffusion, this);
     }
 
     ~BBDDelay() override
     {
-        parameters.removeParameterListener ("delayTime", this);
-        parameters.removeParameterListener ("delayTempoSync", this);
-        parameters.removeParameterListener ("delayNoteDivision", this);
-        parameters.removeParameterListener ("delayFeedback", this);
-        parameters.removeParameterListener ("delayMix", this);
-        parameters.removeParameterListener ("delayLowpass", this);
-        parameters.removeParameterListener ("delayHighpass", this);
-        parameters.removeParameterListener ("delaySaturation", this);
-        parameters.removeParameterListener ("delayModRate", this);
-        parameters.removeParameterListener ("delayModDepth", this);
-        parameters.removeParameterListener ("delayPingPong", this);
-        parameters.removeParameterListener ("delayDiffusion", this);
+        parameters.removeParameterListener (ParamIDs::delayTime, this);
+        parameters.removeParameterListener (ParamIDs::delayTempoSync, this);
+        parameters.removeParameterListener (ParamIDs::delayNoteDivision, this);
+        parameters.removeParameterListener (ParamIDs::delayFeedback, this);
+        parameters.removeParameterListener (ParamIDs::delayMix, this);
+        parameters.removeParameterListener (ParamIDs::delayLowpass, this);
+        parameters.removeParameterListener (ParamIDs::delayHighpass, this);
+        parameters.removeParameterListener (ParamIDs::delaySaturation, this);
+        parameters.removeParameterListener (ParamIDs::delayModRate, this);
+        parameters.removeParameterListener (ParamIDs::delayModDepth, this);
+        parameters.removeParameterListener (ParamIDs::delayPingPong, this);
+        parameters.removeParameterListener (ParamIDs::delayDiffusion, this);
     }
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
     {
-        if (parameterID == "delayTime")           delayTimeMs.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "delayTempoSync") tempoSync.store (newValue >= 0.5f ? 1.0f : 0.0f, std::memory_order_relaxed);
-        else if (parameterID == "delayNoteDivision") noteDivision.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "delayFeedback")  feedback.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "delayMix")       mix.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "delayLowpass")   lowpassFreq.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "delayHighpass")  highpassFreq.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "delaySaturation") saturation.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "delayModRate")   modRate.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "delayModDepth")  modDepth.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == "delayPingPong")  pingPong.store (newValue >= 0.5f ? 1.0f : 0.0f, std::memory_order_relaxed);
-        else if (parameterID == "delayDiffusion") diffusionAmt.store (newValue, std::memory_order_relaxed);
+        if (parameterID == ParamIDs::delayTime)           delayTimeMs.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delayTempoSync) tempoSync.store (newValue >= 0.5f ? 1.0f : 0.0f, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delayNoteDivision) noteDivision.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delayFeedback)  feedback.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delayMix)       mix.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delayLowpass)   lowpassFreq.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delayHighpass)  highpassFreq.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delaySaturation) saturation.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delayModRate)   modRate.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delayModDepth)  modDepth.store (newValue, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delayPingPong)  pingPong.store (newValue >= 0.5f ? 1.0f : 0.0f, std::memory_order_relaxed);
+        else if (parameterID == ParamIDs::delayDiffusion) diffusionAmt.store (newValue, std::memory_order_relaxed);
     }
 
     void setTempoInfo (double bpm, bool available)
@@ -126,7 +127,7 @@ public:
         float targetDelayMs = localDelayMs;
         if (localTempoSync)
         {
-            double bpm = hostTempoAvailable ? currentBpm : static_cast<double> (*parameters.getRawParameterValue ("manualBpm"));
+            double bpm = hostTempoAvailable ? currentBpm : static_cast<double> (*parameters.getRawParameterValue (ParamIDs::manualBpm));
             if (bpm < 20.0) bpm = 120.0;
             double beatMs = 60000.0 / bpm;
             targetDelayMs = static_cast<float> (beatMs * getBeatMultiplier (localDivision));

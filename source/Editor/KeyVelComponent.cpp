@@ -2,6 +2,7 @@
 // KeyVelComponent.cpp
 //
 #include "KeyVelComponent.h"
+#include "../Utility/Parameters.h"
 
 KeyVelComponent::KeyVelComponent (juce::AudioProcessorValueTreeState& apvts,
                                   juce::UndoManager* um,
@@ -16,8 +17,8 @@ KeyVelComponent::KeyVelComponent (juce::AudioProcessorValueTreeState& apvts,
       velocityRawPtr (velocityRaw),
       keyboardRawPtr (keyboardRaw)
 {
-    velCurveParam = parameters.getParameter ("velocityCurve");
-    keyCurveParam = parameters.getParameter ("keyboardCurve");
+    velCurveParam = parameters.getParameter (ParamIDs::velocityCurve);
+    keyCurveParam = parameters.getParameter (ParamIDs::keyboardCurve);
 
     if (modModeState != nullptr)
         modModeState->addListener (this);

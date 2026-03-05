@@ -3,6 +3,7 @@
 //
 
 #include "FilterDisplay.h"
+#include "../Utility/Parameters.h"
 FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
     juce::UndoManager* undoManager,
     std::atomic<int>* gestureCount,
@@ -14,15 +15,15 @@ FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
       modModeState (modModeState)
 {
     // Add listeners to the parameters
-    this->apvts.addParameterListener ("filterFrequency", this);
-    this->apvts.addParameterListener ("filterResonance", this);
-    this->apvts.addParameterListener ("filterOn", this);
+    this->apvts.addParameterListener (ParamIDs::filterFrequency, this);
+    this->apvts.addParameterListener (ParamIDs::filterResonance, this);
+    this->apvts.addParameterListener (ParamIDs::filterOn, this);
 
-    cutoffParam = apvts.getParameter ("filterFrequency");
-    resonanceParam = apvts.getParameter ("filterResonance");
+    cutoffParam = apvts.getParameter (ParamIDs::filterFrequency);
+    resonanceParam = apvts.getParameter (ParamIDs::filterResonance);
 
     // Initialize filterEnabled based on the actual parameter value
-    auto* filterOnParam = apvts.getParameter ("filterOn");
+    auto* filterOnParam = apvts.getParameter (ParamIDs::filterOn);
     if (filterOnParam != nullptr)
         filterEnabled = filterOnParam->getValue() > 0.5f;
 
@@ -38,9 +39,9 @@ FilterDisplay::~FilterDisplay()
 {
     stopTimer();
     // Remove listeners
-    apvts.removeParameterListener ("filterFrequency", this);
-    apvts.removeParameterListener ("filterResonance", this);
-    apvts.removeParameterListener ("filterOn", this);
+    apvts.removeParameterListener (ParamIDs::filterFrequency, this);
+    apvts.removeParameterListener (ParamIDs::filterResonance, this);
+    apvts.removeParameterListener (ParamIDs::filterOn, this);
 }
 
 void FilterDisplay::paint (juce::Graphics& g)
@@ -73,10 +74,10 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
     {
         auto sourceID = modModeState->getTargetSourceID();
         std::vector<ModulationContextMenu::ParamInfo> entries;
-        if (modModeState->findSlotIndex (sourceID, "filterFrequency") >= 0)
-            entries.push_back ({ cutoffParam->getName (15), sourceID, "filterFrequency" });
-        if (modModeState->findSlotIndex (sourceID, "filterResonance") >= 0)
-            entries.push_back ({ resonanceParam->getName (15), sourceID, "filterResonance" });
+        if (modModeState->findSlotIndex (sourceID, ParamIDs::filterFrequency) >= 0)
+            entries.push_back ({ cutoffParam->getName (15), sourceID, ParamIDs::filterFrequency });
+        if (modModeState->findSlotIndex (sourceID, ParamIDs::filterResonance) >= 0)
+            entries.push_back ({ resonanceParam->getName (15), sourceID, ParamIDs::filterResonance });
         if (!entries.empty())
         {
             showModulationContextMenu (this, modModeState, std::move (entries), e.getScreenPosition());
@@ -86,7 +87,7 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
 
     if (e.mods.isRightButtonDown())
     {
-        auto* filterOnParam = apvts.getParameter ("filterOn");
+        auto* filterOnParam = apvts.getParameter (ParamIDs::filterOn);
         if (filterOnParam != nullptr)
         {
             if (undoManager != nullptr)
@@ -172,23 +173,23 @@ void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
         if (!wasModCutoffEngaged
             && absX >= (wasModEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
         {
-            int slot = modModeState->getOrCreateSlot (sourceID, "filterFrequency");
+            int slot = modModeState->getOrCreateSlot (sourceID, ParamIDs::filterFrequency);
             if (slot >= 0)
             {
                 modCutoffEngaged = true;
                 modCutoffRefX = e.x;
-                modDragInitialCutoffDepth = modModeState->getDepth (sourceID, "filterFrequency");
+                modDragInitialCutoffDepth = modModeState->getDepth (sourceID, ParamIDs::filterFrequency);
             }
         }
         if (!wasModResonanceEngaged
             && absY >= (wasModEitherEngaged ? kSecondaryThreshold : kPrimaryThreshold))
         {
-            int slot = modModeState->getOrCreateSlot (sourceID, "filterResonance");
+            int slot = modModeState->getOrCreateSlot (sourceID, ParamIDs::filterResonance);
             if (slot >= 0)
             {
                 modResonanceEngaged = true;
                 modResonanceRefY = e.y;
-                modDragInitialResDepth = modModeState->getDepth (sourceID, "filterResonance");
+                modDragInitialResDepth = modModeState->getDepth (sourceID, ParamIDs::filterResonance);
             }
         }
 
@@ -196,13 +197,13 @@ void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
         {
             float hDelta = static_cast<float> (e.x - modCutoffRefX) / static_cast<float> (getWidth());
             float newCutoffDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialCutoffDepth + hDelta);
-            modModeState->setDepth (sourceID, "filterFrequency", newCutoffDepth);
+            modModeState->setDepth (sourceID, ParamIDs::filterFrequency, newCutoffDepth);
         }
         if (modResonanceEngaged)
         {
             float vDelta = static_cast<float> (modResonanceRefY - e.y) / static_cast<float> (getHeight());
             float newResDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialResDepth + vDelta);
-            modModeState->setDepth (sourceID, "filterResonance", newResDepth);
+            modModeState->setDepth (sourceID, ParamIDs::filterResonance, newResDepth);
         }
 
         repaint();
@@ -271,7 +272,7 @@ void FilterDisplay::parameterChanged (const juce::String& parameterID, float new
 {
     juce::ignoreUnused (newValue);
     // Called when parameters change from outside this component
-    if (parameterID == "filterFrequency" || parameterID == "filterResonance")
+    if (parameterID == ParamIDs::filterFrequency || parameterID == ParamIDs::filterResonance)
     {
         updateParameterValues();
 
@@ -280,7 +281,7 @@ void FilterDisplay::parameterChanged (const juce::String& parameterID, float new
             repaint();
         });
     }
-    else if (parameterID == "filterOn")
+    else if (parameterID == ParamIDs::filterOn)
     {
         filterEnabled = newValue > 0.5f;
     }
@@ -288,8 +289,8 @@ void FilterDisplay::parameterChanged (const juce::String& parameterID, float new
 void FilterDisplay::updateParameterValues()
 {
     // Get the normalized values (0-1)
-    const auto* cutoffParam = apvts.getParameter ("filterFrequency");
-    auto* resonanceParam = apvts.getParameter ("filterResonance");
+    const auto* cutoffParam = apvts.getParameter (ParamIDs::filterFrequency);
+    auto* resonanceParam = apvts.getParameter (ParamIDs::filterResonance);
 
     if (cutoffParam && resonanceParam)
     {
@@ -480,12 +481,12 @@ void FilterDisplay::drawModModeOverlay (juce::Graphics& g) const
 
     auto sourceID = modModeState->getTargetSourceID();
 
-    float cutoffDepth = modModeState->getDepth (sourceID, "filterFrequency");
-    float resDepth = modModeState->getDepth (sourceID, "filterResonance");
+    float cutoffDepth = modModeState->getDepth (sourceID, ParamIDs::filterFrequency);
+    float resDepth = modModeState->getDepth (sourceID, ParamIDs::filterResonance);
 
 
-    bool bipolarCutoff = modModeState->isBipolar (sourceID, "filterFrequency");
-    bool bipolarRes = modModeState->isBipolar (sourceID, "filterResonance");
+    bool bipolarCutoff = modModeState->isBipolar (sourceID, ParamIDs::filterFrequency);
+    bool bipolarRes = modModeState->isBipolar (sourceID, ParamIDs::filterResonance);
 
     // Draw cyan curve at modulated position
     float modCutoff = juce::jlimit (0.0f, 1.0f, normalizedCutoff + cutoffDepth);

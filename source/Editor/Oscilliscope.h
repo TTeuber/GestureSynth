@@ -6,6 +6,7 @@
 
 #include "../PluginProcessor.h"
 #include "../Theme.h"
+#include "../Utility/Parameters.h"
 #include "../Utility/PitchTracker.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -16,8 +17,8 @@ class Oscilloscope final : public juce::Component, public juce::Timer
 public:
     explicit Oscilloscope (PluginProcessor& p) : processor (p), pitchTracker (p.pitchTracker)
     {
-        subOnParam = dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("subOn"));
-        subLevelParam = p.parameters.getParameter ("subOsc");
+        subOnParam = dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::subOn));
+        subLevelParam = p.parameters.getParameter (ParamIDs::subOsc);
         startTimerHz (30);
     }
 

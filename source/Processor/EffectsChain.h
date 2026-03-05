@@ -4,6 +4,7 @@
 #include "Chorus.h"
 #include "Reverb.h"
 #include "../Utility/TempoInfo.h"
+#include "../Utility/Parameters.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 #include <atomic>
@@ -34,8 +35,8 @@ public:
         // Apply modulated chorus depth/rate from mod matrix (last-voice-wins)
         // modDestOutputs stores normalized 0-1 values; convert to actual parameter range
         {
-            auto* depthParam = parameters.getParameter ("chorusDepth");
-            auto* rateParam = parameters.getParameter ("chorusRate");
+            auto* depthParam = parameters.getParameter (ParamIDs::chorusDepth);
+            auto* rateParam = parameters.getParameter (ParamIDs::chorusRate);
             chorus.setDepth (depthParam->convertFrom0to1 (modDestOutputs[12].load (std::memory_order_relaxed)));
             chorus.setRate (rateParam->convertFrom0to1 (modDestOutputs[13].load (std::memory_order_relaxed)));
         }
