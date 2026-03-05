@@ -10,10 +10,8 @@ class ChorusMixComponent final : public SingleParameterComponent
 {
 public:
     explicit ChorusMixComponent (juce::RangedAudioParameter* chorusMixParam,
-        juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr,
-        ModulationModeState* modModeState = nullptr)
-        : SingleParameterComponent (chorusMixParam, nullptr, undoManager, gestureCount, modModeState)
+        const UIContext& ctx = {})
+        : SingleParameterComponent (chorusMixParam, nullptr, ctx)
     {
     }
 

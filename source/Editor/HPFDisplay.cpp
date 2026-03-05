@@ -6,11 +6,9 @@
 #include "../Utility/Parameters.h"
 
 HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
-    juce::UndoManager* undoManager,
-    std::atomic<int>* gestureCount,
-    ModulationModeState* modModeState)
-    : apvts (apvts), undoManager (undoManager), gestureCount (gestureCount),
-      modModeState (modModeState)
+    const UIContext& ctx)
+    : apvts (apvts), undoManager (ctx.undoManager), gestureCount (ctx.gestureCount),
+      modModeState (ctx.modModeState)
 {
     this->apvts.addParameterListener (ParamIDs::hpfFrequency, this);
     this->apvts.addParameterListener (ParamIDs::hpfOn, this);

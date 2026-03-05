@@ -10,28 +10,17 @@
 class VibratoComponent final : public DualParameterComponent, private juce::Timer
 {
 public:
-    VibratoComponent (juce::RangedAudioParameter* depthParam,
-        juce::RangedAudioParameter* rateParam,
-        juce::AudioParameterBool* activeParam = nullptr)
-        : DualParameterComponent (depthParam, rateParam, activeParam)
-    {
-    }
-
     VibratoComponent (const juce::AudioProcessorValueTreeState& apvts,
-        juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr,
+        const UIContext& ctx = {},
         std::atomic<float>* modDepthOutput = nullptr,
         std::atomic<float>* modRateOutput = nullptr,
-        ModulationModeState* modModeState = nullptr,
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::vibratoDepth),
               apvts.getParameter (ParamIDs::vibratoRate),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::vibratoOn)),
-              undoManager,
-              gestureCount,
-              modModeState,
+              ctx,
               param1DestID,
               param2DestID),
           modDepthOutput (modDepthOutput),

@@ -7,6 +7,7 @@
 #include "../Theme.h"
 #include "Utility/ModulationModeState.h"
 #include "Utility/ModulationContextMenu.h"
+#include "Utility/UIContext.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -16,9 +17,7 @@ class HPFDisplay final : public juce::Component,
 {
 public:
     explicit HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
-        juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr,
-        ModulationModeState* modModeState = nullptr);
+        const UIContext& ctx = {});
 
     ~HPFDisplay() override;
 

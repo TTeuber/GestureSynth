@@ -10,6 +10,7 @@
 #include "../../Theme.h"
 #include "ModulationModeState.h"
 #include "ModulationContextMenu.h"
+#include "UIContext.h"
 
 // Base Component Class for single parameter controls
 class SingleParameterComponent : public juce::Component,
@@ -18,15 +19,13 @@ class SingleParameterComponent : public juce::Component,
 public:
     explicit SingleParameterComponent (juce::RangedAudioParameter* param,
         juce::AudioParameterBool* activeParam = nullptr,
-        juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr,
-        ModulationModeState* modModeState = nullptr,
+        const UIContext& ctx = {},
         const juce::String& paramDestID = {})
         : param (param),
           activeParam (activeParam),
-          undoManager (undoManager),
-          gestureCount (gestureCount),
-          modModeState (modModeState),
+          undoManager (ctx.undoManager),
+          gestureCount (ctx.gestureCount),
+          modModeState (ctx.modModeState),
           paramDestID (paramDestID)
     {
         // Register as a listener for the parameter

@@ -10,6 +10,7 @@
 #include "../../Theme.h"
 #include "ModulationModeState.h"
 #include "ModulationContextMenu.h"
+#include "UIContext.h"
 
 // Base Component Class
 class DualParameterComponent : public juce::Component,
@@ -19,17 +20,15 @@ public:
     DualParameterComponent (juce::RangedAudioParameter* param1,
         juce::RangedAudioParameter* param2,
         juce::AudioParameterBool* activeParam = nullptr,
-        juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr,
-        ModulationModeState* modModeState = nullptr,
+        const UIContext& ctx = {},
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : param1 (param1),
           param2 (param2),
           activeParam (activeParam),
-          undoManager (undoManager),
-          gestureCount (gestureCount),
-          modModeState (modModeState),
+          undoManager (ctx.undoManager),
+          gestureCount (ctx.gestureCount),
+          modModeState (ctx.modModeState),
           param1DestID (param1DestID),
           param2DestID (param2DestID)
     {

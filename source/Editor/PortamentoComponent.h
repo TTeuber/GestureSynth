@@ -10,10 +10,8 @@ class PortamentoComponent final : public SingleParameterComponent
 {
 public:
     explicit PortamentoComponent (juce::RangedAudioParameter* portamentoParam,
-        juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr,
-        ModulationModeState* modModeState = nullptr)
-        : SingleParameterComponent (portamentoParam, nullptr, undoManager, gestureCount, modModeState)
+        const UIContext& ctx = {})
+        : SingleParameterComponent (portamentoParam, nullptr, ctx)
     {
     }
 

@@ -7,6 +7,7 @@
 #include "../Theme.h"
 #include "Utility/ModulationModeState.h"
 #include "Utility/ModulationContextMenu.h"
+#include "Utility/UIContext.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -17,11 +18,9 @@ class FilterDisplay final : public juce::Component,
 {
 public:
     explicit FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
-        juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr,
+        const UIContext& ctx = {},
         std::atomic<float>* modCutoffOutput = nullptr,
-        std::atomic<float>* modResonanceOutput = nullptr,
-        ModulationModeState* modModeState = nullptr);
+        std::atomic<float>* modResonanceOutput = nullptr);
 
     ~FilterDisplay() override;
 

@@ -13,28 +13,17 @@
 class DetuneComponent final : public DualParameterComponent, private juce::Timer
 {
 public:
-    DetuneComponent (juce::RangedAudioParameter* detuneParam,
-        juce::RangedAudioParameter* stereoParam,
-        juce::AudioParameterBool* stereoParamBool = nullptr)
-        : DualParameterComponent (detuneParam, stereoParam, stereoParamBool)
-    {
-    }
-
     DetuneComponent (juce::AudioProcessorValueTreeState& apvts,
-        juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr,
+        const UIContext& ctx = {},
         std::atomic<float>* modDetuneOutput = nullptr,
         std::atomic<float>* modWidthOutput = nullptr,
-        ModulationModeState* modModeState = nullptr,
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::oscDetune),
               apvts.getParameter (ParamIDs::oscWidth),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::detuneOn)),
-              undoManager,
-              gestureCount,
-              modModeState,
+              ctx,
               param1DestID,
               param2DestID),
           modDetuneOutput (modDetuneOutput),

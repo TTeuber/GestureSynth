@@ -10,29 +10,17 @@
 class SubOscillatorComponent : public DualParameterComponent, private juce::Timer
 {
 public:
-    SubOscillatorComponent (juce::RangedAudioParameter* subOscParam,
-        juce::RangedAudioParameter* subOscWaveParam)
-        : DualParameterComponent (subOscParam, subOscWaveParam)
-    {
-        // Ensure we're working with the correct parameters
-        jassert (subOscParam->getName (15).contains ("Sub") && subOscWaveParam->getName (15).contains ("Wave"));
-    }
-
     SubOscillatorComponent (juce::AudioProcessorValueTreeState& apvts,
-        juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr,
+        const UIContext& ctx = {},
         std::atomic<float>* modSubOscOutput = nullptr,
         std::atomic<float>* modSubOscWaveOutput = nullptr,
-        ModulationModeState* modModeState = nullptr,
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::subOsc),
               apvts.getParameter (ParamIDs::subOscWave),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::subOn)),
-              undoManager,
-              gestureCount,
-              modModeState,
+              ctx,
               param1DestID,
               param2DestID),
           modSubOscOutput (modSubOscOutput),

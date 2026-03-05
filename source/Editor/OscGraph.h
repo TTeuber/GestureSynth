@@ -14,27 +14,17 @@
 class WaveformComponent final : public DualParameterComponent, private juce::Timer
 {
 public:
-    WaveformComponent (juce::RangedAudioParameter* waveformParam,
-        juce::RangedAudioParameter* pulseWidthParam)
-        : DualParameterComponent (waveformParam, pulseWidthParam)
-    {
-    }
-
     WaveformComponent (juce::AudioProcessorValueTreeState& apvts,
-        juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr,
+        const UIContext& ctx = {},
         std::atomic<float>* modPulseWidthOutput = nullptr,
         std::atomic<float>* modWaveformOutput = nullptr,
-        ModulationModeState* modModeState = nullptr,
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::oscWaveform),
               apvts.getParameter (ParamIDs::pulseWidth),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::oscOn)),
-              undoManager,
-              gestureCount,
-              modModeState,
+              ctx,
               param1DestID,
               param2DestID),
           modPulseWidthOutput (modPulseWidthOutput),

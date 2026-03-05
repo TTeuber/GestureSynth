@@ -5,14 +5,12 @@
 #include "FilterDisplay.h"
 #include "../Utility/Parameters.h"
 FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
-    juce::UndoManager* undoManager,
-    std::atomic<int>* gestureCount,
+    const UIContext& ctx,
     std::atomic<float>* modCutoffOutput,
-    std::atomic<float>* modResonanceOutput,
-    ModulationModeState* modModeState)
-    : apvts (apvts), undoManager (undoManager), gestureCount (gestureCount),
+    std::atomic<float>* modResonanceOutput)
+    : apvts (apvts), undoManager (ctx.undoManager), gestureCount (ctx.gestureCount),
       modCutoffOutput (modCutoffOutput), modResonanceOutput (modResonanceOutput),
-      modModeState (modModeState)
+      modModeState (ctx.modModeState)
 {
     // Add listeners to the parameters
     this->apvts.addParameterListener (ParamIDs::filterFrequency, this);
