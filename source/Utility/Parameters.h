@@ -120,6 +120,35 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
         Normalize (0.0f, 1.0f, 0.01f), 0.35f));
 
     // ================================================================================================================================================
+    // Delay Parameters
+    auto delayTime = make_unique<Parameter> (ParameterID ("delayTime", 1), "Delay Time",
+        Normalize (10.0f, 2000.0f, 0.1f, 0.35f), 375.0f);
+    layout.add (std::move (delayTime));
+    layout.add (make_unique<AudioParameterBool> (ParameterID ("delayTempoSync", 1), "Delay Tempo Sync", false));
+    layout.add (make_unique<AudioParameterChoice> (ParameterID ("delayNoteDivision", 1), "Delay Note Division",
+        juce::StringArray { "1/1", "1/2", "1/2T", "1/2D", "1/4", "1/4T", "1/4D", "1/8", "1/8T", "1/8D", "1/16", "1/16T", "1/16D" }, 4));
+    layout.add (make_unique<Parameter> (ParameterID ("delayFeedback", 1), "Delay Feedback",
+        Normalize (0.0f, 0.95f, 0.01f), 0.4f));
+    layout.add (make_unique<Parameter> (ParameterID ("delayMix", 1), "Delay Mix",
+        Normalize (0.0f, 1.0f, 0.01f), 0.3f));
+    auto delayLowpass = make_unique<Parameter> (ParameterID ("delayLowpass", 1), "Delay Lowpass",
+        Normalize (200.0f, 18000.0f, 1.0f, 0.35f), 4000.0f);
+    layout.add (std::move (delayLowpass));
+    auto delayHighpass = make_unique<Parameter> (ParameterID ("delayHighpass", 1), "Delay Highpass",
+        Normalize (20.0f, 2000.0f, 0.1f, 0.35f), 80.0f);
+    layout.add (std::move (delayHighpass));
+    layout.add (make_unique<Parameter> (ParameterID ("delaySaturation", 1), "Delay Saturation",
+        Normalize (0.0f, 1.0f, 0.01f), 0.3f));
+    auto delayModRate = make_unique<Parameter> (ParameterID ("delayModRate", 1), "Delay Mod Rate",
+        Normalize (0.05f, 5.0f, 0.01f, 0.5f), 0.7f);
+    layout.add (std::move (delayModRate));
+    layout.add (make_unique<Parameter> (ParameterID ("delayModDepth", 1), "Delay Mod Depth",
+        Normalize (0.0f, 1.0f, 0.01f), 0.15f));
+    layout.add (make_unique<AudioParameterBool> (ParameterID ("delayPingPong", 1), "Delay Ping Pong", false));
+    layout.add (make_unique<Parameter> (ParameterID ("delayDiffusion", 1), "Delay Diffusion",
+        Normalize (0.0f, 1.0f, 0.01f), 0.0f));
+
+    // ================================================================================================================================================
     // Voice Mode Parameters
     layout.add (make_unique<AudioParameterBool> (ParameterID ("monoOn", 1), "Mono Mode", false));
     layout.add (make_unique<AudioParameterBool> (ParameterID ("legatoOn", 1), "Legato", false));

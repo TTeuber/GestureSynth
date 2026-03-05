@@ -424,6 +424,53 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     reverbPreDelayAttachment  = std::make_unique<SliderAttachment> (p.parameters, "reverbPreDelay", reverbPreDelaySlider);
     reverbWidthAttachment     = std::make_unique<SliderAttachment> (p.parameters, "reverbWidth", reverbWidthSlider);
     reverbMixAttachment       = std::make_unique<SliderAttachment> (p.parameters, "reverbMix", reverbMixSlider);
+
+    // Delay sliders
+    auto setupDelaySlider = [this] (juce::Slider& slider)
+    {
+        slider.setSliderStyle (juce::Slider::LinearHorizontal);
+        slider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 60, 20);
+        slider.setColour (juce::Slider::textBoxTextColourId, TEXT_COLOR);
+        slider.setColour (juce::Slider::textBoxBackgroundColourId, SECONDARY_COLOR);
+        slider.setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+        addAndMakeVisible (slider);
+    };
+
+    setupDelaySlider (delayTimeSlider);
+    setupDelaySlider (delayFeedbackSlider);
+    setupDelaySlider (delayMixSlider);
+    setupDelaySlider (delayLowpassSlider);
+    setupDelaySlider (delayHighpassSlider);
+    setupDelaySlider (delaySaturationSlider);
+    setupDelaySlider (delayModRateSlider);
+    setupDelaySlider (delayModDepthSlider);
+    setupDelaySlider (delayDiffusionSlider);
+
+    delayTimeAttachment       = std::make_unique<SliderAttachment> (p.parameters, "delayTime", delayTimeSlider);
+    delayFeedbackAttachment   = std::make_unique<SliderAttachment> (p.parameters, "delayFeedback", delayFeedbackSlider);
+    delayMixAttachment        = std::make_unique<SliderAttachment> (p.parameters, "delayMix", delayMixSlider);
+    delayLowpassAttachment    = std::make_unique<SliderAttachment> (p.parameters, "delayLowpass", delayLowpassSlider);
+    delayHighpassAttachment   = std::make_unique<SliderAttachment> (p.parameters, "delayHighpass", delayHighpassSlider);
+    delaySaturationAttachment = std::make_unique<SliderAttachment> (p.parameters, "delaySaturation", delaySaturationSlider);
+    delayModRateAttachment    = std::make_unique<SliderAttachment> (p.parameters, "delayModRate", delayModRateSlider);
+    delayModDepthAttachment   = std::make_unique<SliderAttachment> (p.parameters, "delayModDepth", delayModDepthSlider);
+    delayDiffusionAttachment  = std::make_unique<SliderAttachment> (p.parameters, "delayDiffusion", delayDiffusionSlider);
+
+    // Delay note division combo box
+    delayNoteDivisionCombo.setColour (juce::ComboBox::backgroundColourId, SECONDARY_COLOR);
+    delayNoteDivisionCombo.setColour (juce::ComboBox::textColourId, TEXT_COLOR);
+    delayNoteDivisionCombo.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
+    addAndMakeVisible (delayNoteDivisionCombo);
+    delayNoteDivisionAttachment = std::make_unique<ComboBoxAttachment> (p.parameters, "delayNoteDivision", delayNoteDivisionCombo);
+
+    // Delay toggles
+    delayTempoSyncToggle = std::make_unique<CustomToggleComponent> (
+        dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("delayTempoSync")), "Sync");
+    addAndMakeVisible (*delayTempoSyncToggle);
+
+    delayPingPongToggle = std::make_unique<CustomToggleComponent> (
+        dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter ("delayPingPong")), "Ping Pong");
+    addAndMakeVisible (*delayPingPongToggle);
 }
 
 void ExperimentTabContent::paint (juce::Graphics& g)
@@ -456,6 +503,28 @@ void ExperimentTabContent::paint (juce::Graphics& g)
         g.drawText (leftLabels[i], leftX, y, labelW, sliderH, juce::Justification::centredRight);
         g.drawText (rightLabels[i], rightX, y, labelW, sliderH, juce::Justification::centredRight);
     }
+
+    // BBD Delay section header
+    g.setFont (18.0f);
+    g.drawText ("BBD Delay", getLocalBounds().withTop (290).removeFromTop (30), juce::Justification::centred);
+
+    // Delay slider labels
+    g.setFont (12.0f);
+    int delayTop = 320;
+
+    const char* delayLeftLabels[] = { "Time", "Mix", "Highpass", "Mod Rate", "Diffusion" };
+    const char* delayRightLabels[] = { "Feedback", "Lowpass", "Saturation", "Mod Depth" };
+
+    for (int i = 0; i < 5; ++i)
+    {
+        int y = delayTop + i * (sliderH + spacing);
+        g.drawText (delayLeftLabels[i], leftX, y, labelW, sliderH, juce::Justification::centredRight);
+    }
+    for (int i = 0; i < 4; ++i)
+    {
+        int y = delayTop + i * (sliderH + spacing);
+        g.drawText (delayRightLabels[i], rightX, y, labelW, sliderH, juce::Justification::centredRight);
+    }
 }
 
 void ExperimentTabContent::resized()
@@ -484,4 +553,30 @@ void ExperimentTabContent::resized()
         leftSliders[i]->setBounds (leftX, y, sliderW, sliderH);
         rightSliders[i]->setBounds (rightX, y, sliderW, sliderH);
     }
+
+    // Delay sliders: 2 columns below reverb
+    int delayTop = 320;
+
+    juce::Slider* delayLeftSliders[] = { &delayTimeSlider, &delayMixSlider, &delayHighpassSlider, &delayModRateSlider, &delayDiffusionSlider };
+    juce::Slider* delayRightSliders[] = { &delayFeedbackSlider, &delayLowpassSlider, &delaySaturationSlider, &delayModDepthSlider };
+
+    for (int i = 0; i < 5; ++i)
+    {
+        int y = delayTop + i * (sliderH + spacing);
+        delayLeftSliders[i]->setBounds (leftX, y, sliderW, sliderH);
+    }
+    for (int i = 0; i < 4; ++i)
+    {
+        int y = delayTop + i * (sliderH + spacing);
+        delayRightSliders[i]->setBounds (rightX, y, sliderW, sliderH);
+    }
+
+    // Toggle/combo row below delay sliders
+    int toggleRowY = delayTop + 4 * (sliderH + spacing);
+    int toggleW = 70;
+    int comboW = 90;
+    int toggleRowX = rightX;
+    delayTempoSyncToggle->setBounds (toggleRowX, toggleRowY, toggleW, sliderH);
+    delayNoteDivisionCombo.setBounds (toggleRowX + toggleW + 5, toggleRowY, comboW, sliderH);
+    delayPingPongToggle->setBounds (toggleRowX + toggleW + comboW + 10, toggleRowY, toggleW + 10, sliderH);
 }

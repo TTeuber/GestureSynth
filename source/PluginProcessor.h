@@ -2,6 +2,7 @@
 
 #include "Modulation/LFOData.h"
 #include "Modulation/Modulation.h"
+#include "Processor/BBDDelay.h"
 #include "Processor/Chorus.h"
 #include "Processor/Reverb.h"
 #include "Synthesizer/MySynth.h"
@@ -109,6 +110,7 @@ private:
 
     MySynth synth;
     JuneChorus chorus { parameters };
+    BBDDelay bbdDelay { parameters };
     Reverb reverb { parameters };
 
     double lastProcessingTimeMs;

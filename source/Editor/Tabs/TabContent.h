@@ -458,4 +458,22 @@ private:
     std::unique_ptr<SliderAttachment> reverbBassMultAttachment, reverbModRateAttachment, reverbModDepthAttachment;
     std::unique_ptr<SliderAttachment> reverbDiffusionAttachment, reverbPreDelayAttachment;
     std::unique_ptr<SliderAttachment> reverbWidthAttachment, reverbMixAttachment;
+
+    // Delay sliders
+    juce::Slider delayTimeSlider, delayFeedbackSlider, delayMixSlider, delayLowpassSlider, delayHighpassSlider;
+    juce::Slider delaySaturationSlider, delayModRateSlider, delayModDepthSlider, delayDiffusionSlider;
+
+    // Delay attachments
+    std::unique_ptr<SliderAttachment> delayTimeAttachment, delayFeedbackAttachment, delayMixAttachment;
+    std::unique_ptr<SliderAttachment> delayLowpassAttachment, delayHighpassAttachment, delaySaturationAttachment;
+    std::unique_ptr<SliderAttachment> delayModRateAttachment, delayModDepthAttachment, delayDiffusionAttachment;
+
+    // Delay combo box (note division)
+    juce::ComboBox delayNoteDivisionCombo;
+    using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
+    std::unique_ptr<ComboBoxAttachment> delayNoteDivisionAttachment;
+
+    // Delay toggles
+    std::unique_ptr<CustomToggleComponent> delayTempoSyncToggle;
+    std::unique_ptr<CustomToggleComponent> delayPingPongToggle;
 };

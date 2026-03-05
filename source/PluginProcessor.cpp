@@ -104,6 +104,7 @@ void PluginProcessor::prepareToPlay (const double sampleRate, const int samplesP
     juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), static_cast<juce::uint32> (getMainBusNumOutputChannels()) };
 
     chorus.prepare (spec);
+    bbdDelay.prepare (spec);
     reverb.prepare (spec);
 
     synth.prepareVoices (sampleRate, samplesPerBlock, getTotalNumOutputChannels());
@@ -204,6 +205,9 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     }
 
     chorus.process (buffer);
+
+    bbdDelay.setTempoInfo (tempoInfo.bpm, tempoInfo.hostTempoAvailable);
+    bbdDelay.process (buffer);
 
     reverb.process (buffer);
 
