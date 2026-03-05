@@ -189,6 +189,11 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             tempoInfo.isPlaying = pos->getIsPlaying();
         }
 
+    // --- Audio pipeline: synth voices -> mod outputs -> effects chain ---
+    // Voice rendering writes per-sample modulation values to modDestOutputs[] atomics.
+    // For effects-level destinations (chorus depth/rate), multiple voices write to the
+    // same indices, so the last active voice's final sample determines the value read
+    // by the effects chain ("last-voice-wins"). This is intentional for global effects.
     synth.updateParameters (tempoInfo);
     synth.renderNextBlock (buffer, midiMessages, 0, buffer.getNumSamples());
     synth.resetOutputsIfIdle();

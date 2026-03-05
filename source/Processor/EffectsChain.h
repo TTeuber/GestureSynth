@@ -32,13 +32,15 @@ public:
                   const TempoInfo& tempoInfo,
                   std::array<std::atomic<float>, N>& modDestOutputs)
     {
-        // Apply modulated chorus depth/rate from mod matrix (last-voice-wins)
-        // modDestOutputs stores normalized 0-1 values; convert to actual parameter range
+        // Read effects-level mod destinations written by voice rendering above.
+        // These are "last-voice-wins" — all voices write to the same atomic slots,
+        // so the final active voice's last sample value is what we read here.
+        // This is correct because effects are global (post-voice-sum), not per-voice.
         {
             auto* depthParam = parameters.getParameter (ParamIDs::chorusDepth);
             auto* rateParam = parameters.getParameter (ParamIDs::chorusRate);
-            chorus.setDepth (depthParam->convertFrom0to1 (modDestOutputs[12].load (std::memory_order_relaxed)));
-            chorus.setRate (rateParam->convertFrom0to1 (modDestOutputs[13].load (std::memory_order_relaxed)));
+            chorus.setDepth (depthParam->convertFrom0to1 (modDestOutputs[ModDestIndex::chorusDepth].load (std::memory_order_relaxed)));
+            chorus.setRate (rateParam->convertFrom0to1 (modDestOutputs[ModDestIndex::chorusRate].load (std::memory_order_relaxed)));
         }
 
         chorus.process (buffer);

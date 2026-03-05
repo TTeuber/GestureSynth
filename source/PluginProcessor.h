@@ -61,7 +61,7 @@ public:
 
     std::array<std::atomic<float>, 16> modSourceOutputs {};
 
-    static constexpr int kNumModDests = 14;
+    static constexpr int kNumModDests = ModDestIndex::count;
     std::array<std::atomic<float>, kNumModDests> modDestOutputs {};
 
     using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;

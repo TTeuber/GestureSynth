@@ -43,20 +43,20 @@ MySynthVoice::MySynthVoice (
         modMatrix.initDestination (d);
 
     // Assign output indices so the mod matrix can publish normalized modulated values
-    filterCutoff.setOutputIndex (0);
-    filterResonance.setOutputIndex (1);
-    hpfCutoff.setOutputIndex (2);
-    fineTuneParam.setOutputIndex (3);
-    pulseWidth.setOutputIndex (4);
-    oscWaveform.setOutputIndex (5);
-    oscDetune.setOutputIndex (6);
-    oscWidth.setOutputIndex (7);
-    subOsc.setOutputIndex (8);
-    subOscWave.setOutputIndex (9);
-    vibratoDepthParam.setOutputIndex (10);
-    vibratoRateParam.setOutputIndex (11);
-    chorusDepthParam.setOutputIndex (12);
-    chorusRateParam.setOutputIndex (13);
+    filterCutoff.setOutputIndex (ModDestIndex::filterCutoff);
+    filterResonance.setOutputIndex (ModDestIndex::filterResonance);
+    hpfCutoff.setOutputIndex (ModDestIndex::hpfCutoff);
+    fineTuneParam.setOutputIndex (ModDestIndex::fineTune);
+    pulseWidth.setOutputIndex (ModDestIndex::pulseWidth);
+    oscWaveform.setOutputIndex (ModDestIndex::oscWaveform);
+    oscDetune.setOutputIndex (ModDestIndex::oscDetune);
+    oscWidth.setOutputIndex (ModDestIndex::oscWidth);
+    subOsc.setOutputIndex (ModDestIndex::subOsc);
+    subOscWave.setOutputIndex (ModDestIndex::subOscWave);
+    vibratoDepthParam.setOutputIndex (ModDestIndex::vibratoDepth);
+    vibratoRateParam.setOutputIndex (ModDestIndex::vibratoRate);
+    chorusDepthParam.setOutputIndex (ModDestIndex::chorusDepth);
+    chorusRateParam.setOutputIndex (ModDestIndex::chorusRate);
 
     // Initialize slotCache from modTree
     for (int i = 0; i < modTree.getNumChildren() && i < static_cast<int> (slotCache.size()); ++i)

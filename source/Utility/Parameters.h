@@ -6,6 +6,25 @@
 
 #include "juce_audio_processors/juce_audio_processors.h"
 
+namespace ModDestIndex
+{
+    constexpr int filterCutoff     = 0;
+    constexpr int filterResonance  = 1;
+    constexpr int hpfCutoff        = 2;
+    constexpr int fineTune         = 3;
+    constexpr int pulseWidth       = 4;
+    constexpr int oscWaveform      = 5;
+    constexpr int oscDetune        = 6;
+    constexpr int oscWidth         = 7;
+    constexpr int subOsc           = 8;
+    constexpr int subOscWave       = 9;
+    constexpr int vibratoDepth     = 10;
+    constexpr int vibratoRate      = 11;
+    constexpr int chorusDepth      = 12;
+    constexpr int chorusRate       = 13;
+    constexpr int count            = 14;
+}
+
 namespace ParamIDs
 {
     // Global
