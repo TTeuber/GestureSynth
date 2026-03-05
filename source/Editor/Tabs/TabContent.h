@@ -14,7 +14,7 @@
 #include "../CustomKeyboard.h"
 #include "../WheelComponent.h"
 #include "../KeyVelComponent.h"
-#include "../Oscilliscope.h"
+#include "../Oscilloscope.h"
 #include "../SubOscillatorComponent.h"
 #include "../ChorusMixComponent.h"
 #include "../NoiseComponent.h"
