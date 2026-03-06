@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include "Utility/AnimationFrameSource.h"
 #include "Utility/DualParameterComponent.h"
 #include "../Utility/Parameters.h"
 
-class SubOscillatorComponent : public DualParameterComponent, private juce::Timer
+class SubOscillatorComponent : public DualParameterComponent, public AnimationFrameSource::Listener
 {
 public:
     SubOscillatorComponent (juce::AudioProcessorValueTreeState& apvts,
@@ -24,13 +25,18 @@ public:
               param1DestID,
               param2DestID),
           modSubOscOutput (modSubOscOutput),
-          modSubOscWaveOutput (modSubOscWaveOutput)
+          modSubOscWaveOutput (modSubOscWaveOutput),
+          animSource (ctx.animationSource)
     {
-        if (modSubOscOutput != nullptr || modSubOscWaveOutput != nullptr)
-            startTimerHz (30);
+        if ((modSubOscOutput != nullptr || modSubOscWaveOutput != nullptr) && animSource != nullptr)
+            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
     }
 
-    ~SubOscillatorComponent() override { stopTimer(); }
+    ~SubOscillatorComponent() override
+    {
+        if (animSource != nullptr)
+            animSource->removeListener (this);
+    }
 
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
@@ -78,10 +84,11 @@ protected:
 private:
     std::atomic<float>* modSubOscOutput = nullptr;
     std::atomic<float>* modSubOscWaveOutput = nullptr;
+    AnimationFrameSource* animSource = nullptr;
     float modulatedSubOsc = 0.0f;
     float modulatedSubOscWave = 0.0f;
 
-    void timerCallback() override
+    void onAnimationFrame() override
     {
         constexpr float alpha = 0.3f;
         if (modSubOscOutput != nullptr)

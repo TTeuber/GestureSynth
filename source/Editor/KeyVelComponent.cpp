@@ -9,13 +9,15 @@ KeyVelComponent::KeyVelComponent (juce::AudioProcessorValueTreeState& apvts,
                                   std::atomic<int>* gestureCount,
                                   ModulationModeState* modState,
                                   std::atomic<float>* velocityRaw,
-                                  std::atomic<float>* keyboardRaw)
+                                  std::atomic<float>* keyboardRaw,
+                                  AnimationFrameSource* animSource)
     : parameters (apvts),
       undoManager (um),
       activeGestureCount (gestureCount),
       modModeState (modState),
       velocityRawPtr (velocityRaw),
-      keyboardRawPtr (keyboardRaw)
+      keyboardRawPtr (keyboardRaw),
+      animSource (animSource)
 {
     velCurveParam = parameters.getParameter (ParamIDs::velocityCurve);
     keyCurveParam = parameters.getParameter (ParamIDs::keyboardCurve);
@@ -23,17 +25,19 @@ KeyVelComponent::KeyVelComponent (juce::AudioProcessorValueTreeState& apvts,
     if (modModeState != nullptr)
         modModeState->addListener (this);
 
-    startTimerHz (60);
+    if (animSource != nullptr)
+        animSource->addListener (this, AnimationFrameSource::Rate::Hz60);
 }
 
 KeyVelComponent::~KeyVelComponent()
 {
-    stopTimer();
+    if (animSource != nullptr)
+        animSource->removeListener (this);
     if (modModeState != nullptr)
         modModeState->removeListener (this);
 }
 
-void KeyVelComponent::timerCallback()
+void KeyVelComponent::onAnimationFrame()
 {
     auto* ptr = (activeTab == 0) ? velocityRawPtr : keyboardRawPtr;
     if (ptr != nullptr)

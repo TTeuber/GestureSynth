@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include "Utility/AnimationFrameSource.h"
 #include "Utility/DualParameterComponent.h"
 #include "../Utility/Parameters.h"
 
-class ChorusComponent final : public DualParameterComponent, private juce::Timer
+class ChorusComponent final : public DualParameterComponent, public AnimationFrameSource::Listener
 {
 public:
     ChorusComponent (const juce::AudioProcessorValueTreeState& apvts,
@@ -24,13 +25,18 @@ public:
               param1DestID,
               param2DestID),
           modDepthOutput (modDepthOutput),
-          modRateOutput (modRateOutput)
+          modRateOutput (modRateOutput),
+          animSource (ctx.animationSource)
     {
-        if (modDepthOutput != nullptr || modRateOutput != nullptr)
-            startTimerHz (30);
+        if ((modDepthOutput != nullptr || modRateOutput != nullptr) && animSource != nullptr)
+            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
     }
 
-    ~ChorusComponent() override { stopTimer(); }
+    ~ChorusComponent() override
+    {
+        if (animSource != nullptr)
+            animSource->removeListener (this);
+    }
 
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
@@ -59,10 +65,11 @@ protected:
 private:
     std::atomic<float>* modDepthOutput = nullptr;
     std::atomic<float>* modRateOutput = nullptr;
+    AnimationFrameSource* animSource = nullptr;
     float modulatedDepth = 0.0f;
     float modulatedRate = 0.0f;
 
-    void timerCallback() override
+    void onAnimationFrame() override
     {
         constexpr float alpha = 0.3f;
         if (modDepthOutput != nullptr)

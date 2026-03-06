@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Editor/Tabs/TabContent.h"
+#include "Editor/Utility/AnimationFrameSource.h"
 #include "Editor/Utility/ModulationModeState.h"
 #include "PluginProcessor.h"
 #include "Theme.h"
@@ -52,6 +53,7 @@ private:
     PluginProcessor& processorRef;
 
     ModulationModeState modModeState;
+    AnimationFrameSource animationSource;
 
     juce::Component contentWrapper;
     juce::Label modeLabel;
@@ -65,6 +67,36 @@ private:
 
     juce::TabbedComponent tabbedComponent { juce::TabbedButtonBar::TabsAtTop };
 
+    // Persistent bottom panel and its components
+    juce::Component persistentPanel;
+
+    // Keyboard row
+    ModWheelComponent modWheel;
+    PitchWheelComponent pitchWheel;
+    CustomKeyboard keyboard;
+    PitchBendRangeControl pitchBendRangeControl;
+    VoiceCountControl voiceCountControl;
+    CustomToggleComponent monoToggle;
+    CustomToggleComponent legatoToggle;
+    CustomToggleComponent gateToggle;
+    KeyVelComponent keyVelComponent;
+
+    // LFO/ENV row
+    LFOComponent lfoComponent;
+    ADSRGraph adsrGraph;
+
+    ModSourceTab mwTab, atTab, expTab;
+    ModSourceTab lfoTabs[4];
+    ModSourceTab envTabs[4];
+    ModSourceTab velTab, keyTab;
+    int activeLfoIndex = 0;
+    int activeEnvIndex = 0;
+    int activeKeyVelTab = 0;
+
+    void selectLfo (int index);
+    void selectEnv (int index);
+    void selectKeyVel (int index);
+
     juce::ComponentBoundsConstrainer constrainer;
     std::unique_ptr<ResizeGrip> resizeGrip;
 
@@ -76,6 +108,7 @@ private:
 
     // ModulationModeState::Listener
     void modulationModeChanged (ModulationModeState::Mode newMode) override;
+    void targetSourceChanged (const juce::String& newSourceID) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginEditor)
 };

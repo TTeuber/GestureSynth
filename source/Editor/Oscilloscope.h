@@ -8,18 +8,27 @@
 #include "../Theme.h"
 #include "../Utility/Parameters.h"
 #include "../Utility/PitchTracker.h"
+#include "Utility/AnimationFrameSource.h"
 
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <limits>
 
-class Oscilloscope final : public juce::Component, public juce::Timer
+class Oscilloscope final : public juce::Component, public AnimationFrameSource::Listener
 {
 public:
-    explicit Oscilloscope (PluginProcessor& p) : processor (p), pitchTracker (p.pitchTracker)
+    explicit Oscilloscope (PluginProcessor& p, AnimationFrameSource* animSource = nullptr)
+        : processor (p), pitchTracker (p.pitchTracker), animSource (animSource)
     {
         subOnParam = dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::subOn));
         subLevelParam = p.parameters.getParameter (ParamIDs::subOsc);
-        startTimerHz (30);
+        if (animSource != nullptr)
+            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
+    }
+
+    ~Oscilloscope() override
+    {
+        if (animSource != nullptr)
+            animSource->removeListener (this);
     }
 
     void paint (juce::Graphics& g) override
@@ -54,7 +63,7 @@ public:
         g.strokePath (wavePath, juce::PathStrokeType (1.0f));
     }
 
-    void timerCallback() override
+    void onAnimationFrame() override
     {
         const double sampleRate = processor.getSampleRate();
         float freq = pitchTracker->frequency;
@@ -177,6 +186,7 @@ public:
 private:
     PluginProcessor& processor;
     std::shared_ptr<PitchTracker> pitchTracker;
+    AnimationFrameSource* animSource = nullptr;
     juce::AudioParameterBool* subOnParam = nullptr;
     juce::RangedAudioParameter* subLevelParam = nullptr;
 

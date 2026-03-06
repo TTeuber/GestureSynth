@@ -1,22 +1,25 @@
 #pragma once
 
 #include "../Theme.h"
+#include "Utility/AnimationFrameSource.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 
-class CustomKeyboard final : public juce::Component, private juce::Timer
+class CustomKeyboard final : public juce::Component, public AnimationFrameSource::Listener
 {
 public:
-    explicit CustomKeyboard (juce::MidiKeyboardState& state)
-        : keyboardState (state)
+    explicit CustomKeyboard (juce::MidiKeyboardState& state, AnimationFrameSource* animSource = nullptr)
+        : keyboardState (state), animSource (animSource)
     {
         setMouseCursor (juce::MouseCursor::PointingHandCursor);
         setWantsKeyboardFocus (true);
-        startTimerHz (30);
+        if (animSource != nullptr)
+            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
     }
 
     ~CustomKeyboard() override
     {
-        stopTimer();
+        if (animSource != nullptr)
+            animSource->removeListener (this);
         // Release any computer-keyboard-held notes
         for (int i = 0; i < 128; ++i)
             if (keysPressed[i])
@@ -210,7 +213,7 @@ public:
     }
 
 private:
-    void timerCallback() override
+    void onAnimationFrame() override
     {
         repaint();
     }
@@ -283,6 +286,7 @@ private:
     }
 
     juce::MidiKeyboardState& keyboardState;
+    AnimationFrameSource* animSource = nullptr;
 
     static constexpr int lowestNote = 24;   // C0
     static constexpr int highestNote = 83;  // B5

@@ -2,13 +2,14 @@
 
 #include "../Modulation/MyADSR.h"
 #include "../Theme.h"
+#include "Utility/AnimationFrameSource.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <vector>
 
 #include <utility>
 
-class ADSRGraph final : public juce::Component, public juce::AudioProcessorValueTreeState::Listener, public juce::Timer
+class ADSRGraph final : public juce::Component, public juce::AudioProcessorValueTreeState::Listener, public AnimationFrameSource::Listener
 {
 public:
     ADSRGraph (juce::AudioProcessorValueTreeState& p,
@@ -21,9 +22,10 @@ public:
         juce::StringRef releaseCurveParam,
         std::shared_ptr<MyADSR*> adsr,
         juce::UndoManager* undoManager = nullptr,
-        std::atomic<int>* gestureCount = nullptr);
+        std::atomic<int>* gestureCount = nullptr,
+        AnimationFrameSource* animSource = nullptr);
     ~ADSRGraph() override;
-    void timerCallback() override;
+    void onAnimationFrame() override;
     void parameterChanged (const juce::String& parameterID, float newValue) override;
     void setParameters (float attack, float decay, float sustain, float release);
     void resized() override;
@@ -117,6 +119,7 @@ private:
 
     juce::UndoManager* undoManager = nullptr;
     std::atomic<int>* gestureCount = nullptr;
+    AnimationFrameSource* animSource = nullptr;
     std::vector<juce::RangedAudioParameter*> activeGestureParams;
 
     void beginGesturesForSelectedPoint();

@@ -7,11 +7,12 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include "Utility/AnimationFrameSource.h"
 #include "Utility/DualParameterComponent.h"
 #include "../Utility/Parameters.h"
 
 // First Derived Class (WaveformComponent)
-class WaveformComponent final : public DualParameterComponent, private juce::Timer
+class WaveformComponent final : public DualParameterComponent, public AnimationFrameSource::Listener
 {
 public:
     WaveformComponent (juce::AudioProcessorValueTreeState& apvts,
@@ -28,13 +29,18 @@ public:
               param1DestID,
               param2DestID),
           modPulseWidthOutput (modPulseWidthOutput),
-          modWaveformOutput (modWaveformOutput)
+          modWaveformOutput (modWaveformOutput),
+          animSource (ctx.animationSource)
     {
-        if (modPulseWidthOutput != nullptr || modWaveformOutput != nullptr)
-            startTimerHz (30);
+        if ((modPulseWidthOutput != nullptr || modWaveformOutput != nullptr) && animSource != nullptr)
+            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
     }
 
-    ~WaveformComponent() override { stopTimer(); }
+    ~WaveformComponent() override
+    {
+        if (animSource != nullptr)
+            animSource->removeListener (this);
+    }
 
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
@@ -64,10 +70,11 @@ protected:
 private:
     std::atomic<float>* modPulseWidthOutput = nullptr;
     std::atomic<float>* modWaveformOutput = nullptr;
+    AnimationFrameSource* animSource = nullptr;
     float modulatedPulseWidth = 0.5f;
     float modulatedWaveform = 0.5f;
 
-    void timerCallback() override
+    void onAnimationFrame() override
     {
         constexpr float alpha = 0.3f;
         if (modPulseWidthOutput != nullptr)

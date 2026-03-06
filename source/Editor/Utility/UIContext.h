@@ -8,10 +8,12 @@
 
 namespace juce { class UndoManager; }
 class ModulationModeState;
+class AnimationFrameSource;
 
 struct UIContext
 {
     juce::UndoManager* undoManager = nullptr;
     std::atomic<int>* gestureCount = nullptr;
     ModulationModeState* modModeState = nullptr;
+    AnimationFrameSource* animationSource = nullptr;
 };

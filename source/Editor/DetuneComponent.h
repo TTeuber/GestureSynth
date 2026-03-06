@@ -7,10 +7,11 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include "Utility/AnimationFrameSource.h"
 #include "Utility/DualParameterComponent.h"
 #include "../Utility/Parameters.h"
 
-class DetuneComponent final : public DualParameterComponent, private juce::Timer
+class DetuneComponent final : public DualParameterComponent, public AnimationFrameSource::Listener
 {
 public:
     DetuneComponent (juce::AudioProcessorValueTreeState& apvts,
@@ -27,13 +28,18 @@ public:
               param1DestID,
               param2DestID),
           modDetuneOutput (modDetuneOutput),
-          modWidthOutput (modWidthOutput)
+          modWidthOutput (modWidthOutput),
+          animSource (ctx.animationSource)
     {
-        if (modDetuneOutput != nullptr || modWidthOutput != nullptr)
-            startTimerHz (30);
+        if ((modDetuneOutput != nullptr || modWidthOutput != nullptr) && animSource != nullptr)
+            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
     }
 
-    ~DetuneComponent() override { stopTimer(); }
+    ~DetuneComponent() override
+    {
+        if (animSource != nullptr)
+            animSource->removeListener (this);
+    }
 
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
@@ -60,10 +66,11 @@ protected:
 private:
     std::atomic<float>* modDetuneOutput = nullptr;
     std::atomic<float>* modWidthOutput = nullptr;
+    AnimationFrameSource* animSource = nullptr;
     float modulatedDetune = 0.0f;
     float modulatedWidth = 0.0f;
 
-    void timerCallback() override
+    void onAnimationFrame() override
     {
         constexpr float alpha = 0.3f;
         if (modDetuneOutput != nullptr)

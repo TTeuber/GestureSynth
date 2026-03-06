@@ -3,19 +3,28 @@
 #include "../PluginProcessor.h"
 #include "../Theme.h"
 #include "../Utility/Parameters.h"
+#include "Utility/AnimationFrameSource.h"
 #include "Utility/ModulationModeState.h"
 
 // =============================================================================
 // ModWheelComponent
 // =============================================================================
-class ModWheelComponent final : public juce::Component, private juce::Timer
+class ModWheelComponent final : public juce::Component, public AnimationFrameSource::Listener
 {
 public:
-    ModWheelComponent (PluginProcessor& p, ModulationModeState*)
+    ModWheelComponent (PluginProcessor& p, ModulationModeState*, AnimationFrameSource* animSource = nullptr)
         : processor (p),
-          modWheelRawPtr (p.getSynth().getModWheelRawPtr())
+          modWheelRawPtr (p.getSynth().getModWheelRawPtr()),
+          animSource (animSource)
     {
-        startTimerHz (30);
+        if (animSource != nullptr)
+            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
+    }
+
+    ~ModWheelComponent() override
+    {
+        if (animSource != nullptr)
+            animSource->removeListener (this);
     }
 
     void paint (juce::Graphics& g) override
@@ -64,7 +73,7 @@ public:
         // Mod wheel stays where released (no spring-back)
     }
 
-    void timerCallback() override
+    void onAnimationFrame() override
     {
         if (isDragging || modWheelRawPtr == nullptr)
             return;
@@ -100,6 +109,7 @@ private:
 
     PluginProcessor& processor;
     std::atomic<float>* modWheelRawPtr = nullptr;
+    AnimationFrameSource* animSource = nullptr;
     float currentValue = 0.0f;
     bool isDragging = false;
 };
@@ -107,22 +117,26 @@ private:
 // =============================================================================
 // PitchWheelComponent
 // =============================================================================
-class PitchWheelComponent final : public juce::Component, private juce::Timer,
+class PitchWheelComponent final : public juce::Component, public AnimationFrameSource::Listener,
                                    private juce::AudioProcessorParameter::Listener
 {
 public:
-    explicit PitchWheelComponent (PluginProcessor& p)
+    explicit PitchWheelComponent (PluginProcessor& p, AnimationFrameSource* animSource = nullptr)
         : processor (p),
           pitchBendRawPtr (p.getSynth().getPitchBendRawPtr()),
-          pitchBendRangeParam (p.parameters.getParameter (ParamIDs::pitchBendRange))
+          pitchBendRangeParam (p.parameters.getParameter (ParamIDs::pitchBendRange)),
+          animSource (animSource)
     {
         if (pitchBendRangeParam != nullptr)
             pitchBendRangeParam->addListener (this);
-        startTimerHz (30);
+        if (animSource != nullptr)
+            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
     }
 
     ~PitchWheelComponent() override
     {
+        if (animSource != nullptr)
+            animSource->removeListener (this);
         if (pitchBendRangeParam != nullptr)
             pitchBendRangeParam->removeListener (this);
     }
@@ -223,7 +237,7 @@ public:
         }
     }
 
-    void timerCallback() override
+    void onAnimationFrame() override
     {
         if (isDraggingTrack || pitchBendRawPtr == nullptr)
             return;
@@ -285,6 +299,7 @@ private:
     PluginProcessor& processor;
     std::atomic<float>* pitchBendRawPtr = nullptr;
     juce::RangedAudioParameter* pitchBendRangeParam = nullptr;
+    AnimationFrameSource* animSource = nullptr;
     int currentPitchValue = 8192;
     bool isDraggingTrack = false;
     bool isDraggingNumber = false;

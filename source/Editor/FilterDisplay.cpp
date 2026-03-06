@@ -10,7 +10,7 @@ FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
     std::atomic<float>* modResonanceOutput)
     : apvts (apvts), undoManager (ctx.undoManager), gestureCount (ctx.gestureCount),
       modCutoffOutput (modCutoffOutput), modResonanceOutput (modResonanceOutput),
-      modModeState (ctx.modModeState)
+      animSource (ctx.animationSource), modModeState (ctx.modModeState)
 {
     // Add listeners to the parameters
     this->apvts.addParameterListener (ParamIDs::filterFrequency, this);
@@ -28,14 +28,15 @@ FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
     // Get initial parameter values
     updateParameterValues();
 
-    if (modCutoffOutput != nullptr || modResonanceOutput != nullptr)
-        startTimerHz (30);
+    if ((modCutoffOutput != nullptr || modResonanceOutput != nullptr) && animSource != nullptr)
+        animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
 
     setSize (300, 200);
 }
 FilterDisplay::~FilterDisplay()
 {
-    stopTimer();
+    if (animSource != nullptr)
+        animSource->removeListener (this);
     // Remove listeners
     apvts.removeParameterListener (ParamIDs::filterFrequency, this);
     apvts.removeParameterListener (ParamIDs::filterResonance, this);
@@ -407,7 +408,7 @@ void FilterDisplay::drawParameterValues (juce::Graphics& g) const
 
 }
 
-void FilterDisplay::timerCallback()
+void FilterDisplay::onAnimationFrame()
 {
     constexpr float alpha = 0.3f;
 

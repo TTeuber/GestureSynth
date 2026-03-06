@@ -5,6 +5,7 @@
 #pragma once
 
 #include "../Theme.h"
+#include "Utility/AnimationFrameSource.h"
 #include "Utility/ModulationModeState.h"
 #include "Utility/ModulationContextMenu.h"
 #include "Utility/UIContext.h"
@@ -14,7 +15,7 @@
 //==============================================================================
 class FilterDisplay final : public juce::Component,
                             juce::AudioProcessorValueTreeState::Listener,
-                            private juce::Timer
+                            public AnimationFrameSource::Listener
 {
 public:
     explicit FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
@@ -96,8 +97,9 @@ private:
     float modulatedNormCutoff = 0.5f;
     float modulatedNormResonance = 0.5f;
 
-    void timerCallback() override;
+    void onAnimationFrame() override;
     void drawModulatedFrequencyPath (juce::Graphics& g) const;
+    AnimationFrameSource* animSource = nullptr;
 
     // Modulation mode
     ModulationModeState* modModeState = nullptr;

@@ -2,16 +2,19 @@
 
 #include "../PluginProcessor.h"
 #include "../Theme.h"
+#include "Utility/AnimationFrameSource.h"
 #include "Utility/DepthSlider.h"
 #include "Utility/ModulationIconDrawing.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
-class MatrixComponent final : public juce::Component, public juce::ValueTree::Listener, public juce::Timer
+class MatrixComponent final : public juce::Component, public juce::ValueTree::Listener, public AnimationFrameSource::Listener
 {
 public:
     explicit MatrixComponent (juce::ValueTree& mt, std::atomic<float>* srcOutputs = nullptr,
-        juce::UndoManager* um = nullptr, std::atomic<int>* gc = nullptr)
-        : modTree (mt), sourceOutputs (srcOutputs), undoManager (um), gestureCount (gc)
+        juce::UndoManager* um = nullptr, std::atomic<int>* gc = nullptr,
+        AnimationFrameSource* animSource = nullptr)
+        : modTree (mt), sourceOutputs (srcOutputs), undoManager (um), gestureCount (gc),
+          animSource (animSource)
     {
         modTree.addListener (this);
 
@@ -128,17 +131,18 @@ public:
             };
         }
 
-        if (sourceOutputs != nullptr)
-            startTimerHz (30);
+        if (sourceOutputs != nullptr && animSource != nullptr)
+            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
     }
 
     ~MatrixComponent() override
     {
-        stopTimer();
+        if (animSource != nullptr)
+            animSource->removeListener (this);
         modTree.removeListener (this);
     }
 
-    void timerCallback() override
+    void onAnimationFrame() override
     {
         if (sourceOutputs == nullptr)
             return;
@@ -239,6 +243,7 @@ private:
     std::atomic<float>* sourceOutputs = nullptr;
     juce::UndoManager* undoManager = nullptr;
     std::atomic<int>* gestureCount = nullptr;
+    AnimationFrameSource* animSource = nullptr;
     juce::TooltipWindow tooltipWindow { this, 500 };
 
     // ---------------------------------------------------------------------------------

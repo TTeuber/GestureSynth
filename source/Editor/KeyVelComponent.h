@@ -5,6 +5,7 @@
 
 #include "../Modulation/VelocitySource.h"
 #include "../Theme.h"
+#include "Utility/AnimationFrameSource.h"
 #include "Utility/ModulationModeState.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -12,7 +13,7 @@
 
 class KeyVelComponent final : public juce::Component,
                               public ModulationModeState::Listener,
-                              private juce::Timer
+                              public AnimationFrameSource::Listener
 {
 public:
     KeyVelComponent (juce::AudioProcessorValueTreeState& apvts,
@@ -20,7 +21,8 @@ public:
                      std::atomic<int>* gestureCount,
                      ModulationModeState* modState = nullptr,
                      std::atomic<float>* velocityRaw = nullptr,
-                     std::atomic<float>* keyboardRaw = nullptr);
+                     std::atomic<float>* keyboardRaw = nullptr,
+                     AnimationFrameSource* animSource = nullptr);
     ~KeyVelComponent() override;
 
     // ModulationModeState::Listener
@@ -51,9 +53,10 @@ private:
 
     std::atomic<float>* velocityRawPtr = nullptr;
     std::atomic<float>* keyboardRawPtr = nullptr;
+    AnimationFrameSource* animSource = nullptr;
     float currentInputValue = 0.0f;
 
-    void timerCallback() override;
+    void onAnimationFrame() override;
 
 public:
     void setActiveTab (int index) { activeTab = index; repaint(); }

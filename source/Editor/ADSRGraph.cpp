@@ -13,7 +13,8 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
     const juce::StringRef releaseCurveParam,
     std::shared_ptr<MyADSR*> adsr,
     juce::UndoManager* undoManager,
-    std::atomic<int>* gestureCount)
+    std::atomic<int>* gestureCount,
+    AnimationFrameSource* animSource)
     : parameters(p),
     attackId(attackParam),
     attackCurveId (attackCurveParam),
@@ -24,7 +25,8 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
     releaseCurveId (releaseCurveParam),
     myADSR(std::move(adsr)),
     undoManager(undoManager),
-    gestureCount(gestureCount)
+    gestureCount(gestureCount),
+    animSource(animSource)
 // clang-format on
 {
     parameters.addParameterListener (attackId, this);
@@ -47,11 +49,14 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
 
     totalDuration = attackTime + decayTime + releaseTime;
 
-    startTimerHz (60);
+    if (animSource != nullptr)
+        animSource->addListener (this, AnimationFrameSource::Rate::Hz60);
 }
 
 ADSRGraph::~ADSRGraph()
 {
+    if (animSource != nullptr)
+        animSource->removeListener (this);
     parameters.removeParameterListener (attackId, this);
     parameters.removeParameterListener (attackCurveId, this);
     parameters.removeParameterListener (decayId, this);
@@ -279,7 +284,7 @@ void ADSRGraph::showTime()
     }
 }
 
-void ADSRGraph::timerCallback()
+void ADSRGraph::onAnimationFrame()
 {
     showTime();
 }

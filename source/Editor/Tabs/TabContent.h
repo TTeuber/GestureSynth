@@ -327,26 +327,16 @@ private:
 };
 
 // =============================================================================
-// Main Tab: Filter, Chorus, Vibrato, Waveform, Sub Osc, Detune, HPF, LFO, ADSR
+// Main Tab: Filter, Chorus, Vibrato, Waveform, Sub Osc, Detune, HPF
 // =============================================================================
-class MainTabContent final : public juce::Component, public ModulationModeState::Listener
+class MainTabContent final : public juce::Component
 {
 public:
-    explicit MainTabContent (PluginProcessor& p, ModulationModeState* modState = nullptr);
-    ~MainTabContent() override;
+    explicit MainTabContent (PluginProcessor& p, ModulationModeState* modState = nullptr, AnimationFrameSource* animSource = nullptr);
     void resized() override;
     void paint (juce::Graphics& g) override;
 
-    // ModulationModeState::Listener
-    void modulationModeChanged (ModulationModeState::Mode newMode) override;
-    void targetSourceChanged (const juce::String& newSourceID) override;
-
 private:
-    void selectLfo (int index);
-    void selectEnv (int index);
-
-    PluginProcessor& processor;
-    ModulationModeState* modModeState = nullptr;
     WaveformComponent waveformComponent;
     FilterDisplay filterDisplay;
     HPFDisplay hpfDisplay;
@@ -358,72 +348,48 @@ private:
     NoiseComponent noiseComponent;
     ChorusMixComponent chorusMixComponent;
     PortamentoComponent portamentoComponent;
-    LFOComponent lfoComponent;
-    ADSRGraph adsrGraph;
-    KeyVelComponent keyVelComponent;
-    ModWheelComponent modWheel;
-    PitchWheelComponent pitchWheel;
-    CustomKeyboard keyboard;
-
-    void selectKeyVel (int index);
-
-    ModSourceTab mwTab, atTab, expTab;
-    ModSourceTab lfoTabs[4];
-    ModSourceTab envTabs[4];
-    ModSourceTab velTab, keyTab;
-    int activeLfoIndex = 0;
-    int activeEnvIndex = 0;
-    int activeKeyVelTab = 0;
-
-    // Bottom control row
-    PitchBendRangeControl pitchBendRangeControl;
-    VoiceCountControl voiceCountControl;
-    CustomToggleComponent monoToggle;
-    CustomToggleComponent legatoToggle;
-    CustomToggleComponent gateToggle;
 };
 
 // =============================================================================
-// Keyboard Tab: Custom Keyboard, Oscilloscope
+// Keyboard Tab: Oscilloscope only (keyboard is persistent)
 // =============================================================================
 class KeyboardTabContent final : public juce::Component
 {
 public:
-    explicit KeyboardTabContent (PluginProcessor& p);
+    explicit KeyboardTabContent (PluginProcessor& p, AnimationFrameSource* animSource = nullptr);
     void resized() override;
     void paint (juce::Graphics& g) override;
 
 private:
     Oscilloscope oscilloscope;
-    CustomKeyboard keyboard;
 };
 
 // =============================================================================
-// Modulation Tab: Modulation Matrix
+// Modulation Tab: Modulation Matrix with scrollable viewport
 // =============================================================================
 class ModulationTabContent final : public juce::Component
 {
 public:
-    explicit ModulationTabContent (PluginProcessor& p);
+    explicit ModulationTabContent (PluginProcessor& p, AnimationFrameSource* animSource = nullptr);
     void resized() override;
     void paint (juce::Graphics& g) override;
 
 private:
     MatrixComponent matrixComponent;
+    juce::Viewport matrixViewport;
 };
 
 // =============================================================================
-// Effects Tab: Filter Display, Chorus, Volume, Chorus Mix
+// Effects Tab: Chorus, Vibrato, Volume, Noise, ChorusMix, Portamento
 // =============================================================================
 class EffectsTabContent final : public juce::Component
 {
 public:
-    explicit EffectsTabContent (PluginProcessor& p);
+    explicit EffectsTabContent (PluginProcessor& p, ModulationModeState* modState = nullptr, AnimationFrameSource* animSource = nullptr);
     void resized() override;
     void paint (juce::Graphics& g) override;
 
 private:
-    FilterDisplay filterDisplay;
     ChorusComponent chorusComponent;
     VibratoComponent vibratoComponent;
     VolumeComponent volumeComponent;
@@ -433,7 +399,7 @@ private:
 };
 
 // =============================================================================
-// Experiment Tab: Mono/Legato toggles
+// Experiment Tab: Reverb + BBD Delay side-by-side
 // =============================================================================
 class ExperimentTabContent final : public juce::Component
 {

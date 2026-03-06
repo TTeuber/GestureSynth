@@ -31,5 +31,6 @@ build
 packaging/Output/*
 
 TODO.md
+FIXES.md
 docs/*.md
 .claude
