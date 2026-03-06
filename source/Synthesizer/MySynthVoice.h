@@ -1,6 +1,6 @@
 #pragma once
 
-// #include "AntiAliasOscillator.h"
+#include "../Utility/AtomicHelpers.h"
 #include "../Modulation/KeyboardSource.h"
 #include "../Modulation/AftertouchSource.h"
 #include "../Modulation/ExpressionSource.h"
@@ -51,7 +51,7 @@ public:
     {
         pitchBendValue = (newPitchWheelValue - 8192) / 8192.0f;
         if (pitchBendRawOutput != nullptr)
-            pitchBendRawOutput->store (static_cast<float> (newPitchWheelValue), std::memory_order_relaxed);
+            AtomicHelpers::paramStore (*pitchBendRawOutput, static_cast<float> (newPitchWheelValue));
     }
 
     void controllerMoved (int controllerNumber, int newControllerValue) override
@@ -60,13 +60,13 @@ public:
         {
             modWheelSource.setValue (newControllerValue / 127.0f);
             if (modWheelRawOutput != nullptr)
-                modWheelRawOutput->store (newControllerValue / 127.0f, std::memory_order_relaxed);
+                AtomicHelpers::paramStore (*modWheelRawOutput, newControllerValue / 127.0f);
         }
         else if (controllerNumber == 11)
         {
             expressionSource.setValue (newControllerValue / 127.0f);
             if (expressionRawOutput != nullptr)
-                expressionRawOutput->store (newControllerValue / 127.0f, std::memory_order_relaxed);
+                AtomicHelpers::paramStore (*expressionRawOutput, newControllerValue / 127.0f);
         }
     }
 
@@ -74,7 +74,7 @@ public:
     {
         aftertouchSource.setValue (newAftertouchValue / 127.0f);
         if (aftertouchRawOutput != nullptr)
-            aftertouchRawOutput->store (newAftertouchValue / 127.0f, std::memory_order_relaxed);
+            AtomicHelpers::paramStore (*aftertouchRawOutput, newAftertouchValue / 127.0f);
     }
 
     void renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
@@ -90,17 +90,14 @@ public:
     void setVolume (const float newVolume)
     {
         volume = newVolume;
-        // osc.setVolume (newVolume);
     }
     void setFilterCutoff (const float newFilterCutoff)
     {
         filterCutoff.setBaseValue (newFilterCutoff);
-        // osc.setFilterCutoff (newFilterCutoff);
     }
     void setFilterResonance (const float newFilterResonance)
     {
         filterResonance.setBaseValue (newFilterResonance);
-        // osc.setFilterResonance (newFilterResonance);
     }
     void setLFORate (int index, float rate) { lfos[index].setRate (rate); }
     void setLFOPhase (int index, float phase) { lfos[index].setPhase (phase); }
@@ -132,7 +129,6 @@ public:
     }
 
 private:
-    // CustomOscillator osc;
     juce::AudioProcessorValueTreeState& parameters;
     juce::ValueTree& modTree;
     ModMatrix modMatrix;

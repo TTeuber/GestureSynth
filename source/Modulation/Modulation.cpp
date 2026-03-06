@@ -3,6 +3,7 @@
 //
 
 #include "Modulation.h"
+#include "../Utility/AtomicHelpers.h"
 
 void ModMatrix::addModulation (ModDestination* destination, ModSource* source, float depth, bool isBipolar, int slotIndex)
 {
@@ -102,7 +103,7 @@ void ModMatrix::processSample() const noexcept
 
             float rawSourceVal = source->getNextValue();
             if (sourceOutputs != nullptr)
-                sourceOutputs[slotIdx].store (rawSourceVal, std::memory_order_relaxed);
+                AtomicHelpers::paramStore (sourceOutputs[slotIdx], rawSourceVal);
 
             if (isBipolar)
                 value += (rawSourceVal * 2.0f - 1.0f) * depth;
@@ -113,7 +114,7 @@ void ModMatrix::processSample() const noexcept
         value = juce::jlimit (0.0f, 1.0f, value);
 
         if (destOutputs != nullptr && destination->getOutputIndex() >= 0)
-            destOutputs[destination->getOutputIndex()].store (value, std::memory_order_relaxed);
+            AtomicHelpers::paramStore (destOutputs[destination->getOutputIndex()], value);
 
         destination->setCurrentValue (destination->getRange().convertFrom0to1 (value));
     }
@@ -127,8 +128,8 @@ void ModMatrix::resetOutputs() const noexcept
         for (const auto& [destination, mods] : matrix)
         {
             if (destination != nullptr && destination->getOutputIndex() >= 0)
-                destOutputs[destination->getOutputIndex()].store (
-                    destination->getRawParameterValue(), std::memory_order_relaxed);
+                AtomicHelpers::paramStore (destOutputs[destination->getOutputIndex()],
+                    destination->getRawParameterValue());
         }
     }
 
@@ -138,7 +139,7 @@ void ModMatrix::resetOutputs() const noexcept
         for (const auto& [destination, mods] : matrix)
         {
             for (const auto& [source, depth, isBipolar, slotIdx] : mods)
-                sourceOutputs[slotIdx].store (0.0f, std::memory_order_relaxed);
+                AtomicHelpers::paramStore (sourceOutputs[slotIdx], 0.0f);
         }
     }
 }

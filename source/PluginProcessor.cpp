@@ -1,6 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "Synthesizer/MySynthVoice.h"
+#include "Utility/AtomicHelpers.h"
 
 //==============================================================================
 PluginProcessor::PluginProcessor()
@@ -153,7 +154,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     // Inject UI wheel values as MIDI messages
     {
-        float pendingMod = uiModWheelValue.exchange (-1.0f, std::memory_order_relaxed);
+        float pendingMod = AtomicHelpers::paramExchange (uiModWheelValue, -1.0f);
         if (pendingMod >= 0.0f)
         {
             int cc1 = juce::jlimit (0, 127, static_cast<int> (pendingMod * 127.0f));
@@ -161,7 +162,7 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         }
     }
     {
-        int pendingBend = uiPitchBendValue.exchange (-1, std::memory_order_relaxed);
+        int pendingBend = AtomicHelpers::paramExchange (uiPitchBendValue, -1);
         if (pendingBend >= 0)
             midiMessages.addEvent (juce::MidiMessage::pitchWheel (1, pendingBend), 0);
     }

@@ -1,4 +1,5 @@
 #include "MySynthVoice.h"
+#include "../Utility/AtomicHelpers.h"
 
 MySynthVoice::MySynthVoice (
     juce::AudioProcessorValueTreeState& p,
@@ -416,9 +417,9 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
     keyboardSource.setCurve (keyboardCurveParam.getValue());
 
     if (velocityRawOutput != nullptr)
-        velocityRawOutput->store (this->velocity, std::memory_order_relaxed);
+        AtomicHelpers::paramStore (*velocityRawOutput, this->velocity);
     if (keyboardRawOutput != nullptr)
-        keyboardRawOutput->store (juce::jlimit (0.0f, 1.0f, static_cast<float> (midiNoteNumber) / 127.0f), std::memory_order_relaxed);
+        AtomicHelpers::paramStore (*keyboardRawOutput, juce::jlimit (0.0f, 1.0f, static_cast<float> (midiNoteNumber) / 127.0f));
 
     gateAmp = 0.0f;
     gateReleasing = false;

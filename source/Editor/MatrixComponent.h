@@ -2,6 +2,7 @@
 
 #include "../PluginProcessor.h"
 #include "../Theme.h"
+#include "../Utility/AtomicHelpers.h"
 #include "Utility/AnimationFrameSource.h"
 #include "Utility/DepthSlider.h"
 #include "Utility/ModulationIconDrawing.h"
@@ -148,7 +149,7 @@ public:
             return;
 
         for (int i = 0; i < 16; ++i)
-            rows[i].depthSlider.setSourceValue (sourceOutputs[i].load (std::memory_order_relaxed));
+            rows[i].depthSlider.setSourceValue (AtomicHelpers::paramLoad (sourceOutputs[i]));
     }
 
     void paint (juce::Graphics& g) override

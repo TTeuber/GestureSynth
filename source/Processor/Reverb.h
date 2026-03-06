@@ -3,6 +3,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <array>
 #include <cmath>
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 
 class Reverb : public juce::AudioProcessorValueTreeState::Listener
@@ -39,16 +40,16 @@ public:
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
     {
-        if (parameterID == ParamIDs::reverbDecay)        decay.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::reverbSize)    size.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::reverbDamping) dampingFreq.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::reverbBassMult) bassMult.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::reverbModRate)  modRate.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::reverbModDepth) modDepth.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::reverbDiffusion) diffusion.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::reverbPreDelay)  preDelayMs.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::reverbWidth)     width.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::reverbMix)       mix.store (newValue, std::memory_order_relaxed);
+        if (parameterID == ParamIDs::reverbDecay)        AtomicHelpers::paramStore (decay, newValue);
+        else if (parameterID == ParamIDs::reverbSize)    AtomicHelpers::paramStore (size, newValue);
+        else if (parameterID == ParamIDs::reverbDamping) AtomicHelpers::paramStore (dampingFreq, newValue);
+        else if (parameterID == ParamIDs::reverbBassMult) AtomicHelpers::paramStore (bassMult, newValue);
+        else if (parameterID == ParamIDs::reverbModRate)  AtomicHelpers::paramStore (modRate, newValue);
+        else if (parameterID == ParamIDs::reverbModDepth) AtomicHelpers::paramStore (modDepth, newValue);
+        else if (parameterID == ParamIDs::reverbDiffusion) AtomicHelpers::paramStore (diffusion, newValue);
+        else if (parameterID == ParamIDs::reverbPreDelay)  AtomicHelpers::paramStore (preDelayMs, newValue);
+        else if (parameterID == ParamIDs::reverbWidth)     AtomicHelpers::paramStore (width, newValue);
+        else if (parameterID == ParamIDs::reverbMix)       AtomicHelpers::paramStore (mix, newValue);
     }
 
     void prepare (const juce::dsp::ProcessSpec& spec)
@@ -130,16 +131,16 @@ public:
         if (buffer.getNumChannels() < 2) return;
 
         // Load atomic parameters once per block
-        const float localDecay      = decay.load (std::memory_order_relaxed);
-        const float localSize       = size.load (std::memory_order_relaxed);
-        const float localDamping    = dampingFreq.load (std::memory_order_relaxed);
-        const float localBassMult   = bassMult.load (std::memory_order_relaxed);
-        const float localModRate    = modRate.load (std::memory_order_relaxed);
-        const float localModDepth   = modDepth.load (std::memory_order_relaxed);
-        const float localDiffusion  = diffusion.load (std::memory_order_relaxed);
-        const float localPreDelay   = preDelayMs.load (std::memory_order_relaxed);
-        const float localWidth      = width.load (std::memory_order_relaxed);
-        const float localMix        = mix.load (std::memory_order_relaxed);
+        const float localDecay      = AtomicHelpers::paramLoad (decay);
+        const float localSize       = AtomicHelpers::paramLoad (size);
+        const float localDamping    = AtomicHelpers::paramLoad (dampingFreq);
+        const float localBassMult   = AtomicHelpers::paramLoad (bassMult);
+        const float localModRate    = AtomicHelpers::paramLoad (modRate);
+        const float localModDepth   = AtomicHelpers::paramLoad (modDepth);
+        const float localDiffusion  = AtomicHelpers::paramLoad (diffusion);
+        const float localPreDelay   = AtomicHelpers::paramLoad (preDelayMs);
+        const float localWidth      = AtomicHelpers::paramLoad (width);
+        const float localMix        = AtomicHelpers::paramLoad (mix);
 
         auto* leftChannel  = buffer.getWritePointer (0);
         auto* rightChannel = buffer.getWritePointer (1);

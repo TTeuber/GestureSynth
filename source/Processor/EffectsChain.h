@@ -3,6 +3,7 @@
 #include "BBDDelay.h"
 #include "Chorus.h"
 #include "Reverb.h"
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/TempoInfo.h"
 #include "../Utility/Parameters.h"
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -39,8 +40,8 @@ public:
         {
             auto* depthParam = parameters.getParameter (ParamIDs::chorusDepth);
             auto* rateParam = parameters.getParameter (ParamIDs::chorusRate);
-            chorus.setDepth (depthParam->convertFrom0to1 (modDestOutputs[ModDestIndex::chorusDepth].load (std::memory_order_relaxed)));
-            chorus.setRate (rateParam->convertFrom0to1 (modDestOutputs[ModDestIndex::chorusRate].load (std::memory_order_relaxed)));
+            chorus.setDepth (depthParam->convertFrom0to1 (AtomicHelpers::paramLoad (modDestOutputs[ModDestIndex::chorusDepth])));
+            chorus.setRate (rateParam->convertFrom0to1 (AtomicHelpers::paramLoad (modDestOutputs[ModDestIndex::chorusRate])));
         }
 
         chorus.process (buffer);

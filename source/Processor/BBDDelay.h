@@ -3,6 +3,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include <array>
 #include <cmath>
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 
 class BBDDelay : public juce::AudioProcessorValueTreeState::Listener
@@ -43,18 +44,18 @@ public:
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
     {
-        if (parameterID == ParamIDs::delayTime)           delayTimeMs.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delayTempoSync) tempoSync.store (newValue >= 0.5f ? 1.0f : 0.0f, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delayNoteDivision) noteDivision.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delayFeedback)  feedback.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delayMix)       mix.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delayLowpass)   lowpassFreq.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delayHighpass)  highpassFreq.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delaySaturation) saturation.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delayModRate)   modRate.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delayModDepth)  modDepth.store (newValue, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delayPingPong)  pingPong.store (newValue >= 0.5f ? 1.0f : 0.0f, std::memory_order_relaxed);
-        else if (parameterID == ParamIDs::delayDiffusion) diffusionAmt.store (newValue, std::memory_order_relaxed);
+        if (parameterID == ParamIDs::delayTime)           AtomicHelpers::paramStore (delayTimeMs, newValue);
+        else if (parameterID == ParamIDs::delayTempoSync) AtomicHelpers::paramStore (tempoSync, newValue >= 0.5f ? 1.0f : 0.0f);
+        else if (parameterID == ParamIDs::delayNoteDivision) AtomicHelpers::paramStore (noteDivision, newValue);
+        else if (parameterID == ParamIDs::delayFeedback)  AtomicHelpers::paramStore (feedback, newValue);
+        else if (parameterID == ParamIDs::delayMix)       AtomicHelpers::paramStore (mix, newValue);
+        else if (parameterID == ParamIDs::delayLowpass)   AtomicHelpers::paramStore (lowpassFreq, newValue);
+        else if (parameterID == ParamIDs::delayHighpass)  AtomicHelpers::paramStore (highpassFreq, newValue);
+        else if (parameterID == ParamIDs::delaySaturation) AtomicHelpers::paramStore (saturation, newValue);
+        else if (parameterID == ParamIDs::delayModRate)   AtomicHelpers::paramStore (modRate, newValue);
+        else if (parameterID == ParamIDs::delayModDepth)  AtomicHelpers::paramStore (modDepth, newValue);
+        else if (parameterID == ParamIDs::delayPingPong)  AtomicHelpers::paramStore (pingPong, newValue >= 0.5f ? 1.0f : 0.0f);
+        else if (parameterID == ParamIDs::delayDiffusion) AtomicHelpers::paramStore (diffusionAmt, newValue);
     }
 
     void setTempoInfo (double bpm, bool available)
@@ -110,18 +111,18 @@ public:
         if (buffer.getNumChannels() < 2) return;
 
         // Load atomic parameters once per block
-        const float localDelayMs    = delayTimeMs.load (std::memory_order_relaxed);
-        const bool  localTempoSync  = tempoSync.load (std::memory_order_relaxed) >= 0.5f;
-        const int   localDivision   = static_cast<int> (noteDivision.load (std::memory_order_relaxed));
-        const float localFeedback   = feedback.load (std::memory_order_relaxed);
-        const float localMix        = mix.load (std::memory_order_relaxed);
-        const float localLowpass    = lowpassFreq.load (std::memory_order_relaxed);
-        const float localHighpass   = highpassFreq.load (std::memory_order_relaxed);
-        const float localSaturation = saturation.load (std::memory_order_relaxed);
-        const float localModRate    = modRate.load (std::memory_order_relaxed);
-        const float localModDepth   = modDepth.load (std::memory_order_relaxed);
-        const bool  localPingPong   = pingPong.load (std::memory_order_relaxed) >= 0.5f;
-        const float localDiffusion  = diffusionAmt.load (std::memory_order_relaxed);
+        const float localDelayMs    = AtomicHelpers::paramLoad (delayTimeMs);
+        const bool  localTempoSync  = AtomicHelpers::paramLoad (tempoSync) >= 0.5f;
+        const int   localDivision   = static_cast<int> (AtomicHelpers::paramLoad (noteDivision));
+        const float localFeedback   = AtomicHelpers::paramLoad (feedback);
+        const float localMix        = AtomicHelpers::paramLoad (mix);
+        const float localLowpass    = AtomicHelpers::paramLoad (lowpassFreq);
+        const float localHighpass   = AtomicHelpers::paramLoad (highpassFreq);
+        const float localSaturation = AtomicHelpers::paramLoad (saturation);
+        const float localModRate    = AtomicHelpers::paramLoad (modRate);
+        const float localModDepth   = AtomicHelpers::paramLoad (modDepth);
+        const bool  localPingPong   = AtomicHelpers::paramLoad (pingPong) >= 0.5f;
+        const float localDiffusion  = AtomicHelpers::paramLoad (diffusionAmt);
 
         // Compute target delay time in ms
         float targetDelayMs = localDelayMs;

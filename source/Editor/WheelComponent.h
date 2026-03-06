@@ -2,6 +2,7 @@
 
 #include "../PluginProcessor.h"
 #include "../Theme.h"
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 #include "Utility/AnimationFrameSource.h"
 #include "Utility/ModulationModeState.h"
@@ -78,7 +79,7 @@ public:
         if (isDragging || modWheelRawPtr == nullptr)
             return;
 
-        float hw = modWheelRawPtr->load (std::memory_order_relaxed);
+        float hw = AtomicHelpers::paramLoad (*modWheelRawPtr);
         if (std::abs (hw - currentValue) > 0.001f)
         {
             currentValue = hw;
@@ -101,9 +102,9 @@ private:
             rawVal = currentValue + (rawVal - currentValue) * 0.1f;
 
         currentValue = juce::jlimit (0.0f, 1.0f, rawVal);
-        processor.uiModWheelValue.store (currentValue, std::memory_order_relaxed);
+        AtomicHelpers::paramStore (processor.uiModWheelValue, currentValue);
         if (modWheelRawPtr != nullptr)
-            modWheelRawPtr->store (currentValue, std::memory_order_relaxed);
+            AtomicHelpers::paramStore (*modWheelRawPtr, currentValue);
         repaint();
     }
 
@@ -232,7 +233,7 @@ public:
             isDraggingTrack = false;
             // Spring back to center
             currentPitchValue = 8192;
-            processor.uiPitchBendValue.store (8192, std::memory_order_relaxed);
+            AtomicHelpers::paramStore (processor.uiPitchBendValue, 8192);
             repaint();
         }
     }
@@ -242,7 +243,7 @@ public:
         if (isDraggingTrack || pitchBendRawPtr == nullptr)
             return;
 
-        int hw = static_cast<int> (pitchBendRawPtr->load (std::memory_order_relaxed));
+        int hw = static_cast<int> (AtomicHelpers::paramLoad (*pitchBendRawPtr));
         if (hw != currentPitchValue)
         {
             currentPitchValue = hw;
@@ -292,7 +293,7 @@ private:
         }
 
         currentPitchValue = static_cast<int> (normalised * 16383.0f);
-        processor.uiPitchBendValue.store (currentPitchValue, std::memory_order_relaxed);
+        AtomicHelpers::paramStore (processor.uiPitchBendValue, currentPitchValue);
         repaint();
     }
 

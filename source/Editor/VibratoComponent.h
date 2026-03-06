@@ -6,6 +6,7 @@
 
 #include "Utility/AnimationFrameSource.h"
 #include "Utility/DualParameterComponent.h"
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 
 class VibratoComponent final : public DualParameterComponent, public AnimationFrameSource::Listener
@@ -74,12 +75,12 @@ private:
         constexpr float alpha = 0.3f;
         if (modDepthOutput != nullptr)
         {
-            float target = modDepthOutput->load (std::memory_order_relaxed);
+            float target = AtomicHelpers::paramLoad (*modDepthOutput);
             modulatedDepth += alpha * (target - modulatedDepth);
         }
         if (modRateOutput != nullptr)
         {
-            float target = modRateOutput->load (std::memory_order_relaxed);
+            float target = AtomicHelpers::paramLoad (*modRateOutput);
             modulatedRate += alpha * (target - modulatedRate);
         }
         repaint();

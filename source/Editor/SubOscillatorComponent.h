@@ -6,6 +6,7 @@
 
 #include "Utility/AnimationFrameSource.h"
 #include "Utility/DualParameterComponent.h"
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 
 class SubOscillatorComponent : public DualParameterComponent, public AnimationFrameSource::Listener
@@ -93,12 +94,12 @@ private:
         constexpr float alpha = 0.3f;
         if (modSubOscOutput != nullptr)
         {
-            float target = modSubOscOutput->load (std::memory_order_relaxed);
+            float target = AtomicHelpers::paramLoad (*modSubOscOutput);
             modulatedSubOsc += alpha * (target - modulatedSubOsc);
         }
         if (modSubOscWaveOutput != nullptr)
         {
-            float target = modSubOscWaveOutput->load (std::memory_order_relaxed);
+            float target = AtomicHelpers::paramLoad (*modSubOscWaveOutput);
             modulatedSubOscWave += alpha * (target - modulatedSubOscWave);
         }
         repaint();

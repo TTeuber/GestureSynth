@@ -9,6 +9,7 @@
 
 #include "Utility/AnimationFrameSource.h"
 #include "Utility/DualParameterComponent.h"
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 
 class DetuneComponent final : public DualParameterComponent, public AnimationFrameSource::Listener
@@ -75,12 +76,12 @@ private:
         constexpr float alpha = 0.3f;
         if (modDetuneOutput != nullptr)
         {
-            float target = modDetuneOutput->load (std::memory_order_relaxed);
+            float target = AtomicHelpers::paramLoad (*modDetuneOutput);
             modulatedDetune += alpha * (target - modulatedDetune);
         }
         if (modWidthOutput != nullptr)
         {
-            float target = modWidthOutput->load (std::memory_order_relaxed);
+            float target = AtomicHelpers::paramLoad (*modWidthOutput);
             modulatedWidth += alpha * (target - modulatedWidth);
         }
         repaint();

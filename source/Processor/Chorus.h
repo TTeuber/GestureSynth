@@ -7,6 +7,7 @@
 #include <atomic>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 
 /**
@@ -57,20 +58,20 @@ public:
     {
         if (parameterID == ParamIDs::chorusMix)
         {
-            mix.store (newValue, std::memory_order_relaxed);
+            AtomicHelpers::paramStore (mix, newValue);
         }
         else if (parameterID == ParamIDs::chorusOn)
         {
-            currentMode.store (newValue > 0.5f ? On : Off, std::memory_order_relaxed);
+            AtomicHelpers::paramStore (currentMode, static_cast<int> (newValue > 0.5f ? On : Off));
         }
         else if (parameterID == ParamIDs::chorusDepth)
         {
-            depth.store (newValue, std::memory_order_relaxed);
+            AtomicHelpers::paramStore (depth, newValue);
         }
         else if (parameterID == ParamIDs::chorusRate)
         {
-            rate.store (newValue, std::memory_order_relaxed);
-            phaseIncrement.store (newValue / sampleRate, std::memory_order_relaxed);
+            AtomicHelpers::paramStore (rate, newValue);
+            AtomicHelpers::paramStore (phaseIncrement, newValue / sampleRate);
         }
         else
         {
@@ -91,11 +92,11 @@ public:
         delayWritePosition = 0;
 
         // Initialize LFO
-        phaseIncrement.store (rate.load (std::memory_order_relaxed) / sampleRate, std::memory_order_relaxed);
+        AtomicHelpers::paramStore (phaseIncrement, AtomicHelpers::paramLoad (rate) / sampleRate);
 
         // Initialize depth smoothing (20ms time constant)
         depthSmoothCoeff = 1.0f - std::exp (-1.0f / (0.02f * sampleRate));
-        currentSmoothedDepth = depth.load (std::memory_order_relaxed);
+        currentSmoothedDepth = AtomicHelpers::paramLoad (depth);
 
         // Reset filters
         for (int i = 0; i < 2; ++i)
@@ -118,7 +119,7 @@ public:
         }
 
         delayWritePosition = 0;
-        currentSmoothedDepth = depth.load (std::memory_order_relaxed);
+        currentSmoothedDepth = AtomicHelpers::paramLoad (depth);
     }
 
     void process (juce::AudioBuffer<float>& buffer)
@@ -130,13 +131,13 @@ public:
         const int numSamples = buffer.getNumSamples();
 
         // Load atomic parameters once per block
-        const int mode = currentMode.load (std::memory_order_relaxed);
+        const int mode = AtomicHelpers::paramLoad (currentMode);
         if (mode == Off)
             return;
 
-        const float localMix = mix.load (std::memory_order_relaxed);
-        const float localDepth = depth.load (std::memory_order_relaxed);
-        const float localPhaseInc = phaseIncrement.load (std::memory_order_relaxed);
+        const float localMix = AtomicHelpers::paramLoad (mix);
+        const float localDepth = AtomicHelpers::paramLoad (depth);
+        const float localPhaseInc = AtomicHelpers::paramLoad (phaseIncrement);
 
         const int channelCount = juce::jmin (numChannels, 2);
         float* outputPtrs[2] = {};
@@ -194,25 +195,25 @@ public:
     // Set the chorus mode (OFF, ON)
     void setMode (ChorusMode mode)
     {
-        currentMode.store (mode, std::memory_order_relaxed);
+        AtomicHelpers::paramStore (currentMode, static_cast<int> (mode));
     }
 
     // Get the current mode
     ChorusMode getMode() const
     {
-        return static_cast<ChorusMode> (currentMode.load (std::memory_order_relaxed));
+        return static_cast<ChorusMode> (AtomicHelpers::paramLoad (currentMode));
     }
 
     // Set the wet/dry mix amount (0.0 = dry only, 1.0 = wet only)
     void setMix (float newMix)
     {
-        mix.store (juce::jlimit (0.0f, 1.0f, newMix), std::memory_order_relaxed);
+        AtomicHelpers::paramStore (mix, juce::jlimit (0.0f, 1.0f, newMix));
     }
 
     // Get the current mix amount
     float getMix() const
     {
-        return mix.load (std::memory_order_relaxed);
+        return AtomicHelpers::paramLoad (mix);
     }
 
     // Set the feedback amount
@@ -230,14 +231,14 @@ public:
     // Set the rate
     void setRate (float newRate)
     {
-        rate.store (newRate, std::memory_order_relaxed);
-        phaseIncrement.store (newRate / sampleRate, std::memory_order_relaxed);
+        AtomicHelpers::paramStore (rate, newRate);
+        AtomicHelpers::paramStore (phaseIncrement, newRate / sampleRate);
     }
 
     // Set the depth
     void setDepth (float newDepth)
     {
-        depth.store (newDepth, std::memory_order_relaxed);
+        AtomicHelpers::paramStore (depth, newDepth);
     }
 
     // Set the stereo width (0.0 = mono, 1.0 = full stereo)

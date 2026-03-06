@@ -9,6 +9,7 @@
 
 #include "Utility/AnimationFrameSource.h"
 #include "Utility/DualParameterComponent.h"
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 
 // First Derived Class (WaveformComponent)
@@ -79,12 +80,12 @@ private:
         constexpr float alpha = 0.3f;
         if (modPulseWidthOutput != nullptr)
         {
-            float target = modPulseWidthOutput->load (std::memory_order_relaxed);
+            float target = AtomicHelpers::paramLoad (*modPulseWidthOutput);
             modulatedPulseWidth += alpha * (target - modulatedPulseWidth);
         }
         if (modWaveformOutput != nullptr)
         {
-            float target = modWaveformOutput->load (std::memory_order_relaxed);
+            float target = AtomicHelpers::paramLoad (*modWaveformOutput);
             modulatedWaveform += alpha * (target - modulatedWaveform);
         }
         repaint();

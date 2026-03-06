@@ -3,6 +3,7 @@
 //
 
 #include "FilterDisplay.h"
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
     const UIContext& ctx,
@@ -414,12 +415,12 @@ void FilterDisplay::onAnimationFrame()
 
     if (modCutoffOutput != nullptr)
     {
-        float target = modCutoffOutput->load (std::memory_order_relaxed);
+        float target = AtomicHelpers::paramLoad (*modCutoffOutput);
         modulatedNormCutoff += alpha * (target - modulatedNormCutoff);
     }
     if (modResonanceOutput != nullptr)
     {
-        float target = modResonanceOutput->load (std::memory_order_relaxed);
+        float target = AtomicHelpers::paramLoad (*modResonanceOutput);
         modulatedNormResonance += alpha * (target - modulatedNormResonance);
     }
 

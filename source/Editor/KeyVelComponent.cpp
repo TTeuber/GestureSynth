@@ -2,6 +2,7 @@
 // KeyVelComponent.cpp
 //
 #include "KeyVelComponent.h"
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 
 KeyVelComponent::KeyVelComponent (juce::AudioProcessorValueTreeState& apvts,
@@ -42,7 +43,7 @@ void KeyVelComponent::onAnimationFrame()
     auto* ptr = (activeTab == 0) ? velocityRawPtr : keyboardRawPtr;
     if (ptr != nullptr)
     {
-        float newVal = ptr->load (std::memory_order_relaxed);
+        float newVal = AtomicHelpers::paramLoad (*ptr);
         if (newVal != currentInputValue)
         {
             currentInputValue = newVal;
