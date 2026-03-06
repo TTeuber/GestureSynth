@@ -40,8 +40,8 @@ public:
         {
             auto* depthParam = parameters.getParameter (ParamIDs::chorusDepth);
             auto* rateParam = parameters.getParameter (ParamIDs::chorusRate);
-            chorus.setDepth (depthParam->convertFrom0to1 (AtomicHelpers::paramLoad (modDestOutputs[ModDestIndex::chorusDepth])));
-            chorus.setRate (rateParam->convertFrom0to1 (AtomicHelpers::paramLoad (modDestOutputs[ModDestIndex::chorusRate])));
+            chorus.setDepth (depthParam->convertFrom0to1 (AtomicHelpers::paramLoad (modDestOutputs[ModDest::chorusDepth])));
+            chorus.setRate (rateParam->convertFrom0to1 (AtomicHelpers::paramLoad (modDestOutputs[ModDest::chorusRate])));
         }
 
         chorus.process (buffer);

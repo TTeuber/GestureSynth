@@ -61,7 +61,7 @@ public:
 
     std::array<std::atomic<float>, 16> modSourceOutputs {};
 
-    static constexpr int kNumModDests = ModDestIndex::count;
+    static constexpr int kNumModDests = ModDest::count;
     std::array<std::atomic<float>, kNumModDests> modDestOutputs {};
 
     using ModList = std::vector<std::tuple<juce::String, float, juce::String, bool>>;
@@ -85,7 +85,7 @@ public:
     };
 
     static inline const juce::StringArray modSourceIDs  = { "None", "env1", "env2", "env3", "env4", "lfo1", "lfo2", "lfo3", "lfo4", "modWheel", "aftertouch", "expression", "velocity", "keyboard" };
-    static inline const juce::StringArray modDestIDs    = { "None", ParamIDs::filterFrequency, ParamIDs::filterResonance, ParamIDs::hpfFrequency, ParamIDs::fineTune, ParamIDs::pulseWidth, ParamIDs::oscWaveform, ParamIDs::oscDetune, ParamIDs::oscWidth, ParamIDs::subOsc, ParamIDs::subOscWave, ParamIDs::vibratoDepth, ParamIDs::vibratoRate, ParamIDs::chorusDepth, ParamIDs::chorusRate };
+    static inline const juce::StringArray modDestIDs    = ModDest::buildDestIDs();
 
     std::atomic<float> uiModWheelValue { -1.0f };
     std::atomic<int>   uiPitchBendValue { -1 };

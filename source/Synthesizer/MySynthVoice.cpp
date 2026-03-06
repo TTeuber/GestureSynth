@@ -38,26 +38,9 @@ MySynthVoice::MySynthVoice (
     parameters.addParameterListener (ParamIDs::gateMode, this);
     gateMode = *parameters.getRawParameterValue (ParamIDs::gateMode) > 0.5f;
 
-    // Initialize the mod destinations
-    // Currently this is how the current value is updated when there are no mod sources
+    registerModDestinations();
     for (const auto& [_, d] : modDestinations)
         modMatrix.initDestination (d);
-
-    // Assign output indices so the mod matrix can publish normalized modulated values
-    filterCutoff.setOutputIndex (ModDestIndex::filterCutoff);
-    filterResonance.setOutputIndex (ModDestIndex::filterResonance);
-    hpfCutoff.setOutputIndex (ModDestIndex::hpfCutoff);
-    fineTuneParam.setOutputIndex (ModDestIndex::fineTune);
-    pulseWidth.setOutputIndex (ModDestIndex::pulseWidth);
-    oscWaveform.setOutputIndex (ModDestIndex::oscWaveform);
-    oscDetune.setOutputIndex (ModDestIndex::oscDetune);
-    oscWidth.setOutputIndex (ModDestIndex::oscWidth);
-    subOsc.setOutputIndex (ModDestIndex::subOsc);
-    subOscWave.setOutputIndex (ModDestIndex::subOscWave);
-    vibratoDepthParam.setOutputIndex (ModDestIndex::vibratoDepth);
-    vibratoRateParam.setOutputIndex (ModDestIndex::vibratoRate);
-    chorusDepthParam.setOutputIndex (ModDestIndex::chorusDepth);
-    chorusRateParam.setOutputIndex (ModDestIndex::chorusRate);
 
     // Initialize slotCache from modTree
     for (int i = 0; i < modTree.getNumChildren() && i < static_cast<int> (slotCache.size()); ++i)

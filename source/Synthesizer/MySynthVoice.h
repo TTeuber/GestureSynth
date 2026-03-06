@@ -273,22 +273,33 @@ private:
         { keyboardSource.getID(), &keyboardSource },
     };
 
-    std::map<juce::String, ModDestination*> modDestinations = {
-        { filterCutoff.getID(), &filterCutoff },
-        { filterResonance.getID(), &filterResonance },
-        { hpfCutoff.getID(), &hpfCutoff },
-        { fineTuneParam.getID(), &fineTuneParam },
-        { pulseWidth.getID(), &pulseWidth },
-        { oscWaveform.getID(), &oscWaveform },
-        { oscDetune.getID(), &oscDetune },
-        { oscWidth.getID(), &oscWidth },
-        { subOsc.getID(), &subOsc },
-        { subOscWave.getID(), &subOscWave },
-        { vibratoDepthParam.getID(), &vibratoDepthParam },
-        { vibratoRateParam.getID(), &vibratoRateParam },
-        { chorusDepthParam.getID(), &chorusDepthParam },
-        { chorusRateParam.getID(), &chorusRateParam }
-    };
+    std::map<juce::String, ModDestination*> modDestinations;
+
+    void registerModDestinations()
+    {
+        struct Reg { ModDestination* dest; int index; };
+        const Reg regs[] = {
+            { &filterCutoff,      ModDest::filterCutoff },
+            { &filterResonance,   ModDest::filterResonance },
+            { &hpfCutoff,         ModDest::hpfCutoff },
+            { &fineTuneParam,     ModDest::fineTune },
+            { &pulseWidth,        ModDest::pulseWidth },
+            { &oscWaveform,       ModDest::oscWaveform },
+            { &oscDetune,         ModDest::oscDetune },
+            { &oscWidth,          ModDest::oscWidth },
+            { &subOsc,            ModDest::subOsc },
+            { &subOscWave,        ModDest::subOscWave },
+            { &vibratoDepthParam, ModDest::vibratoDepth },
+            { &vibratoRateParam,  ModDest::vibratoRate },
+            { &chorusDepthParam,  ModDest::chorusDepth },
+            { &chorusRateParam,   ModDest::chorusRate },
+        };
+        for (const auto& r : regs)
+        {
+            modDestinations[r.dest->getID()] = r.dest;
+            r.dest->setOutputIndex (r.index);
+        }
+    }
 
     std::atomic<float>* velocityRawOutput = nullptr;
     std::atomic<float>* keyboardRawOutput = nullptr;

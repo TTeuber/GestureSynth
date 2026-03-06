@@ -6,23 +6,50 @@
 
 #include "juce_audio_processors/juce_audio_processors.h"
 
-namespace ModDestIndex
+namespace ModDest
 {
-    constexpr int filterCutoff     = 0;
-    constexpr int filterResonance  = 1;
-    constexpr int hpfCutoff        = 2;
-    constexpr int fineTune         = 3;
-    constexpr int pulseWidth       = 4;
-    constexpr int oscWaveform      = 5;
-    constexpr int oscDetune        = 6;
-    constexpr int oscWidth         = 7;
-    constexpr int subOsc           = 8;
-    constexpr int subOscWave       = 9;
-    constexpr int vibratoDepth     = 10;
-    constexpr int vibratoRate      = 11;
-    constexpr int chorusDepth      = 12;
-    constexpr int chorusRate       = 13;
-    constexpr int count            = 14;
+    inline constexpr const char* paramIDs[] = {
+        "filterFrequency",  // 0
+        "filterResonance",  // 1
+        "hpfFrequency",     // 2
+        "fineTune",         // 3
+        "pulseWidth",       // 4
+        "oscWaveform",      // 5
+        "oscDetune",        // 6
+        "oscWidth",         // 7
+        "subOsc",           // 8
+        "subOscWave",       // 9
+        "vibratoDepth",     // 10
+        "vibratoRate",      // 11
+        "chorusDepth",      // 12
+        "chorusRate",       // 13
+    };
+
+    inline constexpr int count = static_cast<int> (sizeof (paramIDs) / sizeof (paramIDs[0]));
+
+    inline constexpr int filterCutoff    = 0;
+    inline constexpr int filterResonance = 1;
+    inline constexpr int hpfCutoff       = 2;
+    inline constexpr int fineTune        = 3;
+    inline constexpr int pulseWidth      = 4;
+    inline constexpr int oscWaveform     = 5;
+    inline constexpr int oscDetune       = 6;
+    inline constexpr int oscWidth        = 7;
+    inline constexpr int subOsc          = 8;
+    inline constexpr int subOscWave      = 9;
+    inline constexpr int vibratoDepth    = 10;
+    inline constexpr int vibratoRate     = 11;
+    inline constexpr int chorusDepth     = 12;
+    inline constexpr int chorusRate      = 13;
+
+    inline juce::StringArray buildDestIDs()
+    {
+        juce::StringArray result;
+        result.add ("None");
+        for (int i = 0; i < count; ++i)
+            result.add (paramIDs[i]);
+        return result;
+    }
 }
 
 namespace ParamIDs
