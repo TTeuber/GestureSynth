@@ -29,7 +29,7 @@ public:
 class MySynthVoice final : public juce::SynthesiserVoice, public juce::ValueTree::Listener, juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<MyADSR*> ampEnvPtr, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData,
+    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::array<std::shared_ptr<MyADSR*>, 4> envPtrs, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData,
                   std::atomic<float>* velocityRawOut = nullptr, std::atomic<float>* keyboardRawOut = nullptr,
                   std::atomic<float>* modWheelRawOut = nullptr, std::atomic<float>* pitchBendRawOut = nullptr,
                   std::atomic<float>* aftertouchRawOut = nullptr, std::atomic<float>* expressionRawOut = nullptr);
@@ -83,7 +83,7 @@ public:
 
     [[nodiscard]] float frequencyToPhaseIncrement (float frequency) const;
 
-    std::shared_ptr<MyADSR*> getEnvPtr() { return env1ptr; }
+    std::shared_ptr<MyADSR*> getEnvPtr (int index = 0) { return envPtrs[index]; }
 
     float getOversamplingLatency() const { return juneOscillator.getLatencyInSamples(); }
 
@@ -195,7 +195,7 @@ private:
     MyADSR adsr2 = MyADSR (parameters, 2);
     MyADSR adsr3 = MyADSR (parameters, 3);
     MyADSR adsr4 = MyADSR (parameters, 4);
-    std::shared_ptr<MyADSR*> env1ptr;
+    std::array<std::shared_ptr<MyADSR*>, 4> envPtrs;
 
     std::shared_ptr<PitchTracker> pitchTracker;
 

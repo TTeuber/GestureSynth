@@ -168,7 +168,7 @@ void PluginEditor::selectEnv (int index)
     for (int i = 0; i < 4; ++i)
         envTabs[i].setSelected (i == index);
     int envNum = index + 1;
-    auto adsrPtr = (index == 0) ? processorRef.getSynth().getAmpADSRPtr() : std::make_shared<MyADSR*> (nullptr);
+    auto adsrPtr = processorRef.getSynth().getEnvPtr (index);
     adsrGraph.rebind (
         ParamIDs::envParamID (envNum, "Attack"),
         ParamIDs::envParamID (envNum, "AttackCurve"),

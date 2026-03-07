@@ -33,6 +33,12 @@ public:
     std::shared_ptr<MyADSR*> getAmpADSRPtr() { return ampEnvPtr; }
     std::shared_ptr<MyADSR*> getFilterADSRPtr() { return filterEnvPtr; }
 
+    std::shared_ptr<MyADSR*> getEnvPtr (int index)
+    {
+        jassert (index >= 0 && index < 4);
+        return envPtrs[index];
+    }
+
     std::atomic<float>* getVelocityRawPtr() { return &currentVelocityRaw; }
     std::atomic<float>* getKeyboardRawPtr() { return &currentKeyboardRaw; }
     std::atomic<float>* getModWheelRawPtr() { return &currentModWheelRaw; }
@@ -90,6 +96,9 @@ private:
 
     std::shared_ptr<MyADSR*> ampEnvPtr = std::make_shared<MyADSR*>();
     std::shared_ptr<MyADSR*> filterEnvPtr = std::make_shared<MyADSR*>();
+    std::shared_ptr<MyADSR*> env3Ptr = std::make_shared<MyADSR*>();
+    std::shared_ptr<MyADSR*> env4Ptr = std::make_shared<MyADSR*>();
+    std::array<std::shared_ptr<MyADSR*>, 4> envPtrs = { ampEnvPtr, filterEnvPtr, env3Ptr, env4Ptr };
 
     std::shared_ptr<PitchTracker> pitchTracker;
     std::array<std::shared_ptr<LFOData>, 4>* lfoDataPtr = nullptr;

@@ -25,7 +25,7 @@ MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, st
 
     clearVoices();
     for (int i = 0; i < 8; ++i)
-        addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pt, lfoData, &currentVelocityRaw, &currentKeyboardRaw, &currentModWheelRaw, &currentPitchBendRaw, &currentAftertouchRaw, &currentExpressionRaw));
+        addVoice (new MySynthVoice (parameters, modTree, envPtrs, pt, lfoData, &currentVelocityRaw, &currentKeyboardRaw, &currentModWheelRaw, &currentPitchBendRaw, &currentAftertouchRaw, &currentExpressionRaw));
 
     monoVoice = dynamic_cast<MySynthVoice*> (voices.getUnchecked (0));
 
@@ -65,7 +65,7 @@ void MySynth::setVoiceCount (int count)
 
     clearVoices();
     for (int i = 0; i < count; ++i)
-        addVoice (new MySynthVoice (parameters, modTree, ampEnvPtr, pitchTracker, *lfoDataPtr,
+        addVoice (new MySynthVoice (parameters, modTree, envPtrs, pitchTracker, *lfoDataPtr,
             &currentVelocityRaw, &currentKeyboardRaw, &currentModWheelRaw,
             &currentPitchBendRaw, &currentAftertouchRaw, &currentExpressionRaw));
 
