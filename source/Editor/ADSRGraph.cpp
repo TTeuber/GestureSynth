@@ -202,9 +202,12 @@ void ADSRGraph::paint (juce::Graphics& g)
     releaseCurveCircle.addEllipse (releaseCurveX - 5, getCurveY (releaseCurveX) - 5, 10, 10);
     g.fillPath (releaseCurveCircle);
 
-    juce::Path timeCircle;
-    timeCircle.addEllipse (timePoint.getX() - 5, timePoint.getY() - 5, 10, 10);
-    g.fillPath (timeCircle);
+    if (showTimePoint)
+    {
+        juce::Path timeCircle;
+        timeCircle.addEllipse (timePoint.getX() - 5, timePoint.getY() - 5, 10, 10);
+        g.fillPath (timeCircle);
+    }
 
     juce::Path adsrPath;
 
@@ -275,11 +278,17 @@ float ADSRGraph::getCurveY (const float x) const
 
 void ADSRGraph::showTime()
 {
-    if (myADSR != nullptr && *myADSR != nullptr)
+    if (myADSR != nullptr && *myADSR != nullptr && (*myADSR)->isActive())
     {
         const std::array<float, 2> xy = (*myADSR)->getTimePoint();
         const float x = xy[0] / durationWidth * static_cast<float> (getWidth()) - xOffset;
         timePoint = { x, getCurveY (x) };
+        showTimePoint = true;
+        repaint();
+    }
+    else if (showTimePoint)
+    {
+        showTimePoint = false;
         repaint();
     }
 }

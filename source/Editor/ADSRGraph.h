@@ -88,6 +88,7 @@ private:
     };
 
     juce::Point<float> timePoint;
+    bool showTimePoint = false;
 
     float durationWidth = 3.2f;
     float xOffset = 0.0f;
