@@ -50,11 +50,11 @@ protected:
             && (std::abs (modulatedDepth - param1Value) > 0.001f
                 || std::abs (modulatedRate - param2Value) > 0.001f))
         {
-            g.setColour (TEXT_COLOR.withAlpha (0.25f));
+            g.setColour (getDrawColor().withAlpha (0.25f));
             drawChorusWaves (g, bounds, modulatedDepth, modulatedRate);
         }
 
-        g.setColour (TEXT_COLOR);
+        g.setColour (getDrawColor());
         drawChorusWaves (g, bounds, param1Value, param2Value);
     }
 

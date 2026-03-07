@@ -47,6 +47,8 @@ public:
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
+        g.setOpacity (isActive ? 1.0f : 0.5f);
+
         const float centerY = bounds.getCentreY();
 
         // Draw ghost path at modulated values (behind main)
@@ -54,12 +56,12 @@ protected:
             && (std::abs (modulatedPulseWidth - param2Value) > 0.001f
                 || std::abs (modulatedWaveform - param1Value) > 0.001f))
         {
-            g.setColour (TEXT_COLOR.withAlpha (0.25f));
+            g.setColour (getDrawColor().withAlpha (0.25f));
             drawPath (g, bounds, centerY, 0.0f, modulatedWaveform, modulatedPulseWidth);
         }
 
         // Draw main path on top
-        g.setColour (TEXT_COLOR);
+        g.setColour (getDrawColor());
         drawPath (g, bounds, centerY, 0.0f, param1Value);
     }
 

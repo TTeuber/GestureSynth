@@ -364,6 +364,8 @@ protected:
     float param1Value = 0.0f;
     float param2Value = 0.0f;
 
+    juce::Colour getDrawColor() const { return isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR; }
+
     float padding = 0.4f; // Padding for drawing
 
     juce::UndoManager* undoManager = nullptr;

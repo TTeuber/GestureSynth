@@ -46,16 +46,18 @@ public:
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
+        g.setOpacity (isActive ? 1.0f : 0.5f);
+
         // Draw ghost path at modulated values (behind main)
         if ((modDetuneOutput != nullptr || modWidthOutput != nullptr)
             && (std::abs (modulatedDetune - param1Value) > 0.001f
                 || std::abs (modulatedWidth - param2Value) > 0.001f))
         {
-            g.setColour (TEXT_COLOR.withAlpha (0.25f));
+            g.setColour (getDrawColor().withAlpha (0.25f));
             drawPathWithValues (g, bounds, modulatedDetune, modulatedWidth);
         }
 
-        g.setColour (TEXT_COLOR);
+        g.setColour (getDrawColor());
         drawPathWithValues (g, bounds, param1Value, param2Value);
     }
 

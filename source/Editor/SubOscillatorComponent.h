@@ -43,16 +43,18 @@ public:
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
+        g.setOpacity (isActive ? 1.0f : 0.5f);
+
         // Draw ghost path at modulated values (behind main)
         if ((modSubOscOutput != nullptr || modSubOscWaveOutput != nullptr)
             && (std::abs (modulatedSubOsc - param1Value) > 0.001f
                 || std::abs (modulatedSubOscWave - param2Value) > 0.001f))
         {
-            g.setColour (TEXT_COLOR.withAlpha (0.25f));
+            g.setColour (getDrawColor().withAlpha (0.25f));
             drawMorphedWaveform (g, bounds, modulatedSubOsc, modulatedSubOscWave);
         }
 
-        g.setColour (TEXT_COLOR);
+        g.setColour (getDrawColor());
         drawMorphedWaveform (g, bounds, param1Value, param2Value);
     }
 
