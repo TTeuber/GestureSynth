@@ -14,7 +14,8 @@
 
 // Base Component Class for single parameter controls
 class SingleParameterComponent : public juce::Component,
-                                 private juce::AudioProcessorParameter::Listener
+                                 private juce::AudioProcessorParameter::Listener,
+                                 private juce::Timer
 {
 public:
     explicit SingleParameterComponent (juce::RangedAudioParameter* param,
@@ -48,6 +49,7 @@ public:
 
     ~SingleParameterComponent() override
     {
+        stopTimer();
         // Remove listeners
         param->removeListener (this);
 
@@ -74,35 +76,41 @@ public:
             g.setColour (TEXT_COLOR);
         }
 
-        // Draw the parameter name at the top
         g.setFont (14.0f);
-        g.drawText (param->getName (15),
-            bounds.getX(),
-            5,
-            bounds.getWidth(),
-            20,
-            juce::Justification::centredTop,
-            true);
+
+        // Draw the parameter name at the top (fades out on hover)
+        if (hoverAlpha < 0.99f)
+        {
+            g.setOpacity (isActive ? (1.0f - hoverAlpha) : 0.5f * (1.0f - hoverAlpha));
+            g.drawText (param->getName (15),
+                bounds.getX(),
+                5,
+                bounds.getWidth(),
+                20,
+                juce::Justification::centredTop,
+                true);
+        }
+
+        // Draw the parameter value at the top (fades in on hover)
+        if (hoverAlpha > 0.01f)
+        {
+            g.setOpacity (isActive ? hoverAlpha : 0.5f * hoverAlpha);
+            g.drawText (getParameterText(),
+                bounds.getX(),
+                5,
+                bounds.getWidth(),
+                20,
+                juce::Justification::centredTop,
+                true);
+        }
+
+        g.setOpacity (isActive ? 1.0f : 0.5f);
 
         // Draw the main visualization (implemented by derived classes)
-        drawVisualization (g, bounds.withTrimmedTop (20).withTrimmedBottom (20));
+        drawVisualization (g, bounds.withTrimmedTop (20));
 
         // Draw modulation overlay
-        drawModulationOverlay (g, bounds.withTrimmedTop (20).withTrimmedBottom (20));
-
-        // Draw value at the bottom
-        if (!isActive)
-            g.setColour (TEXT_INACTIVE_COLOR);
-        else
-            g.setColour (TEXT_COLOR);
-
-        g.drawText (getParameterText(),
-            bounds.getX(),
-            bounds.getBottom() - 20,
-            bounds.getWidth(),
-            20,
-            juce::Justification::centredBottom,
-            true);
+        drawModulationOverlay (g, bounds.withTrimmedTop (20));
 
         // Draw the active toggle button in the top-left if we have an active parameter
         if (activeParam != nullptr)
@@ -126,6 +134,18 @@ public:
         // Ensure square aspect ratio
         const int size = juce::jmin (getWidth(), getHeight());
         setBounds (getX(), getY(), size, size);
+    }
+
+    void mouseEnter (const juce::MouseEvent&) override
+    {
+        hoverTarget = true;
+        startTimerHz (60);
+    }
+
+    void mouseExit (const juce::MouseEvent&) override
+    {
+        hoverTarget = false;
+        startTimerHz (60);
     }
 
     void mouseDown (const juce::MouseEvent& e) override
@@ -255,6 +275,10 @@ protected:
     // Active state
     bool isActive = true;
 
+    // Hover state
+    float hoverAlpha = 0.0f;
+    bool hoverTarget = false;
+
     // Current parameter value
     float paramValue = 0.0f;
 
@@ -334,6 +358,18 @@ private:
         else if (activeParam != nullptr && parameterIndex == activeParam->getParameterIndex())
             isActive = activeParam->get();
 
+        repaint();
+    }
+
+    void timerCallback() override
+    {
+        const float target = hoverTarget ? 1.0f : 0.0f;
+        hoverAlpha += 0.25f * (target - hoverAlpha);
+        if (std::abs (hoverAlpha - target) < 0.01f)
+        {
+            hoverAlpha = target;
+            stopTimer();
+        }
         repaint();
     }
 
