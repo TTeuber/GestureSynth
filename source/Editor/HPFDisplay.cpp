@@ -29,6 +29,7 @@ HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
 
 HPFDisplay::~HPFDisplay()
 {
+    stopTimer();
     if (modModeState != nullptr)
         modModeState->removeListener (this);
     apvts.removeParameterListener (ParamIDs::hpfFrequency, this);
@@ -39,7 +40,24 @@ void HPFDisplay::paint (juce::Graphics& g)
 {
     g.fillAll (SECONDARY_COLOR);
 
-    drawParameterValues (g);
+    // Draw label with fading opacity
+    if (hoverAlpha < 0.99f)
+    {
+        g.setColour (hpfEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
+        g.setFont (14.0f);
+        g.setOpacity (1.0f - hoverAlpha);
+        g.drawText ("High Pass Filter", 0, 5, getWidth(), 20, juce::Justification::centredTop, true);
+    }
+
+    // Draw parameter values with fading opacity
+    if (hoverAlpha > 0.01f)
+    {
+        g.setOpacity (hoverAlpha);
+        drawParameterValues (g);
+    }
+
+    g.setOpacity (1.0f);
+
     drawFrequencyPath (g);
     drawModModeOverlay (g);
 }
@@ -159,6 +177,32 @@ void HPFDisplay::mouseUp (const juce::MouseEvent& e)
     isDragging = false;
 }
 
+void HPFDisplay::mouseEnter (const juce::MouseEvent&)
+{
+    hoverTarget = true;
+    startTimerHz (60);
+}
+
+void HPFDisplay::mouseExit (const juce::MouseEvent&)
+{
+    hoverTarget = false;
+    startTimerHz (60);
+}
+
+void HPFDisplay::timerCallback()
+{
+    const float target = hoverTarget ? 1.0f : 0.0f;
+    hoverAlpha += 0.25f * (target - hoverAlpha);
+
+    if (std::abs (hoverAlpha - target) < 0.01f)
+    {
+        hoverAlpha = target;
+        stopTimer();
+    }
+
+    repaint();
+}
+
 void HPFDisplay::parameterChanged (const juce::String& parameterID, float newValue)
 {
     if (parameterID == ParamIDs::hpfFrequency)
@@ -246,7 +290,7 @@ double HPFDisplay::computeHPGainDb (double freq, double cutoffFreqHz)
 
 void HPFDisplay::drawParameterValues (juce::Graphics& g) const
 {
-    g.setColour (hpfEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
+    g.setColour ((hpfEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR).withAlpha (hoverAlpha));
     g.setFont (14.0f);
 
     juce::String freqText;

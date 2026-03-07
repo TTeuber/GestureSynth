@@ -28,7 +28,8 @@ public:
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::oscOn)),
               ctx,
               param1DestID,
-              param2DestID),
+              param2DestID,
+              "Oscillator"),
           modPulseWidthOutput (modPulseWidthOutput),
           modWaveformOutput (modWaveformOutput),
           animSource (ctx.animationSource)

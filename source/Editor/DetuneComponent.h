@@ -27,7 +27,8 @@ public:
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::detuneOn)),
               ctx,
               param1DestID,
-              param2DestID),
+              param2DestID,
+              "Detune"),
           modDetuneOutput (modDetuneOutput),
           modWidthOutput (modWidthOutput),
           animSource (ctx.animationSource)

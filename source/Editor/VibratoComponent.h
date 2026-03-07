@@ -24,7 +24,8 @@ public:
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::vibratoOn)),
               ctx,
               param1DestID,
-              param2DestID),
+              param2DestID,
+              "Vibrato"),
           modDepthOutput (modDepthOutput),
           modRateOutput (modRateOutput),
           animSource (ctx.animationSource)

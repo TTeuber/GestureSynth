@@ -36,6 +36,7 @@ FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
 }
 FilterDisplay::~FilterDisplay()
 {
+    stopTimer();
     if (animSource != nullptr)
         animSource->removeListener (this);
     // Remove listeners
@@ -49,8 +50,23 @@ void FilterDisplay::paint (juce::Graphics& g)
     // Fill background
     g.fillAll (SECONDARY_COLOR);
 
-    // Draw parameter values
-    drawParameterValues (g);
+    // Draw label with fading opacity
+    if (hoverAlpha < 0.99f)
+    {
+        g.setColour (filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
+        g.setFont (14.0f);
+        g.setOpacity (1.0f - hoverAlpha);
+        g.drawText ("Low Pass Filter", 0, 5, getWidth(), 20, juce::Justification::centredTop, true);
+    }
+
+    // Draw parameter values with fading opacity
+    if (hoverAlpha > 0.01f)
+    {
+        g.setOpacity (hoverAlpha);
+        drawParameterValues (g);
+    }
+
+    g.setOpacity (1.0f);
 
     // Draw the modulated ghost curve behind the main curve
     drawModulatedFrequencyPath (g);
@@ -268,6 +284,32 @@ void FilterDisplay::mouseUp (const juce::MouseEvent& e)
     isDragging = false;
 }
 
+void FilterDisplay::mouseEnter (const juce::MouseEvent&)
+{
+    hoverTarget = true;
+    startTimerHz (60);
+}
+
+void FilterDisplay::mouseExit (const juce::MouseEvent&)
+{
+    hoverTarget = false;
+    startTimerHz (60);
+}
+
+void FilterDisplay::timerCallback()
+{
+    const float target = hoverTarget ? 1.0f : 0.0f;
+    hoverAlpha += 0.25f * (target - hoverAlpha);
+
+    if (std::abs (hoverAlpha - target) < 0.01f)
+    {
+        hoverAlpha = target;
+        stopTimer();
+    }
+
+    repaint();
+}
+
 void FilterDisplay::parameterChanged (const juce::String& parameterID, float newValue)
 {
     juce::ignoreUnused (newValue);
@@ -391,7 +433,7 @@ double FilterDisplay::computeFirstOrderStage (const double freq, const double cu
 
 void FilterDisplay::drawParameterValues (juce::Graphics& g) const
 {
-    g.setColour (filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
+    g.setColour ((filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR).withAlpha (hoverAlpha));
     g.setFont (14.0f);
 
     // Format the frequency value

@@ -15,7 +15,8 @@
 //==============================================================================
 class FilterDisplay final : public juce::Component,
                             juce::AudioProcessorValueTreeState::Listener,
-                            public AnimationFrameSource::Listener
+                            public AnimationFrameSource::Listener,
+                            private juce::Timer
 {
 public:
     explicit FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
@@ -35,7 +36,13 @@ public:
 
     void mouseUp (const juce::MouseEvent& e) override;
 
+    void mouseEnter (const juce::MouseEvent&) override;
+
+    void mouseExit (const juce::MouseEvent&) override;
+
 private:
+    float hoverAlpha = 0.0f;
+    bool hoverTarget = false;
     juce::AudioProcessorValueTreeState& apvts;
 
     juce::RangedAudioParameter* cutoffParam = nullptr;
@@ -97,6 +104,7 @@ private:
     float modulatedNormCutoff = 0.5f;
     float modulatedNormResonance = 0.5f;
 
+    void timerCallback() override;
     void onAnimationFrame() override;
     void drawModulatedFrequencyPath (juce::Graphics& g) const;
     AnimationFrameSource* animSource = nullptr;

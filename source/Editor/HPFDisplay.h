@@ -14,7 +14,8 @@
 //==============================================================================
 class HPFDisplay final : public juce::Component,
                          juce::AudioProcessorValueTreeState::Listener,
-                         public ModulationModeState::Listener
+                         public ModulationModeState::Listener,
+                         private juce::Timer
 {
 public:
     explicit HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
@@ -32,7 +33,13 @@ public:
 
     void mouseUp (const juce::MouseEvent& e) override;
 
+    void mouseEnter (const juce::MouseEvent&) override;
+
+    void mouseExit (const juce::MouseEvent&) override;
+
 private:
+    float hoverAlpha = 0.0f;
+    bool hoverTarget = false;
     juce::AudioProcessorValueTreeState& apvts;
 
     juce::RangedAudioParameter* cutoffParam = nullptr;
@@ -88,6 +95,7 @@ private:
 
     void drawModModeOverlay (juce::Graphics& g) const;
 
+    void timerCallback() override;
     void modulationModeChanged (ModulationModeState::Mode newMode) override;
     void targetSourceChanged (const juce::String& newSourceID) override;
 

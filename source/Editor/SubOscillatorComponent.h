@@ -24,7 +24,8 @@ public:
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::subOn)),
               ctx,
               param1DestID,
-              param2DestID),
+              param2DestID,
+              "Sub Osc"),
           modSubOscOutput (modSubOscOutput),
           modSubOscWaveOutput (modSubOscWaveOutput),
           animSource (ctx.animationSource)

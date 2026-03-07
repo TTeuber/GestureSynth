@@ -14,7 +14,8 @@
 
 // Base Component Class
 class DualParameterComponent : public juce::Component,
-                               private juce::AudioProcessorParameter::Listener
+                               private juce::AudioProcessorParameter::Listener,
+                               private juce::Timer
 {
 public:
     DualParameterComponent (juce::RangedAudioParameter* param1,
@@ -22,10 +23,12 @@ public:
         juce::AudioParameterBool* activeParam = nullptr,
         const UIContext& ctx = {},
         const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {})
+        const juce::String& param2DestID = {},
+        const juce::String& label = {})
         : param1 (param1),
           param2 (param2),
           activeParam (activeParam),
+          componentLabel (label),
           undoManager (ctx.undoManager),
           gestureCount (ctx.gestureCount),
           modModeState (ctx.modModeState),
@@ -54,6 +57,8 @@ public:
 
     ~DualParameterComponent() override
     {
+        stopTimer();
+
         // Remove listeners
         param1->removeListener (this);
         param2->removeListener (this);
@@ -95,23 +100,42 @@ public:
         else
             g.setColour (TEXT_COLOR);
 
-        // Display parameter 1 text (bottom left)
-        g.drawText (getParam1Text(),
-            10,
-            getHeight() - 25,
-            120,
-            20,
-            juce::Justification::bottomLeft,
-            true);
+        // Draw label with fading opacity (visible when not hovering)
+        if (componentLabel.isNotEmpty() && hoverAlpha < 0.99f)
+        {
+            g.setOpacity ((1.0f - hoverAlpha) * (isActive ? 1.0f : 0.5f));
+            g.drawText (componentLabel,
+                0,
+                5,
+                getWidth(),
+                20,
+                juce::Justification::centredTop,
+                true);
+        }
 
-        // Display parameter 2 text (top right)
-        g.drawText (getParam2Text(),
-            getWidth() - 120,
-            5,
-            110,
-            20,
-            juce::Justification::topRight,
-            true);
+        // Draw parameter texts with fading opacity (visible when hovering)
+        if (hoverAlpha > 0.01f)
+        {
+            g.setOpacity (hoverAlpha * (isActive ? 1.0f : 0.5f));
+
+            // Display parameter 1 text (bottom left)
+            g.drawText (getParam1Text(),
+                10,
+                getHeight() - 25,
+                120,
+                20,
+                juce::Justification::bottomLeft,
+                true);
+
+            // Display parameter 2 text (top right)
+            g.drawText (getParam2Text(),
+                getWidth() - 120,
+                5,
+                110,
+                20,
+                juce::Justification::topRight,
+                true);
+        }
 
         // Draw the active toggle button in the top-left if we have an active parameter
         if (activeParam != nullptr)
@@ -329,11 +353,28 @@ public:
         isDragging = false;
     }
 
+    void mouseEnter (const juce::MouseEvent&) override
+    {
+        hoverTarget = true;
+        startTimerHz (60);
+    }
+
+    void mouseExit (const juce::MouseEvent&) override
+    {
+        hoverTarget = false;
+        startTimerHz (60);
+    }
+
 protected:
     // Parameter pointers
     juce::RangedAudioParameter* param1;
     juce::RangedAudioParameter* param2;
     juce::AudioParameterBool* activeParam;
+
+    // Label and hover state
+    juce::String componentLabel;
+    float hoverAlpha = 0.0f;
+    bool hoverTarget = false;
 
     // Active state
     bool isActive = true;
@@ -413,6 +454,20 @@ private:
     void parameterGestureChanged (int, bool) override
     {
         // Not needed for this implementation
+    }
+
+    void timerCallback() override
+    {
+        const float target = hoverTarget ? 1.0f : 0.0f;
+        hoverAlpha += 0.25f * (target - hoverAlpha);
+
+        if (std::abs (hoverAlpha - target) < 0.01f)
+        {
+            hoverAlpha = target;
+            stopTimer();
+        }
+
+        repaint();
     }
 
     void drawModulationOverlay (juce::Graphics& g, const juce::Rectangle<int>& bounds)
