@@ -239,6 +239,14 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     delayPingPongToggle = std::make_unique<CustomToggleComponent> (
         dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayPingPong)), "Ping Pong");
     addAndMakeVisible (*delayPingPongToggle);
+
+    delayOnToggle = std::make_unique<CustomToggleComponent> (
+        dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayOn)), "Delay");
+    addAndMakeVisible (*delayOnToggle);
+
+    reverbOnToggle = std::make_unique<CustomToggleComponent> (
+        dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::reverbOn)), "Reverb");
+    addAndMakeVisible (*reverbOnToggle);
 }
 
 void ExperimentTabContent::paint (juce::Graphics& g)
@@ -260,12 +268,12 @@ void ExperimentTabContent::paint (juce::Graphics& g)
     int labelW = 80;
     int contentTop = area.getY();
 
-    // Reverb header (left half)
+    // Reverb header (left half) - leave space for toggle on left
     auto reverbHeaderArea = juce::Rectangle<int> (0, contentTop, halfW, 25);
     g.setFont (16.0f);
     g.drawText ("Reverb", reverbHeaderArea, juce::Justification::centred);
 
-    // Delay header (right half)
+    // Delay header (right half) - leave space for toggle on left
     auto delayHeaderArea = juce::Rectangle<int> (halfW, contentTop, halfW, 25);
     g.drawText ("BBD Delay", delayHeaderArea, juce::Justification::centred);
 
@@ -320,6 +328,13 @@ void ExperimentTabContent::resized()
     int labelW = 80;
     int sliderW = halfW / 2 - labelW - 15;
     int sliderTop = area.getY() + 28; // after section headers
+
+    // On/off toggles next to section headers
+    int onToggleW = 55;
+    int onToggleH = 22;
+    int headerY = area.getY();
+    reverbOnToggle->setBounds (5, headerY + 2, onToggleW, onToggleH);
+    delayOnToggle->setBounds (halfW + 5, headerY + 2, onToggleW, onToggleH);
 
     // Reverb sliders: 2 columns within left half
     int reverbLeftSliderX = 5 + labelW + 5;

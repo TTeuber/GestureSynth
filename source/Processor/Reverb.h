@@ -12,6 +12,7 @@ public:
     explicit Reverb (juce::AudioProcessorValueTreeState& p)
         : parameters (p)
     {
+        parameters.addParameterListener (ParamIDs::reverbOn, this);
         parameters.addParameterListener (ParamIDs::reverbDecay, this);
         parameters.addParameterListener (ParamIDs::reverbSize, this);
         parameters.addParameterListener (ParamIDs::reverbDamping, this);
@@ -26,6 +27,7 @@ public:
 
     ~Reverb() override
     {
+        parameters.removeParameterListener (ParamIDs::reverbOn, this);
         parameters.removeParameterListener (ParamIDs::reverbDecay, this);
         parameters.removeParameterListener (ParamIDs::reverbSize, this);
         parameters.removeParameterListener (ParamIDs::reverbDamping, this);
@@ -40,7 +42,8 @@ public:
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
     {
-        if (parameterID == ParamIDs::reverbDecay)        AtomicHelpers::paramStore (decay, newValue);
+        if (parameterID == ParamIDs::reverbOn)             AtomicHelpers::paramStore (enabled, newValue >= 0.5f ? 1 : 0);
+        else if (parameterID == ParamIDs::reverbDecay) AtomicHelpers::paramStore (decay, newValue);
         else if (parameterID == ParamIDs::reverbSize)    AtomicHelpers::paramStore (size, newValue);
         else if (parameterID == ParamIDs::reverbDamping) AtomicHelpers::paramStore (dampingFreq, newValue);
         else if (parameterID == ParamIDs::reverbBassMult) AtomicHelpers::paramStore (bassMult, newValue);
@@ -129,6 +132,9 @@ public:
         juce::ScopedNoDenormals noDenormals;
 
         if (buffer.getNumChannels() < 2) return;
+
+        if (AtomicHelpers::paramLoad (enabled) == 0)
+            return;
 
         // Load atomic parameters once per block
         const float localDecay      = AtomicHelpers::paramLoad (decay);
@@ -274,6 +280,7 @@ public:
 private:
     juce::AudioProcessorValueTreeState& parameters;
 
+    std::atomic<int> enabled { 0 };
     std::atomic<float> decay { 0.5f };
     std::atomic<float> size { 0.5f };
     std::atomic<float> dampingFreq { 6000.0f };

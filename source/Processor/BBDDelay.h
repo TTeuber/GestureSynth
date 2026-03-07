@@ -12,6 +12,7 @@ public:
     explicit BBDDelay (juce::AudioProcessorValueTreeState& p)
         : parameters (p)
     {
+        parameters.addParameterListener (ParamIDs::delayOn, this);
         parameters.addParameterListener (ParamIDs::delayTime, this);
         parameters.addParameterListener (ParamIDs::delayTempoSync, this);
         parameters.addParameterListener (ParamIDs::delayNoteDivision, this);
@@ -28,6 +29,7 @@ public:
 
     ~BBDDelay() override
     {
+        parameters.removeParameterListener (ParamIDs::delayOn, this);
         parameters.removeParameterListener (ParamIDs::delayTime, this);
         parameters.removeParameterListener (ParamIDs::delayTempoSync, this);
         parameters.removeParameterListener (ParamIDs::delayNoteDivision, this);
@@ -44,7 +46,8 @@ public:
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
     {
-        if (parameterID == ParamIDs::delayTime)           AtomicHelpers::paramStore (delayTimeMs, newValue);
+        if (parameterID == ParamIDs::delayOn)               AtomicHelpers::paramStore (enabled, newValue >= 0.5f ? 1 : 0);
+        else if (parameterID == ParamIDs::delayTime)     AtomicHelpers::paramStore (delayTimeMs, newValue);
         else if (parameterID == ParamIDs::delayTempoSync) AtomicHelpers::paramStore (tempoSync, newValue >= 0.5f ? 1.0f : 0.0f);
         else if (parameterID == ParamIDs::delayNoteDivision) AtomicHelpers::paramStore (noteDivision, newValue);
         else if (parameterID == ParamIDs::delayFeedback)  AtomicHelpers::paramStore (feedback, newValue);
@@ -109,6 +112,9 @@ public:
         juce::ScopedNoDenormals noDenormals;
 
         if (buffer.getNumChannels() < 2) return;
+
+        if (AtomicHelpers::paramLoad (enabled) == 0)
+            return;
 
         // Load atomic parameters once per block
         const float localDelayMs    = AtomicHelpers::paramLoad (delayTimeMs);
@@ -243,6 +249,7 @@ public:
 private:
     juce::AudioProcessorValueTreeState& parameters;
 
+    std::atomic<int> enabled { 0 };
     std::atomic<float> delayTimeMs { 375.0f };
     std::atomic<float> tempoSync { 0.0f };
     std::atomic<float> noteDivision { 4.0f };

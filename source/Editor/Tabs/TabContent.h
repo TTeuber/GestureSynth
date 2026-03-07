@@ -491,4 +491,8 @@ private:
     // Delay toggles
     std::unique_ptr<CustomToggleComponent> delayTempoSyncToggle;
     std::unique_ptr<CustomToggleComponent> delayPingPongToggle;
+
+    // On/off toggles
+    std::unique_ptr<CustomToggleComponent> delayOnToggle;
+    std::unique_ptr<CustomToggleComponent> reverbOnToggle;
 };

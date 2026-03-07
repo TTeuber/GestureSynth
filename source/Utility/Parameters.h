@@ -92,6 +92,8 @@ namespace ParamIDs
     inline constexpr auto hpfOn        = "hpfOn";
     inline constexpr auto chorusOn     = "chorusOn";
     inline constexpr auto vibratoOn    = "vibratoOn";
+    inline constexpr auto delayOn      = "delayOn";
+    inline constexpr auto reverbOn     = "reverbOn";
 
     // Portamento
     inline constexpr auto portamentoTime = "portamentoTime";
@@ -228,6 +230,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::hpfOn, 1), "HPF On", true));
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::chorusOn, 1), "Chorus On", false));
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::vibratoOn, 1), "Vibrato On", true));
+    layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::delayOn, 1), "Delay On", false));
+    layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::reverbOn, 1), "Reverb On", false));
 
     // ================================================================================================================================================
     // Portamento Parameters
