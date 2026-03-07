@@ -35,8 +35,6 @@ MySynthVoice::MySynthVoice (
     parameters.addParameterListener (ParamIDs::hpfOn, this);
     hpfEnabled = *parameters.getRawParameterValue (ParamIDs::hpfOn) > 0.5f;
 
-    parameters.addParameterListener (ParamIDs::gateMode, this);
-    gateMode = *parameters.getRawParameterValue (ParamIDs::gateMode) > 0.5f;
 
     registerModDestinations();
     for (const auto& [_, d] : modDestinations)
@@ -61,7 +59,7 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     // Process any pending modulation commands from UI thread
     modMatrix.processPendingCommands();
 
-    if (!gateMode && !adsr1.isActive())
+    if (!adsr1.isActive())
     {
         clearCurrentNote();
     }
@@ -152,26 +150,9 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
             currentEnvVal = juce::jmin (currentEnvVal + slewRate, targetEnvVal);
         else if (currentEnvVal > targetEnvVal)
             currentEnvVal = juce::jmax (currentEnvVal - slewRate, targetEnvVal);
-        float ampVal;
-        if (gateMode)
-        {
-            const float gateTarget = gateReleasing ? 0.0f : 1.0f;
-            if (gateAmp < gateTarget)
-                gateAmp = juce::jmin (gateAmp + slewRate, gateTarget);
-            else if (gateAmp > gateTarget)
-                gateAmp = juce::jmax (gateAmp - slewRate, gateTarget);
-            ampVal = gateAmp;
-        }
-        else
-        {
-            ampVal = currentEnvVal;
-        }
-        tempDataL[sample] *= ampVal * velocity * volume;
-        tempDataR[sample] *= ampVal * velocity * volume;
+        tempDataL[sample] *= currentEnvVal * velocity * volume;
+        tempDataR[sample] *= currentEnvVal * velocity * volume;
     }
-
-    if (gateMode && gateReleasing && gateAmp <= 0.0f)
-        clearCurrentNote();
 
     outputBuffer.addFrom (0, startSample, tempBuffer, 0, 0, numSamples);
     outputBuffer.addFrom (1, startSample, tempBuffer, 1, 0, numSamples);
@@ -226,10 +207,6 @@ void MySynthVoice::parameterChanged (const juce::String& parameterID, float newV
         if (hpfEnabled && !wasEnabled)
             for (auto& hpf : hpFilters)
                 hpf.reset();
-    }
-    else if (parameterID == ParamIDs::gateMode)
-    {
-        gateMode = newValue > 0.5f;
     }
 }
 
@@ -404,9 +381,6 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
     if (keyboardRawOutput != nullptr)
         AtomicHelpers::paramStore (*keyboardRawOutput, juce::jlimit (0.0f, 1.0f, static_cast<float> (midiNoteNumber) / 127.0f));
 
-    gateAmp = 0.0f;
-    gateReleasing = false;
-
     for (auto* env : envs)
         env->noteOn();
     *env1ptr = &adsr1;
@@ -419,11 +393,8 @@ void MySynthVoice::stopNote (float velocity, const bool allowTailOff)
 {
     if (allowTailOff)
     {
-        if (gateMode)
-            gateReleasing = true;
-        else
-            for (auto* env : envs)
-                env->noteOff();
+        for (auto* env : envs)
+            env->noteOff();
     }
     else
     {

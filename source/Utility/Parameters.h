@@ -125,7 +125,6 @@ namespace ParamIDs
     // Voice mode
     inline constexpr auto monoOn         = "monoOn";
     inline constexpr auto legatoOn       = "legatoOn";
-    inline constexpr auto gateMode       = "gateMode";
     inline constexpr auto pitchBendRange = "pitchBendRange";
     inline constexpr auto voiceCount     = "voiceCount";
 
@@ -292,7 +291,6 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     // Voice Mode Parameters
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::monoOn, 1), "Mono Mode", false));
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::legatoOn, 1), "Legato", false));
-    layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::gateMode, 1), "Gate Mode", false));
     layout.add (make_unique<Parameter> (ID (ParamIDs::pitchBendRange, 1), "Pitch Bend Range", Normalize (1.0f, 12.0f, 1.0f), 2.0f));
     layout.add (make_unique<AudioParameterChoice> (ID (ParamIDs::voiceCount, 1), "Voice Count",
         juce::StringArray { "2", "3", "4", "5", "6", "8", "12", "16" }, 5));

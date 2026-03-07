@@ -76,7 +76,6 @@ private:
     CustomKeyboard keyboard;
     PitchBendRangeControl pitchBendRangeControl;
     VoiceCountControl voiceCountControl;
-    CustomToggleComponent gateToggle;
     KeyVelComponent keyVelComponent;
 
     // LFO/ENV row

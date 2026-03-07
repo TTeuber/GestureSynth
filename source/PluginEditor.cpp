@@ -10,7 +10,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       voiceCountControl (dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::voiceCount)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::monoOn)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::legatoOn))),
-      gateToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::gateMode)), "Gate"),
       keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &modModeState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr(), &animationSource),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
       adsrGraph (p.parameters, ParamIDs::envParamID (1, "Attack"), ParamIDs::envParamID (1, "AttackCurve"), ParamIDs::envParamID (1, "Decay"), ParamIDs::envParamID (1, "DecayCurve"), ParamIDs::envParamID (1, "Sustain"), ParamIDs::envParamID (1, "Release"), ParamIDs::envParamID (1, "ReleaseCurve"), p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount, &animationSource)
@@ -63,7 +62,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     persistentPanel.addAndMakeVisible (keyboard);
     persistentPanel.addAndMakeVisible (pitchBendRangeControl);
     persistentPanel.addAndMakeVisible (voiceCountControl);
-    persistentPanel.addAndMakeVisible (gateToggle);
     persistentPanel.addAndMakeVisible (keyVelComponent);
     persistentPanel.addAndMakeVisible (lfoComponent);
     persistentPanel.addAndMakeVisible (adsrGraph);
@@ -231,7 +229,6 @@ void PluginEditor::resized()
 
     pitchBendRangeControl.setBounds (controlRow.removeFromLeft (pbWidth).reduced (2, 2));
     voiceCountControl.setBounds (controlRow.removeFromLeft (vcWidth).reduced (2, 2));
-    gateToggle.setBounds (controlRow.reduced (4, 3));
 
     keyboard.setBounds (keyboardRow.reduced (2));
 
