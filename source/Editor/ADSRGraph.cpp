@@ -258,6 +258,8 @@ void ADSRGraph::drawCurve (juce::Graphics& g) const
         }
     }
 
+    path.lineTo (releaseX, height);
+
     g.setColour (juce::Colours::white);
     g.strokePath (path, juce::PathStrokeType (2.0f));
 }
