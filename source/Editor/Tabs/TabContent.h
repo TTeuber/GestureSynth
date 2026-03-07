@@ -254,17 +254,24 @@ class VoiceCountControl final : public juce::Component,
                                  private juce::AudioProcessorParameter::Listener
 {
 public:
-    explicit VoiceCountControl (juce::AudioParameterChoice* param)
-        : param (param)
+    VoiceCountControl (juce::AudioParameterChoice* voiceCountParam,
+                       juce::AudioParameterBool* monoParam,
+                       juce::AudioParameterBool* legatoParam)
+        : voiceCountParam (voiceCountParam), monoParam (monoParam), legatoParam (legatoParam)
     {
-        jassert (param != nullptr);
-        param->addListener (this);
+        jassert (voiceCountParam != nullptr);
+        jassert (monoParam != nullptr);
+        jassert (legatoParam != nullptr);
+        voiceCountParam->addListener (this);
+        monoParam->addListener (this);
+        legatoParam->addListener (this);
     }
 
     ~VoiceCountControl() override
     {
-        if (param != nullptr)
-            param->removeListener (this);
+        if (voiceCountParam != nullptr) voiceCountParam->removeListener (this);
+        if (monoParam != nullptr) monoParam->removeListener (this);
+        if (legatoParam != nullptr) legatoParam->removeListener (this);
     }
 
     void paint (juce::Graphics& g) override
@@ -277,14 +284,23 @@ public:
         g.setFont (11.0f);
         g.drawText ("Voices", labelArea, juce::Justification::centredRight, true);
 
-        // Number in rounded rect on right
+        // Display text in rounded rect on right
         auto numArea = bounds.reduced (2.0f, 2.0f);
         g.setColour (SECONDARY_COLOR);
         g.fillRoundedRectangle (numArea, 4.0f);
         g.setColour (TEXT_COLOR);
         g.drawRoundedRectangle (numArea, 4.0f, 1.0f);
         g.setFont (12.0f);
-        g.drawText (param->getCurrentValueAsText(), numArea, juce::Justification::centred, true);
+
+        juce::String displayText;
+        if (legatoParam->get())
+            displayText = "Legato";
+        else if (monoParam->get())
+            displayText = "Mono";
+        else
+            displayText = voiceCountParam->getCurrentValueAsText();
+
+        g.drawText (displayText, numArea, juce::Justification::centred, true);
     }
 
     void mouseUp (const juce::MouseEvent& e) override
@@ -292,19 +308,50 @@ public:
         if (!getLocalBounds().contains (e.x, e.y))
             return;
 
+        bool isMono = monoParam->get();
+        bool isLegato = legatoParam->get();
+
         juce::PopupMenu menu;
-        const auto& choices = param->choices;
+        menu.addItem (2, "Mono", true, isMono && !isLegato);
+        menu.addItem (1, "Legato", true, isLegato);
+        menu.addSeparator();
+
+        const auto& choices = voiceCountParam->choices;
         for (int i = 0; i < choices.size(); ++i)
-            menu.addItem (i + 1, choices[i], true, i == param->getIndex());
+            menu.addItem (i + 100, choices[i], true, !isMono && !isLegato && i == voiceCountParam->getIndex());
 
         menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this),
             [this] (int result)
             {
-                if (result > 0)
+                if (result == 1) // Legato
                 {
-                    param->beginChangeGesture();
-                    param->setValueNotifyingHost (param->convertTo0to1 (static_cast<float> (result - 1)));
-                    param->endChangeGesture();
+                    monoParam->beginChangeGesture();
+                    *monoParam = true;
+                    monoParam->endChangeGesture();
+                    legatoParam->beginChangeGesture();
+                    *legatoParam = true;
+                    legatoParam->endChangeGesture();
+                }
+                else if (result == 2) // Mono
+                {
+                    monoParam->beginChangeGesture();
+                    *monoParam = true;
+                    monoParam->endChangeGesture();
+                    legatoParam->beginChangeGesture();
+                    *legatoParam = false;
+                    legatoParam->endChangeGesture();
+                }
+                else if (result >= 100) // Voice count
+                {
+                    monoParam->beginChangeGesture();
+                    *monoParam = false;
+                    monoParam->endChangeGesture();
+                    legatoParam->beginChangeGesture();
+                    *legatoParam = false;
+                    legatoParam->endChangeGesture();
+                    voiceCountParam->beginChangeGesture();
+                    voiceCountParam->setValueNotifyingHost (voiceCountParam->convertTo0to1 (static_cast<float> (result - 100)));
+                    voiceCountParam->endChangeGesture();
                 }
             });
     }
@@ -321,7 +368,9 @@ private:
     }
     void parameterGestureChanged (int, bool) override {}
 
-    juce::AudioParameterChoice* param = nullptr;
+    juce::AudioParameterChoice* voiceCountParam = nullptr;
+    juce::AudioParameterBool* monoParam = nullptr;
+    juce::AudioParameterBool* legatoParam = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VoiceCountControl)
 };

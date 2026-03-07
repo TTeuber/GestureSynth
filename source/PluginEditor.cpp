@@ -7,9 +7,9 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       pitchWheel (p, &animationSource),
       keyboard (p.keyboardState, &animationSource),
       pitchBendRangeControl (p.parameters.getParameter (ParamIDs::pitchBendRange)),
-      voiceCountControl (dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::voiceCount))),
-      monoToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::monoOn)), "Mono"),
-      legatoToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::legatoOn)), "Legato"),
+      voiceCountControl (dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::voiceCount)),
+                         dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::monoOn)),
+                         dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::legatoOn))),
       gateToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::gateMode)), "Gate"),
       keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &modModeState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr(), &animationSource),
       lfoComponent (p.lfoData[0], p.parameters, true, 1),
@@ -63,8 +63,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     persistentPanel.addAndMakeVisible (keyboard);
     persistentPanel.addAndMakeVisible (pitchBendRangeControl);
     persistentPanel.addAndMakeVisible (voiceCountControl);
-    persistentPanel.addAndMakeVisible (monoToggle);
-    persistentPanel.addAndMakeVisible (legatoToggle);
     persistentPanel.addAndMakeVisible (gateToggle);
     persistentPanel.addAndMakeVisible (keyVelComponent);
     persistentPanel.addAndMakeVisible (lfoComponent);
@@ -228,14 +226,11 @@ void PluginEditor::resized()
     auto controlRow = keyboardRow.removeFromBottom (controlRowHeight);
 
     int controlWidth = controlRow.getWidth();
-    int pbWidth = controlWidth * 25 / 100;
-    int vcWidth = controlWidth * 20 / 100;
-    int toggleWidth = (controlWidth - pbWidth - vcWidth) / 3;
+    int pbWidth = controlWidth * 30 / 100;
+    int vcWidth = controlWidth * 40 / 100;
 
     pitchBendRangeControl.setBounds (controlRow.removeFromLeft (pbWidth).reduced (2, 2));
     voiceCountControl.setBounds (controlRow.removeFromLeft (vcWidth).reduced (2, 2));
-    monoToggle.setBounds (controlRow.removeFromLeft (toggleWidth).reduced (4, 3));
-    legatoToggle.setBounds (controlRow.removeFromLeft (toggleWidth).reduced (4, 3));
     gateToggle.setBounds (controlRow.reduced (4, 3));
 
     keyboard.setBounds (keyboardRow.reduced (2));

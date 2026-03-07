@@ -76,8 +76,6 @@ private:
     CustomKeyboard keyboard;
     PitchBendRangeControl pitchBendRangeControl;
     VoiceCountControl voiceCountControl;
-    CustomToggleComponent monoToggle;
-    CustomToggleComponent legatoToggle;
     CustomToggleComponent gateToggle;
     KeyVelComponent keyVelComponent;
 
