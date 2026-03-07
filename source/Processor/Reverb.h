@@ -12,6 +12,7 @@ public:
     explicit Reverb (juce::AudioProcessorValueTreeState& p)
         : parameters (p)
     {
+        AtomicHelpers::paramStore (enabled, *p.getRawParameterValue (ParamIDs::reverbOn) >= 0.5f ? 1 : 0);
         parameters.addParameterListener (ParamIDs::reverbOn, this);
         parameters.addParameterListener (ParamIDs::reverbDecay, this);
         parameters.addParameterListener (ParamIDs::reverbSize, this);

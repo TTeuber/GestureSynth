@@ -26,7 +26,7 @@ public:
     //==============================================================================
     explicit JuneChorus (juce::AudioProcessorValueTreeState& p)
         : parameters (p),
-          currentMode (On),
+          currentMode (static_cast<int> (*p.getRawParameterValue (ParamIDs::chorusOn) > 0.5f ? On : Off)),
           rate (0.1f),
           depth (0.001f),
           mix (0.5f),

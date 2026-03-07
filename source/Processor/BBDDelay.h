@@ -12,6 +12,7 @@ public:
     explicit BBDDelay (juce::AudioProcessorValueTreeState& p)
         : parameters (p)
     {
+        AtomicHelpers::paramStore (enabled, *p.getRawParameterValue (ParamIDs::delayOn) >= 0.5f ? 1 : 0);
         parameters.addParameterListener (ParamIDs::delayOn, this);
         parameters.addParameterListener (ParamIDs::delayTime, this);
         parameters.addParameterListener (ParamIDs::delayTempoSync, this);

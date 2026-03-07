@@ -29,6 +29,9 @@ MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, st
 
     monoVoice = dynamic_cast<MySynthVoice*> (voices.getUnchecked (0));
 
+    prevVibratoOn = vibratoOnParam->load() > 0.5f;
+    applyToAllVoices ([vib = prevVibratoOn] (MySynthVoice* voice) { voice->setVibratoEnabled (vib); });
+
     clearSounds();
     addSound (new MySynthSound());
 }

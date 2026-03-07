@@ -15,6 +15,10 @@ public:
         : parameters (p), pulseWidth (pw), waveformMix (wf),
           detuneParam (dt), widthParam (ow), subOscParam (so), subOscWaveParam (sw)
     {
+        oscillatorEnabled = *p.getRawParameterValue (ParamIDs::oscOn) > 0.5f;
+        subOscillatorEnabled = *p.getRawParameterValue (ParamIDs::subOn) > 0.5f;
+        detuneEnabled = *p.getRawParameterValue (ParamIDs::detuneOn) > 0.5f;
+
         parameters.addParameterListener (ParamIDs::oscOn, this);
         parameters.addParameterListener (ParamIDs::subOn, this);
         parameters.addParameterListener (ParamIDs::detuneOn, this);
@@ -320,9 +324,9 @@ private:
     DynamicParameter& subOscParam;
     DynamicParameter& subOscWaveParam;
     float detuneAmount = 0.25f;
-    bool oscillatorEnabled = true; // Default to on
-    bool subOscillatorEnabled = true; // Default to on
-    bool detuneEnabled = true; // Default to on
+    bool oscillatorEnabled = false;
+    bool subOscillatorEnabled = false;
+    bool detuneEnabled = false;
     // size_t numSamples = 512;
     juce::dsp::Oversampling<float> oversampling = juce::dsp::Oversampling<float> (
         2,     // numChannels (stereo)
