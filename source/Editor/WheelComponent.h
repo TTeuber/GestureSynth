@@ -234,6 +234,8 @@ public:
             // Spring back to center
             currentPitchValue = 8192;
             AtomicHelpers::paramStore (processor.uiPitchBendValue, 8192);
+            if (pitchBendRawPtr != nullptr)
+                AtomicHelpers::paramStore (*pitchBendRawPtr, 8192.0f);
             repaint();
         }
     }
