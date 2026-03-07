@@ -137,21 +137,6 @@ public:
                 true);
         }
 
-        // Draw the active toggle button in the top-left if we have an active parameter
-        if (activeParam != nullptr)
-        {
-            const int toggleSize = 12;
-            const juce::Rectangle<int> toggleRect (10, 10, toggleSize, toggleSize);
-
-            g.setOpacity (1.0f); // Ensure the toggle is fully visible even when inactive
-            g.setColour (juce::Colours::white);
-            g.drawRect (toggleRect, 1.0f);
-
-            if (isActive)
-            {
-                g.fillRect (toggleRect.reduced (2));
-            }
-        }
     }
 
     void resized() override
@@ -183,19 +168,15 @@ public:
             }
         }
 
-        // Check if clicking the toggle button
-        if (activeParam != nullptr)
+        // Toggle active state on right-click
+        if (activeParam != nullptr && e.mods.isRightButtonDown())
         {
-            const juce::Rectangle<int> toggleRect (10, 10, 12, 12);
-            if (toggleRect.contains (e.getPosition()) || e.mods.isRightButtonDown())
-            {
-                if (undoManager != nullptr)
-                    undoManager->beginNewTransaction();
-                activeParam->beginChangeGesture();
-                activeParam->setValueNotifyingHost (isActive ? 0.0f : 1.0f);
-                activeParam->endChangeGesture();
-                return;
-            }
+            if (undoManager != nullptr)
+                undoManager->beginNewTransaction();
+            activeParam->beginChangeGesture();
+            activeParam->setValueNotifyingHost (isActive ? 0.0f : 1.0f);
+            activeParam->endChangeGesture();
+            return;
         }
 
         // Modulation mode handling
