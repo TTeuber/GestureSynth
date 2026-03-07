@@ -188,7 +188,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
 
     // ================================================================================================================================================
     // Chorus Parameters
-    layout.add (make_unique<Parameter> (ID (ParamIDs::chorusMix, 1), "Chorus Mix", 0.0f, 1.0f, 0.5f));
+    layout.add (make_unique<Parameter> (ID (ParamIDs::chorusMix, 1), "Chrs Mix", 0.0f, 1.0f, 0.5f));
     layout.add (make_unique<Parameter> (ID (ParamIDs::chorusDepth, 1), "Chorus Depth", Normalize (0.0f, 0.03f, 0.0f), 0.015f));
     auto chorusRate = make_unique<Parameter> (ID (ParamIDs::chorusRate, 1), "Chorus Rate", Normalize (0.0f, 1.0f, 0.0f), 0.15f);
     chorusRate->range.setSkewForCentre (0.3f);
@@ -235,7 +235,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
 
     // ================================================================================================================================================
     // Portamento Parameters
-    auto portamentoTime = make_unique<Parameter> (ID (ParamIDs::portamentoTime, 1), "Portamento", Normalize (0.0f, 5000.0f, 0.1f), 0.0f);
+    auto portamentoTime = make_unique<Parameter> (ID (ParamIDs::portamentoTime, 1), "Porta", Normalize (0.0f, 5000.0f, 0.1f), 0.0f);
     portamentoTime->range.setSkewForCentre (500.0f);
     layout.add (std::move (portamentoTime));
 

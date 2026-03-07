@@ -288,9 +288,9 @@ private:
     juce::MidiKeyboardState& keyboardState;
     AnimationFrameSource* animSource = nullptr;
 
-    static constexpr int lowestNote = 24;   // C0
-    static constexpr int highestNote = 83;  // B5
-    static constexpr int numWhiteKeys = 42; // C0-B5: 42 white keys
+    static constexpr int lowestNote = 36;   // C1
+    static constexpr int highestNote = 95;  // B5
+    static constexpr int numWhiteKeys = 35; // C1-B5: 35 white keys
     static constexpr int midiChannel = 1;
 
     int currentNote = -1;
