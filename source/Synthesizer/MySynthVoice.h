@@ -33,6 +33,7 @@ public:
                   std::atomic<float>* velocityRawOut = nullptr, std::atomic<float>* keyboardRawOut = nullptr,
                   std::atomic<float>* modWheelRawOut = nullptr, std::atomic<float>* pitchBendRawOut = nullptr,
                   std::atomic<float>* aftertouchRawOut = nullptr, std::atomic<float>* expressionRawOut = nullptr);
+    ~MySynthVoice() override;
     void addNodeToMatrix (const juce::ValueTree& childNode);
 
     void parameterChanged (const juce::String& parameterID, float newValue) override;

@@ -48,8 +48,18 @@ MySynthVoice::MySynthVoice (
                          child.getProperty ("destination").toString() };
     }
 
+    for (int i = 0; i < modTree.getNumChildren() && i < static_cast<int> (slotCache.size()); ++i)
+        addNodeToMatrix (modTree.getChild (i));
+
     for (auto* env : envs)
         env->setSampleRate (currentSampleRate);
+}
+
+MySynthVoice::~MySynthVoice()
+{
+    modTree.removeListener (this);
+    parameters.removeParameterListener (ParamIDs::filterOn, this);
+    parameters.removeParameterListener (ParamIDs::hpfOn, this);
 }
 
 void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, const int startSample, const int numSamples)
