@@ -65,7 +65,7 @@ public:
         if (compactMode && !hovered)
         {
             // Compact default: text only, centered
-            g.setColour (isTarget ? MOD_COLOR : (selected ? juce::Colours::black : TEXT_COLOR));
+            g.setColour (isTarget ? getModColor (sourceID) : (selected ? juce::Colours::black : TEXT_COLOR));
             g.setFont (13.0f);
             g.drawText (text, bounds, juce::Justification::centred, true);
         }
@@ -76,7 +76,7 @@ public:
             float cy = bounds.getCentreY();
             float r = 16.0f * 0.35f;
 
-            g.setColour (isTarget ? MOD_COLOR : TEXT_COLOR.withAlpha (0.6f));
+            g.setColour (isTarget ? getModColor (sourceID) : TEXT_COLOR.withAlpha (0.6f));
             g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.5f);
             g.drawLine (cx - r - 2, cy, cx + r + 2, cy, 1.2f);
             g.drawLine (cx, cy - r - 2, cx, cy + r + 2, 1.2f);
@@ -90,7 +90,7 @@ public:
             float cy = iconArea.getCentreY();
             float r = iconSize * 0.35f;
 
-            g.setColour (isTarget ? MOD_COLOR : TEXT_COLOR.withAlpha (0.6f));
+            g.setColour (isTarget ? getModColor (sourceID) : TEXT_COLOR.withAlpha (0.6f));
             g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.5f);
             g.drawLine (cx - r - 2, cy, cx + r + 2, cy, 1.2f);
             g.drawLine (cx, cy - r - 2, cx, cy + r + 2, 1.2f);

@@ -435,7 +435,7 @@ private:
         float modP1 = juce::jlimit (0.0f, 1.0f, param1Value + depth1);
         float modP2 = juce::jlimit (0.0f, 1.0f, param2Value + depth2);
 
-        g.setColour (MOD_COLOR.withAlpha (0.7f));
+        g.setColour (getModColor (sourceID).withAlpha (0.7f));
         drawVisualizationWithValues (g, bounds, modP1, modP2);
 
         // Draw faint ghost for bipolar (opposite direction)
@@ -444,7 +444,7 @@ private:
             float ghostP1 = bipolar1 ? juce::jlimit (0.0f, 1.0f, param1Value - depth1) : modP1;
             float ghostP2 = bipolar2 ? juce::jlimit (0.0f, 1.0f, param2Value - depth2) : modP2;
 
-            g.setColour (MOD_COLOR.withAlpha (0.2f));
+            g.setColour (getModColor (sourceID).withAlpha (0.2f));
             drawVisualizationWithValues (g, bounds, ghostP1, ghostP2);
         }
     }

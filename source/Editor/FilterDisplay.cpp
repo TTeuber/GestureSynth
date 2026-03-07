@@ -491,14 +491,14 @@ void FilterDisplay::drawModModeOverlay (juce::Graphics& g) const
     // Draw cyan curve at modulated position
     float modCutoff = juce::jlimit (0.0f, 1.0f, normalizedCutoff + cutoffDepth);
     float modRes = juce::jlimit (0.0f, 1.0f, normalizedResonance + resDepth);
-    drawFilterCurveAt (g, modCutoff, modRes, MOD_COLOR.withAlpha (0.7f), 2.0f);
+    drawFilterCurveAt (g, modCutoff, modRes, getModColor (sourceID).withAlpha (0.7f), 2.0f);
 
     // Draw faint ghost for bipolar
     if (bipolarCutoff || bipolarRes)
     {
         float ghostCutoff = bipolarCutoff ? juce::jlimit (0.0f, 1.0f, normalizedCutoff - cutoffDepth) : modCutoff;
         float ghostRes = bipolarRes ? juce::jlimit (0.0f, 1.0f, normalizedResonance - resDepth) : modRes;
-        drawFilterCurveAt (g, ghostCutoff, ghostRes, MOD_COLOR.withAlpha (0.2f), 1.5f);
+        drawFilterCurveAt (g, ghostCutoff, ghostRes, getModColor (sourceID).withAlpha (0.2f), 1.5f);
     }
 }
 

@@ -361,14 +361,14 @@ private:
         float modValue = juce::jlimit (0.0f, 1.0f, paramValue + depth);
         float modY = bounds.getBottom() - modValue * bounds.getHeight();
 
-        g.setColour (MOD_COLOR.withAlpha (0.7f));
+        g.setColour (getModColor (sourceID).withAlpha (0.7f));
         g.drawHorizontalLine (static_cast<int> (modY), static_cast<float> (bounds.getX()), static_cast<float> (bounds.getRight()));
 
         if (bipolar)
         {
             float ghostValue = juce::jlimit (0.0f, 1.0f, paramValue - depth);
             float ghostY = bounds.getBottom() - ghostValue * bounds.getHeight();
-            g.setColour (MOD_COLOR.withAlpha (0.2f));
+            g.setColour (getModColor (sourceID).withAlpha (0.2f));
             g.drawHorizontalLine (static_cast<int> (ghostY), static_cast<float> (bounds.getX()), static_cast<float> (bounds.getRight()));
         }
     }

@@ -316,7 +316,7 @@ void PluginEditor::modulationModeChanged (ModulationModeState::Mode newMode)
     if (newMode == ModulationModeState::Mode::Modulation)
     {
         modeLabel.setText ("Modulation Mode", juce::dontSendNotification);
-        modeLabel.setColour (juce::Label::textColourId, MOD_COLOR);
+        modeLabel.setColour (juce::Label::textColourId, getModColor (modModeState.getTargetSourceID()));
     }
     else
     {
@@ -338,8 +338,10 @@ void PluginEditor::modulationModeChanged (ModulationModeState::Mode newMode)
     modWheel.repaint();
 }
 
-void PluginEditor::targetSourceChanged (const juce::String&)
+void PluginEditor::targetSourceChanged (const juce::String& newSourceID)
 {
+    if (modModeState.isModulationMode())
+        modeLabel.setColour (juce::Label::textColourId, getModColor (newSourceID));
     for (int i = 0; i < 4; ++i)
     {
         lfoTabs[i].repaint();

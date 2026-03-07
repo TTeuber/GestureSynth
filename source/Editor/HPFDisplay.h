@@ -13,7 +13,8 @@
 
 //==============================================================================
 class HPFDisplay final : public juce::Component,
-                         juce::AudioProcessorValueTreeState::Listener
+                         juce::AudioProcessorValueTreeState::Listener,
+                         public ModulationModeState::Listener
 {
 public:
     explicit HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
@@ -86,6 +87,9 @@ private:
     int modDragStartX = 0;
 
     void drawModModeOverlay (juce::Graphics& g) const;
+
+    void modulationModeChanged (ModulationModeState::Mode newMode) override;
+    void targetSourceChanged (const juce::String& newSourceID) override;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (HPFDisplay)
 };

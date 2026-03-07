@@ -19,6 +19,9 @@ HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
     if (hpfOnParam != nullptr)
         hpfEnabled = hpfOnParam->getValue() > 0.5f;
 
+    if (modModeState != nullptr)
+        modModeState->addListener (this);
+
     updateParameterValues();
 
     setSize (200, 150);
@@ -26,6 +29,8 @@ HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
 
 HPFDisplay::~HPFDisplay()
 {
+    if (modModeState != nullptr)
+        modModeState->removeListener (this);
     apvts.removeParameterListener (ParamIDs::hpfFrequency, this);
     apvts.removeParameterListener (ParamIDs::hpfOn, this);
 }
@@ -300,13 +305,13 @@ void HPFDisplay::drawModModeOverlay (juce::Graphics& g) const
     float modNormCutoff = juce::jlimit (0.0f, 1.0f, normalizedCutoff + depth);
     float modFreq = cutoffParam->getNormalisableRange().convertFrom0to1 (modNormCutoff);
 
-    drawHPFCurveAt (g, modFreq, MOD_COLOR.withAlpha (0.7f), 2.0f);
+    drawHPFCurveAt (g, modFreq, getModColor (sourceID).withAlpha (0.7f), 2.0f);
 
     if (bipolar)
     {
         float ghostNormCutoff = juce::jlimit (0.0f, 1.0f, normalizedCutoff - depth);
         float ghostFreq = cutoffParam->getNormalisableRange().convertFrom0to1 (ghostNormCutoff);
-        drawHPFCurveAt (g, ghostFreq, MOD_COLOR.withAlpha (0.2f), 1.5f);
+        drawHPFCurveAt (g, ghostFreq, getModColor (sourceID).withAlpha (0.2f), 1.5f);
     }
 }
 
@@ -320,4 +325,14 @@ double HPFDisplay::freqToDisplayX (double freq) const
     if (freq <= 0.0)
         return 0.0;
     return std::log (freq / kDisplayMinFreq) / std::log (kDisplayMaxFreq / kDisplayMinFreq);
+}
+
+void HPFDisplay::modulationModeChanged (ModulationModeState::Mode)
+{
+    repaint();
+}
+
+void HPFDisplay::targetSourceChanged (const juce::String&)
+{
+    repaint();
 }
