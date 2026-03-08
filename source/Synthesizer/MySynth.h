@@ -109,4 +109,7 @@ private:
     std::atomic<float> currentPitchBendRaw { 8192.0f };
     std::atomic<float> currentAftertouchRaw { 0.0f };
     std::atomic<float> currentExpressionRaw { 0.0f };
+
+    std::atomic<float>* cachedSourceOutputArray = nullptr;
+    std::atomic<float>* cachedDestOutputArray = nullptr;
 };

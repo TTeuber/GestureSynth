@@ -76,6 +76,12 @@ void MySynth::setVoiceCount (int count)
     if (preparedSampleRate > 0.0)
         prepareVoices (preparedSampleRate, preparedSamplesPerBlock, preparedNumChannels);
 
+    // Reconnect mod output arrays to new voices
+    if (cachedSourceOutputArray != nullptr)
+        setSourceOutputArray (cachedSourceOutputArray);
+    if (cachedDestOutputArray != nullptr)
+        setDestOutputArray (cachedDestOutputArray);
+
     // Reset previous-value cache so updateParameters() re-applies everything
     prevVolume = -1.0f;
     prevNoiseLevel = -1.0f;
@@ -215,11 +221,13 @@ void MySynth::applyToAllVoices (Func&& function)
 
 void MySynth::setSourceOutputArray (std::atomic<float>* arr)
 {
+    cachedSourceOutputArray = arr;
     applyToAllVoices ([arr] (MySynthVoice* v) { v->setSourceOutputArray (arr); });
 }
 
 void MySynth::setDestOutputArray (std::atomic<float>* arr)
 {
+    cachedDestOutputArray = arr;
     applyToAllVoices ([arr] (MySynthVoice* v) { v->setDestOutputArray (arr); });
 }
 
