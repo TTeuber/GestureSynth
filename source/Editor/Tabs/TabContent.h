@@ -52,11 +52,14 @@ public:
         auto bounds = getLocalBounds().toFloat();
 
         // Background
-        if (selected)
-            g.setColour (juce::Colours::orange);
-        else
-            g.setColour (SECONDARY_COLOR);
+        g.setColour (SECONDARY_COLOR);
         g.fillRoundedRectangle (bounds, 3.0f);
+
+        if (selected)
+        {
+            g.setColour (getModColor (sourceID));
+            g.drawRoundedRectangle (bounds.reduced (0.5f), 3.0f, 1.5f);
+        }
 
         bool isTarget = modModeState != nullptr
             && modModeState->isModulationMode()
@@ -65,7 +68,7 @@ public:
         if (compactMode && !hovered)
         {
             // Compact default: text only, centered
-            g.setColour (isTarget ? getModColor (sourceID) : (selected ? juce::Colours::black : TEXT_COLOR));
+            g.setColour (isTarget ? getModColor (sourceID) : TEXT_COLOR);
             g.setFont (13.0f);
             g.drawText (text, bounds, juce::Justification::centred, true);
         }
@@ -95,7 +98,7 @@ public:
             g.drawLine (cx - r - 2, cy, cx + r + 2, cy, 1.2f);
             g.drawLine (cx, cy - r - 2, cx, cy + r + 2, 1.2f);
 
-            g.setColour (selected ? juce::Colours::black : TEXT_COLOR);
+            g.setColour (TEXT_COLOR);
             g.setFont (13.0f);
             g.drawText (text, bounds.withTrimmedLeft (iconSize + 8), juce::Justification::centred, true);
         }
