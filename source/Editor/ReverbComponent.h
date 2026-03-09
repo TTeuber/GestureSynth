@@ -26,7 +26,46 @@ public:
     }
 
 protected:
-    void drawVisualization (juce::Graphics&, const juce::Rectangle<int>&) const override {}
+    void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
+    {
+        g.setOpacity (isActive ? 1.0f : 0.5f);
+        g.setColour (getDrawColor());
+        drawDampedOscillation (g, bounds, param1Value, param2Value);
+    }
+
+    void drawVisualizationWithValues (juce::Graphics& g,
+        const juce::Rectangle<int>& bounds, float p1, float p2) const override
+    {
+        drawDampedOscillation (g, bounds, p1, p2);
+    }
+
+private:
+    static void drawDampedOscillation (juce::Graphics& g, const juce::Rectangle<int>& bounds,
+        float mix, float decay)
+    {
+        juce::Path path;
+        const float width = static_cast<float> (bounds.getWidth());
+        const float height = static_cast<float> (bounds.getHeight());
+        const float left = static_cast<float> (bounds.getX());
+        const float top = static_cast<float> (bounds.getY());
+
+        for (float px = 0; px <= width; px += 1.5f)
+        {
+            const float nx = px / width;
+            const float y = std::exp ((-14.0f + 10.0f * decay) * nx)
+                          * std::sin (20.0f * juce::MathConstants<float>::pi * nx)
+                          * (0.5f * mix) + 0.5f;
+
+            const float screenY = top + height * (1.0f - y);
+
+            if (px == 0)
+                path.startNewSubPath (left, screenY);
+            else
+                path.lineTo (left + px, screenY);
+        }
+
+        g.strokePath (path, juce::PathStrokeType (1.5f));
+    }
 
     juce::String getParam1Text() const override
     {
