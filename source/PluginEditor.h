@@ -7,7 +7,7 @@
 #include "Theme.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 
-#define HEIGHT 750
+#define HEIGHT 780
 #define WIDTH 1100
 
 //==============================================================================

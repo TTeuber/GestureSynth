@@ -110,19 +110,35 @@ void ModulationTabContent::resized()
 // =============================================================================
 
 EffectsTabContent::EffectsTabContent (PluginProcessor& p, ModulationModeState* modState, AnimationFrameSource* animSource)
-    : chorusComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[12], &p.modDestOutputs[13], ParamIDs::chorusDepth, ParamIDs::chorusRate),
-      vibratoComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[10], &p.modDestOutputs[11], ParamIDs::vibratoDepth, ParamIDs::vibratoRate),
-      volumeComponent (p.parameters.getParameter (ParamIDs::volume), { &p.undoManager, &p.activeGestureCount, modState }),
-      noiseComponent (p.parameters.getParameter (ParamIDs::noiseLevel), { &p.undoManager, &p.activeGestureCount, modState }),
-      chorusMixComponent (p.parameters.getParameter (ParamIDs::chorusMix), { &p.undoManager, &p.activeGestureCount, modState }),
-      portamentoComponent (p.parameters.getParameter (ParamIDs::portamentoTime), { &p.undoManager, &p.activeGestureCount, modState })
+    : delayComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
+      delayModComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
+      delayRateComponent (p.parameters.getParameter (ParamIDs::delayTime),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync)),
+          dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::delayNoteDivision)),
+          { &p.undoManager, &p.activeGestureCount, modState }),
+      delayBpmToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync)), "BPM"),
+      delayHighpassComponent (p.parameters.getParameter (ParamIDs::delayHighpass), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      delayLowpassComponent (p.parameters.getParameter (ParamIDs::delayLowpass), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
+      reverbModComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
+      reverbSizeComponent (p.parameters.getParameter (ParamIDs::reverbSize), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbPreDelayComponent (p.parameters.getParameter (ParamIDs::reverbPreDelay), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbBassMultComponent (p.parameters.getParameter (ParamIDs::reverbBassMult), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbDampingComponent (p.parameters.getParameter (ParamIDs::reverbDamping), nullptr, { &p.undoManager, &p.activeGestureCount, modState })
 {
-    addAndMakeVisible (chorusComponent);
-    addAndMakeVisible (vibratoComponent);
-    addAndMakeVisible (volumeComponent);
-    addAndMakeVisible (noiseComponent);
-    addAndMakeVisible (chorusMixComponent);
-    addAndMakeVisible (portamentoComponent);
+    addAndMakeVisible (delayComponent);
+    addAndMakeVisible (delayModComponent);
+    addAndMakeVisible (delayRateComponent);
+    addAndMakeVisible (delayBpmToggle);
+    addAndMakeVisible (delayHighpassComponent);
+    addAndMakeVisible (delayLowpassComponent);
+
+    addAndMakeVisible (reverbComponent);
+    addAndMakeVisible (reverbModComponent);
+    addAndMakeVisible (reverbSizeComponent);
+    addAndMakeVisible (reverbPreDelayComponent);
+    addAndMakeVisible (reverbBassMultComponent);
+    addAndMakeVisible (reverbDampingComponent);
 }
 
 void EffectsTabContent::paint (juce::Graphics& g)
@@ -133,22 +149,30 @@ void EffectsTabContent::paint (juce::Graphics& g)
 void EffectsTabContent::resized()
 {
     auto area = getLocalBounds();
+    auto rowHeight = area.getHeight() / 2;
 
-    // 3 columns filling full height
-    auto colWidth = area.getWidth() / 3;
-    auto chorusArea = area.removeFromLeft (colWidth);
-    auto vibratoArea = area.removeFromLeft (colWidth);
-    auto rightColumn = area;
+    // --- Delay row ---
+    auto delayRow = area.removeFromTop (rowHeight);
+    auto squareSize = rowHeight;
+    delayComponent.setBounds (delayRow.removeFromLeft (squareSize).reduced (5));
+    delayModComponent.setBounds (delayRow.removeFromLeft (squareSize).reduced (5));
+    auto delayGrid = delayRow;
+    auto delayGridTop = delayGrid.removeFromTop (delayGrid.getHeight() / 2);
+    delayRateComponent.setBounds (delayGridTop.removeFromLeft (delayGridTop.getWidth() / 2).reduced (5));
+    delayBpmToggle.setBounds (delayGridTop.reduced (5));
+    delayHighpassComponent.setBounds (delayGrid.removeFromLeft (delayGrid.getWidth() / 2).reduced (5));
+    delayLowpassComponent.setBounds (delayGrid.reduced (5));
 
-    chorusComponent.setBounds (chorusArea.reduced (5));
-    vibratoComponent.setBounds (vibratoArea.reduced (5));
-
-    // Right column: 2x2 grid
-    auto topRight = rightColumn.removeFromTop (rightColumn.getHeight() / 2);
-    volumeComponent.setBounds (topRight.removeFromLeft (topRight.getWidth() / 2).reduced (5));
-    noiseComponent.setBounds (topRight.reduced (5));
-    chorusMixComponent.setBounds (rightColumn.removeFromLeft (rightColumn.getWidth() / 2).reduced (5));
-    portamentoComponent.setBounds (rightColumn.reduced (5));
+    // --- Reverb row ---
+    auto reverbRow = area;
+    reverbComponent.setBounds (reverbRow.removeFromLeft (squareSize).reduced (5));
+    reverbModComponent.setBounds (reverbRow.removeFromLeft (squareSize).reduced (5));
+    auto reverbGrid = reverbRow;
+    auto reverbGridTop = reverbGrid.removeFromTop (reverbGrid.getHeight() / 2);
+    reverbSizeComponent.setBounds (reverbGridTop.removeFromLeft (reverbGridTop.getWidth() / 2).reduced (5));
+    reverbPreDelayComponent.setBounds (reverbGridTop.reduced (5));
+    reverbBassMultComponent.setBounds (reverbGrid.removeFromLeft (reverbGrid.getWidth() / 2).reduced (5));
+    reverbDampingComponent.setBounds (reverbGrid.reduced (5));
 }
 
 // =============================================================================

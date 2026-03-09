@@ -241,51 +241,51 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
 
     // ================================================================================================================================================
     // Reverb Parameters
-    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbDecay, 1), "Reverb Decay",
+    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbDecay, 1), "Decay",
         Normalize (0.3f, 30.0f, 0.01f, 0.35f), 2.5f));
-    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbSize, 1), "Reverb Size",
+    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbSize, 1), "Size",
         Normalize (0.25f, 2.0f, 0.01f), 1.0f));
-    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbDamping, 1), "Reverb Damping",
+    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbDamping, 1), "Damping",
         Normalize (1000.0f, 16000.0f, 10.0f, 0.5f), 6000.0f));
-    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbBassMult, 1), "Reverb Bass Mult",
+    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbBassMult, 1), "Bass Mult",
         Normalize (0.5f, 2.0f, 0.01f), 1.0f));
-    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbModRate, 1), "Reverb Mod Rate",
+    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbModRate, 1), "Rate",
         Normalize (0.1f, 5.0f, 0.01f, 0.5f), 1.0f));
-    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbModDepth, 1), "Reverb Mod Depth",
+    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbModDepth, 1), "Depth",
         Normalize (0.0f, 1.0f, 0.01f), 0.3f));
     layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbDiffusion, 1), "Reverb Diffusion",
         Normalize (0.0f, 1.0f, 0.01f), 0.7f));
-    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbPreDelay, 1), "Reverb Pre-Delay",
+    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbPreDelay, 1), "Pre-Delay",
         Normalize (0.0f, 300.0f, 1.0f), 20.0f));
     layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbWidth, 1), "Reverb Width",
         Normalize (0.0f, 1.0f, 0.01f), 1.0f));
-    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbMix, 1), "Reverb Mix",
+    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbMix, 1), "Mix",
         Normalize (0.0f, 1.0f, 0.01f), 0.35f));
 
     // ================================================================================================================================================
     // Delay Parameters
-    auto delayTime = make_unique<Parameter> (ID (ParamIDs::delayTime, 1), "Delay Time",
+    auto delayTime = make_unique<Parameter> (ID (ParamIDs::delayTime, 1), "Time",
         Normalize (10.0f, 2000.0f, 0.1f, 0.35f), 375.0f);
     layout.add (std::move (delayTime));
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::delayTempoSync, 1), "Delay Tempo Sync", false));
     layout.add (make_unique<AudioParameterChoice> (ID (ParamIDs::delayNoteDivision, 1), "Delay Note Division",
         juce::StringArray { "1/1", "1/2", "1/2T", "1/2D", "1/4", "1/4T", "1/4D", "1/8", "1/8T", "1/8D", "1/16", "1/16T", "1/16D" }, 4));
-    layout.add (make_unique<Parameter> (ID (ParamIDs::delayFeedback, 1), "Delay Feedback",
+    layout.add (make_unique<Parameter> (ID (ParamIDs::delayFeedback, 1), "Feedback",
         Normalize (0.0f, 0.95f, 0.01f), 0.4f));
-    layout.add (make_unique<Parameter> (ID (ParamIDs::delayMix, 1), "Delay Mix",
+    layout.add (make_unique<Parameter> (ID (ParamIDs::delayMix, 1), "Mix",
         Normalize (0.0f, 1.0f, 0.01f), 0.3f));
-    auto delayLowpass = make_unique<Parameter> (ID (ParamIDs::delayLowpass, 1), "Delay Lowpass",
+    auto delayLowpass = make_unique<Parameter> (ID (ParamIDs::delayLowpass, 1), "Lowpass",
         Normalize (200.0f, 18000.0f, 1.0f, 0.35f), 4000.0f);
     layout.add (std::move (delayLowpass));
-    auto delayHighpass = make_unique<Parameter> (ID (ParamIDs::delayHighpass, 1), "Delay Highpass",
+    auto delayHighpass = make_unique<Parameter> (ID (ParamIDs::delayHighpass, 1), "Highpass",
         Normalize (20.0f, 2000.0f, 0.1f, 0.35f), 80.0f);
     layout.add (std::move (delayHighpass));
     layout.add (make_unique<Parameter> (ID (ParamIDs::delaySaturation, 1), "Delay Saturation",
         Normalize (0.0f, 1.0f, 0.01f), 0.3f));
-    auto delayModRate = make_unique<Parameter> (ID (ParamIDs::delayModRate, 1), "Delay Mod Rate",
+    auto delayModRate = make_unique<Parameter> (ID (ParamIDs::delayModRate, 1), "Rate",
         Normalize (0.05f, 5.0f, 0.01f, 0.5f), 0.7f);
     layout.add (std::move (delayModRate));
-    layout.add (make_unique<Parameter> (ID (ParamIDs::delayModDepth, 1), "Delay Mod Depth",
+    layout.add (make_unique<Parameter> (ID (ParamIDs::delayModDepth, 1), "Depth",
         Normalize (0.0f, 1.0f, 0.01f), 0.15f));
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::delayPingPong, 1), "Delay Ping Pong", false));
     layout.add (make_unique<Parameter> (ID (ParamIDs::delayDiffusion, 1), "Delay Diffusion",

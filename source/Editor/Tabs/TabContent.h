@@ -4,6 +4,11 @@
 #include "../../Theme.h"
 #include "../ADSRGraph.h"
 #include "../ChorusComponent.h"
+#include "../DelayComponent.h"
+#include "../DelayModComponent.h"
+#include "../DelayRateComponent.h"
+#include "../ReverbComponent.h"
+#include "../ReverbModComponent.h"
 #include "../VibratoComponent.h"
 #include "../DetuneComponent.h"
 #include "../FilterDisplay.h"
@@ -442,12 +447,19 @@ public:
     void paint (juce::Graphics& g) override;
 
 private:
-    ChorusComponent chorusComponent;
-    VibratoComponent vibratoComponent;
-    VolumeComponent volumeComponent;
-    NoiseComponent noiseComponent;
-    ChorusMixComponent chorusMixComponent;
-    PortamentoComponent portamentoComponent;
+    DelayComponent delayComponent;
+    DelayModComponent delayModComponent;
+    DelayRateComponent delayRateComponent;
+    CustomToggleComponent delayBpmToggle;
+    SingleParameterComponent delayHighpassComponent;
+    SingleParameterComponent delayLowpassComponent;
+
+    ReverbComponent reverbComponent;
+    ReverbModComponent reverbModComponent;
+    SingleParameterComponent reverbSizeComponent;
+    SingleParameterComponent reverbPreDelayComponent;
+    SingleParameterComponent reverbBassMultComponent;
+    SingleParameterComponent reverbDampingComponent;
 };
 
 // =============================================================================
