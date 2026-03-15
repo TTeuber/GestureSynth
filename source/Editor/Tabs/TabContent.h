@@ -5,9 +5,11 @@
 #include "../ADSRGraph.h"
 #include "../ChorusComponent.h"
 #include "../DelayComponent.h"
+#include "../DelayFilterComponent.h"
 #include "../DelayModComponent.h"
 #include "../DelayRateComponent.h"
 #include "../ReverbComponent.h"
+#include "../ReverbFilterComponent.h"
 #include "../ReverbModComponent.h"
 #include "../VibratoComponent.h"
 #include "../DetuneComponent.h"
@@ -451,15 +453,15 @@ private:
     DelayModComponent delayModComponent;
     DelayRateComponent delayRateComponent;
     CustomToggleComponent delayBpmToggle;
-    SingleParameterComponent delayHighpassComponent;
-    SingleParameterComponent delayLowpassComponent;
+    DelayHighpassComponent delayHighpassComponent;
+    DelayLowpassComponent delayLowpassComponent;
 
     ReverbComponent reverbComponent;
     ReverbModComponent reverbModComponent;
     SingleParameterComponent reverbSizeComponent;
     SingleParameterComponent reverbPreDelayComponent;
-    SingleParameterComponent reverbBassMultComponent;
-    SingleParameterComponent reverbDampingComponent;
+    ReverbBassMultComponent reverbBassMultComponent;
+    ReverbDampingComponent reverbDampingComponent;
 };
 
 // =============================================================================
