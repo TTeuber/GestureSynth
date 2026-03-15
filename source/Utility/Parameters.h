@@ -242,13 +242,13 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     // ================================================================================================================================================
     // Reverb Parameters
     layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbDecay, 1), "Decay",
-        Normalize (0.3f, 30.0f, 0.01f, 0.35f), 2.5f));
+        Normalize (1.0f, 20.0f, 0.1f, 0.2f), 4.0f));
     layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbSize, 1), "Size",
-        Normalize (0.25f, 2.0f, 0.01f), 1.0f));
+        Normalize (1.0f, 4.0f, 0.1f), 2.0f));
     layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbDamping, 1), "Damping",
         Normalize (1000.0f, 16000.0f, 10.0f, 0.5f), 6000.0f));
     layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbBassMult, 1), "Bass Mult",
-        Normalize (0.5f, 2.0f, 0.01f), 1.0f));
+        Normalize (0.5f, 2.0f, 0.01f), 1.5f));
     layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbModRate, 1), "Rate",
         Normalize (0.1f, 5.0f, 0.01f, 0.5f), 1.0f));
     layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbModDepth, 1), "Depth",

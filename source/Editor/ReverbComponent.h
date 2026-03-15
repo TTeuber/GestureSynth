@@ -52,9 +52,9 @@ private:
         for (float px = 0; px <= width; px += 1.5f)
         {
             const float nx = px / width;
-            const float y = std::exp ((-14.0f + 10.0f * decay) * nx)
+            const float y = std::exp ((-14.0f + 12.0f * decay) * nx)
                           * std::sin (20.0f * juce::MathConstants<float>::pi * nx)
-                          * (0.5f * mix) + 0.5f;
+                          * (mix - std::pow(mix, 2.0f) + std::pow(0.8f * mix, 3.0f)) + 0.5f;
 
             const float screenY = top + height * (1.0f - y);
 
