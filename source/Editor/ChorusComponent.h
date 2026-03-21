@@ -135,7 +135,8 @@ private:
         const float midY = bounds.getCentreY();
 
         // Draw sine wave from left to right
-        for (float x = 0; x <= bounds.getWidth(); x += 5.0f)
+        const float step = juce::jmin (5.0f, wavelength / 20.0f);
+        for (float x = 0; x <= bounds.getWidth(); x += step)
         {
             // Calculate normalized x-position (0 to 2π)
             const float normalizedX = (x / wavelength) * juce::MathConstants<float>::twoPi;

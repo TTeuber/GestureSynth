@@ -11,6 +11,7 @@
 #include "../ReverbComponent.h"
 #include "../ReverbFilterComponent.h"
 #include "../ReverbModComponent.h"
+#include "../ReverbSizeComponent.h"
 #include "../VibratoComponent.h"
 #include "../DetuneComponent.h"
 #include "../FilterDisplay.h"
@@ -458,7 +459,7 @@ private:
 
     ReverbComponent reverbComponent;
     ReverbModComponent reverbModComponent;
-    SingleParameterComponent reverbSizeComponent;
+    ReverbSizeComponent reverbSizeComponent;
     SingleParameterComponent reverbPreDelayComponent;
     ReverbBassMultComponent reverbBassMultComponent;
     ReverbDampingComponent reverbDampingComponent;
