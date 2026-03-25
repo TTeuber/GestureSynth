@@ -397,9 +397,10 @@ public:
     void resized() override;
     void paint (juce::Graphics& g) override;
 
-    void setShowEffects (bool show);
-
 private:
+    juce::Viewport viewport;
+    juce::Component scrollContent;
+
     // Synth components
     WaveformComponent waveformComponent;
     FilterDisplay filterDisplay;
@@ -427,8 +428,6 @@ private:
     ReverbPreDelayComponent reverbPreDelayComponent;
     ReverbBassMultComponent reverbBassMultComponent;
     ReverbDampingComponent reverbDampingComponent;
-
-    bool showingEffects = false;
 };
 
 // =============================================================================

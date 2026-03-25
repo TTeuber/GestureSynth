@@ -56,12 +56,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     contentWrapper.addAndMakeVisible (tabbedComponent);
 
-    synthEffectsToggle.setOnChange ([this] (bool showEffects)
-    {
-        mainTab->setShowEffects (showEffects);
-    });
-    contentWrapper.addAndMakeVisible (synthEffectsToggle);
-
     // Persistent panel components
     persistentPanel.addAndMakeVisible (modWheel);
     persistentPanel.addAndMakeVisible (pitchWheel);
@@ -207,13 +201,8 @@ void PluginEditor::resized()
     contentWrapper.setBounds (0, 0, WIDTH, HEIGHT);
 
     constexpr int persistentHeight = 380;
-    constexpr int toggleRowHeight = 30;
     tabbedComponent.setBounds (0, 0, WIDTH, HEIGHT - persistentHeight);
     persistentPanel.setBounds (0, HEIGHT - persistentHeight, WIDTH, persistentHeight);
-
-    // Position toggle row just below the tab bar, above tab content
-    int tabBarBottom = tabbedComponent.getTabbedButtonBar().getBounds().getBottom();
-    synthEffectsToggle.setBounds (10, tabBarBottom + 3, 80, toggleRowHeight - 6);
 
     // Layout persistent panel
     auto panelArea = persistentPanel.getLocalBounds();

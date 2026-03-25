@@ -3,12 +3,11 @@
 #include "Editor/Tabs/TabContent.h"
 #include "Editor/Utility/AnimationFrameSource.h"
 #include "Editor/Utility/ModulationModeState.h"
-#include "Editor/Utility/SynthEffectsToggle.h"
 #include "PluginProcessor.h"
 #include "Theme.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 
-#define HEIGHT 800
+#define HEIGHT 775
 #define WIDTH 1100
 
 //==============================================================================
@@ -67,8 +66,6 @@ private:
     std::unique_ptr<ExperimentTabContent> experimentTab;
 
     juce::TabbedComponent tabbedComponent { juce::TabbedButtonBar::TabsAtTop };
-
-    SynthEffectsToggle synthEffectsToggle;
 
     // Persistent bottom panel and its components
     juce::Component persistentPanel;
