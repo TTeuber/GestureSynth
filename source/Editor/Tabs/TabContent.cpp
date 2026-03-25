@@ -61,8 +61,12 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
     scrollContent.addAndMakeVisible (reverbDampingComponent);
 
     viewport.setViewedComponent (&scrollContent, false);
-    viewport.setScrollBarsShown (true, false);
+    viewport.setScrollBarsShown (false, false, true, false);
+    viewport.onScroll = [this] { scrollIndicator.showIndicator(); };
     addAndMakeVisible (viewport);
+
+    scrollIndicator.setViewport (&viewport);
+    addAndMakeVisible (scrollIndicator);
 }
 
 void MainTabContent::paint (juce::Graphics& g)
@@ -74,8 +78,9 @@ void MainTabContent::resized()
 {
     auto area = getLocalBounds();
     viewport.setBounds (area);
+    scrollIndicator.setBounds (area);
 
-    int availableWidth = viewport.getWidth() - viewport.getScrollBarThickness();
+    int availableWidth = viewport.getWidth();
     int unitSize = availableWidth / 6;
     int totalHeight = unitSize * 3;
 

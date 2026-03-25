@@ -388,6 +388,84 @@ private:
 };
 
 // =============================================================================
+// ScrollIndicator: overlay scroll thumb that fades in/out
+// =============================================================================
+class ScrollIndicator final : public juce::Component,
+                               private juce::Timer
+{
+public:
+    ScrollIndicator() { setInterceptsMouseClicks (false, false); }
+
+    void setViewport (juce::Viewport* vp) { viewport = vp; }
+
+    void showIndicator()
+    {
+        alpha = 1.0f;
+        fadeDelayActive = true;
+        startTimer (1000);
+        repaint();
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        if (viewport == nullptr || alpha <= 0.0f) return;
+
+        auto viewHeight = (float) viewport->getHeight();
+        auto contentHeight = (float) viewport->getViewedComponent()->getHeight();
+        if (contentHeight <= viewHeight) return;
+
+        float ratio = viewHeight / contentHeight;
+        float thumbHeight = juce::jmax (20.0f, ratio * viewHeight);
+        float scrollRatio = (float) viewport->getViewPositionY() / (contentHeight - viewHeight);
+        float thumbY = scrollRatio * (viewHeight - thumbHeight);
+        constexpr float barWidth = 4.0f;
+        float barX = (float) getWidth() - barWidth - 2.0f;
+
+        g.setColour (TEXT_COLOR.withAlpha (alpha * 0.5f));
+        g.fillRoundedRectangle (barX, thumbY, barWidth, thumbHeight, barWidth / 2.0f);
+    }
+
+private:
+    void timerCallback() override
+    {
+        if (fadeDelayActive)
+        {
+            fadeDelayActive = false;
+            startTimer (30);
+            return;
+        }
+        alpha -= 0.1f;
+        if (alpha <= 0.0f)
+        {
+            alpha = 0.0f;
+            stopTimer();
+        }
+        repaint();
+    }
+
+    juce::Viewport* viewport = nullptr;
+    float alpha = 0.0f;
+    bool fadeDelayActive = false;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScrollIndicator)
+};
+
+// =============================================================================
+// NotifyingViewport: Viewport that notifies on scroll
+// =============================================================================
+class NotifyingViewport final : public juce::Viewport
+{
+public:
+    std::function<void()> onScroll;
+
+    void visibleAreaChanged (const juce::Rectangle<int>& newVisibleArea) override
+    {
+        juce::Viewport::visibleAreaChanged (newVisibleArea);
+        if (onScroll) onScroll();
+    }
+};
+
+// =============================================================================
 // Main Tab: Filter, Chorus, Vibrato, Waveform, Sub Osc, Detune, HPF
 // =============================================================================
 class MainTabContent final : public juce::Component
@@ -398,8 +476,9 @@ public:
     void paint (juce::Graphics& g) override;
 
 private:
-    juce::Viewport viewport;
+    NotifyingViewport viewport;
     juce::Component scrollContent;
+    ScrollIndicator scrollIndicator;
 
     // Synth components
     WaveformComponent waveformComponent;
