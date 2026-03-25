@@ -11,7 +11,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::monoOn)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::legatoOn))),
       keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &modModeState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr(), &animationSource),
-      lfoComponent (p.lfoData[0], p.parameters, true, 1),
+      lfoComponent (p.lfoData[0], p.parameters, true, 1, p.getSynth().getLFOPtr (0), &animationSource),
       adsrGraph (p.parameters, ParamIDs::envParamID (1, "Attack"), ParamIDs::envParamID (1, "AttackCurve"), ParamIDs::envParamID (1, "Decay"), ParamIDs::envParamID (1, "DecayCurve"), ParamIDs::envParamID (1, "Sustain"), ParamIDs::envParamID (1, "Release"), ParamIDs::envParamID (1, "ReleaseCurve"), p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount, &animationSource)
 {
     // Set up modulation mode state
@@ -159,7 +159,7 @@ void PluginEditor::selectLfo (int index)
     activeLfoIndex = index;
     for (int i = 0; i < 4; ++i)
         lfoTabs[i].setSelected (i == index);
-    lfoComponent.rebind (processorRef.lfoData[index], index + 1);
+    lfoComponent.rebind (processorRef.lfoData[index], index + 1, processorRef.getSynth().getLFOPtr (index));
 }
 
 void PluginEditor::selectEnv (int index)

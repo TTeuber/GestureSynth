@@ -1,11 +1,14 @@
 #include "LFOComponent.h"
 #include <algorithm>
 
-LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorValueTreeState& parameters, bool showRateSlider, int lfoIdx)
+LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorValueTreeState& parameters, bool showRateSlider, int lfoIdx,
+                            std::shared_ptr<MyLFO*> lfoPtr, AnimationFrameSource* animSrc)
     : lfoData (std::move (data)),
       apvts (parameters),
       hasRateSlider (showRateSlider),
       lfoIndex (lfoIdx),
+      myLFO (std::move (lfoPtr)),
+      animSource (animSrc),
       sineButton (0, [this] { this->lfoData->setShape (LFOShape::Sine); this->lfoData->updateListeners(); }),
       triangleButton (1, [this] { this->lfoData->setShape (LFOShape::Triangle); this->lfoData->updateListeners(); }),
       sawButton (2, [this] { this->lfoData->setShape (LFOShape::RampDown); this->lfoData->updateListeners(); }),
@@ -58,20 +61,26 @@ LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorV
     addAndMakeVisible (flipHButton);
     addAndMakeVisible (flipVButton);
 
+    if (animSource != nullptr)
+        animSource->addListener (this, AnimationFrameSource::Rate::Hz60);
+
     setSize (300, 200);
 }
 
 LFOComponent::~LFOComponent()
 {
+    if (animSource != nullptr)
+        animSource->removeListener (this);
     lfoData->removeListener (this);
 }
 
-void LFOComponent::rebind (std::shared_ptr<LFOData> newData, int newLfoIndex)
+void LFOComponent::rebind (std::shared_ptr<LFOData> newData, int newLfoIndex, std::shared_ptr<MyLFO*> newLfoPtr)
 {
     lfoData->removeListener (this);
 
     lfoData = std::move (newData);
     lfoIndex = newLfoIndex;
+    myLFO = std::move (newLfoPtr);
 
     lfoData->addListener (this);
 
@@ -96,6 +105,25 @@ void LFOComponent::rebind (std::shared_ptr<LFOData> newData, int newLfoIndex)
 void LFOComponent::lfoDataChanged()
 {
     repaint();
+}
+
+void LFOComponent::onAnimationFrame()
+{
+    if (myLFO != nullptr && *myLFO != nullptr)
+    {
+        const float phase = (*myLFO)->getPhase();
+        if (phase != currentPhase || !showPhaseIndicator)
+        {
+            currentPhase = phase;
+            showPhaseIndicator = true;
+            repaint();
+        }
+    }
+    else if (showPhaseIndicator)
+    {
+        showPhaseIndicator = false;
+        repaint();
+    }
 }
 
 // =====================================================================================
@@ -265,6 +293,14 @@ void LFOComponent::paint (juce::Graphics& g)
         g.setColour (selected ? juce::Colours::yellow : juce::Colours::orange);
         g.fillEllipse (px - kPointRadius, py - kPointRadius,
             kPointRadius * 2.0f, kPointRadius * 2.0f);
+    }
+
+    // Phase indicator vertical line
+    if (showPhaseIndicator)
+    {
+        const float phaseX = positionToX (currentPhase);
+        g.setColour (juce::Colours::white.withAlpha (0.6f));
+        g.drawLine (phaseX, graphBounds.getY(), phaseX, graphBounds.getBottom(), 1.5f);
     }
 }
 

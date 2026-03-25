@@ -29,7 +29,7 @@ public:
 class MySynthVoice final : public juce::SynthesiserVoice, public juce::ValueTree::Listener, juce::AudioProcessorValueTreeState::Listener
 {
 public:
-    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::array<std::shared_ptr<MyADSR*>, 4> envPtrs, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData,
+    MySynthVoice (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::array<std::shared_ptr<MyADSR*>, 4> envPtrs, std::array<std::shared_ptr<MyLFO*>, 4> lfoPtrs, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData,
                   std::atomic<float>* velocityRawOut = nullptr, std::atomic<float>* keyboardRawOut = nullptr,
                   std::atomic<float>* modWheelRawOut = nullptr, std::atomic<float>* pitchBendRawOut = nullptr,
                   std::atomic<float>* aftertouchRawOut = nullptr, std::atomic<float>* expressionRawOut = nullptr);
@@ -196,6 +196,7 @@ private:
     MyADSR adsr3 = MyADSR (parameters, 3);
     MyADSR adsr4 = MyADSR (parameters, 4);
     std::array<std::shared_ptr<MyADSR*>, 4> envPtrs;
+    std::array<std::shared_ptr<MyLFO*>, 4> lfoPtrs;
 
     std::shared_ptr<PitchTracker> pitchTracker;
 

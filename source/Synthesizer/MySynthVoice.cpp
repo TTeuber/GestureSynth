@@ -5,6 +5,7 @@ MySynthVoice::MySynthVoice (
     juce::AudioProcessorValueTreeState& p,
     juce::ValueTree& mt,
     std::array<std::shared_ptr<MyADSR*>, 4> envPtrsIn,
+    std::array<std::shared_ptr<MyLFO*>, 4> lfoPtrsIn,
     std::shared_ptr<PitchTracker> pt,
     std::array<std::shared_ptr<LFOData>, 4>& lfoData,
     std::atomic<float>* velocityRawOut,
@@ -16,6 +17,7 @@ MySynthVoice::MySynthVoice (
     : parameters (p),
       modTree (mt),
       envPtrs (std::move (envPtrsIn)),
+      lfoPtrs (std::move (lfoPtrsIn)),
       pitchTracker (std::move (pt)),
       velocityRawOutput (velocityRawOut),
       keyboardRawOutput (keyboardRawOut),
@@ -397,6 +399,8 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
     *envPtrs[1] = &adsr2;
     *envPtrs[2] = &adsr3;
     *envPtrs[3] = &adsr4;
+    for (int i = 0; i < 4; ++i)
+        *lfoPtrs[i] = &lfos[i];
     pitchTracker->updateFrequency (frequency);
     waveLength = static_cast<int> (std::ceil (2 * currentSampleRate / frequency));
     while (waveLength > WaveformBuffer::kBufferSize)

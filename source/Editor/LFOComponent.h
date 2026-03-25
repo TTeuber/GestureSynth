@@ -4,21 +4,26 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "../Modulation/LFOData.h"
+#include "../Modulation/MyLFO.h"
 #include "../Theme.h"
 #include "LFORateComponent.h"
+#include "Utility/AnimationFrameSource.h"
 #include "Utility/CustomToggleComponent.h"
 #include "../Utility/Parameters.h"
 
 class LFOComponent final : public juce::Component,
-                           public LFOData::Listener
+                           public LFOData::Listener,
+                           public AnimationFrameSource::Listener
 {
 public:
-    LFOComponent (std::shared_ptr<LFOData> lfoData, juce::AudioProcessorValueTreeState& parameters, bool showRateSlider = true, int lfoIndex = 1);
+    LFOComponent (std::shared_ptr<LFOData> lfoData, juce::AudioProcessorValueTreeState& parameters, bool showRateSlider = true, int lfoIndex = 1,
+                  std::shared_ptr<MyLFO*> lfoPtr = nullptr, AnimationFrameSource* animSource = nullptr);
     ~LFOComponent() override;
 
-    void rebind (std::shared_ptr<LFOData> newData, int newLfoIndex);
+    void rebind (std::shared_ptr<LFOData> newData, int newLfoIndex, std::shared_ptr<MyLFO*> newLfoPtr = nullptr);
 
     void lfoDataChanged() override;
+    void onAnimationFrame() override;
 
     void paint (juce::Graphics& g) override;
     void resized() override;
@@ -58,6 +63,11 @@ private:
     juce::AudioProcessorValueTreeState& apvts;
     const bool hasRateSlider;
     int lfoIndex;
+
+    std::shared_ptr<MyLFO*> myLFO;
+    AnimationFrameSource* animSource = nullptr;
+    float currentPhase = 0.0f;
+    bool showPhaseIndicator = false;
 
     // New rate display and toggle components
     std::unique_ptr<LFORateComponent> rateComponent;
