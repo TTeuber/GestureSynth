@@ -16,8 +16,24 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
       volumeComponent (p.parameters.getParameter (ParamIDs::volume), { &p.undoManager, &p.activeGestureCount, modState }),
       noiseComponent (p.parameters.getParameter (ParamIDs::noiseLevel), { &p.undoManager, &p.activeGestureCount, modState }),
       chorusMixComponent (p.parameters.getParameter (ParamIDs::chorusMix), { &p.undoManager, &p.activeGestureCount, modState }),
-      portamentoComponent (p.parameters.getParameter (ParamIDs::portamentoTime), { &p.undoManager, &p.activeGestureCount, modState })
+      portamentoComponent (p.parameters.getParameter (ParamIDs::portamentoTime), { &p.undoManager, &p.activeGestureCount, modState }),
+      delayComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
+      delayModComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
+      delayRateComponent (p.parameters.getParameter (ParamIDs::delayTime),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync)),
+          dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::delayNoteDivision)),
+          { &p.undoManager, &p.activeGestureCount, modState }),
+      delayBpmToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync)), "BPM"),
+      delayHighpassComponent (p.parameters.getParameter (ParamIDs::delayHighpass), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      delayLowpassComponent (p.parameters.getParameter (ParamIDs::delayLowpass), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
+      reverbModComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
+      reverbSizeComponent (p.parameters.getParameter (ParamIDs::reverbSize), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbPreDelayComponent (p.parameters.getParameter (ParamIDs::reverbPreDelay), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbBassMultComponent (p.parameters.getParameter (ParamIDs::reverbBassMult), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbDampingComponent (p.parameters.getParameter (ParamIDs::reverbDamping), nullptr, { &p.undoManager, &p.activeGestureCount, modState })
 {
+    // Synth components (visible by default)
     addAndMakeVisible (waveformComponent);
     addAndMakeVisible (filterDisplay);
     addAndMakeVisible (hpfDisplay);
@@ -29,6 +45,20 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
     addAndMakeVisible (noiseComponent);
     addAndMakeVisible (chorusMixComponent);
     addAndMakeVisible (portamentoComponent);
+
+    // Effects components (hidden by default)
+    addChildComponent (delayComponent);
+    addChildComponent (delayModComponent);
+    addChildComponent (delayRateComponent);
+    addChildComponent (delayBpmToggle);
+    addChildComponent (delayHighpassComponent);
+    addChildComponent (delayLowpassComponent);
+    addChildComponent (reverbComponent);
+    addChildComponent (reverbModComponent);
+    addChildComponent (reverbSizeComponent);
+    addChildComponent (reverbPreDelayComponent);
+    addChildComponent (reverbBassMultComponent);
+    addChildComponent (reverbDampingComponent);
 }
 
 void MainTabContent::paint (juce::Graphics& g)
@@ -36,30 +66,94 @@ void MainTabContent::paint (juce::Graphics& g)
     g.fillAll (PRIMARY_COLOR);
 }
 
+void MainTabContent::setShowEffects (bool show)
+{
+    showingEffects = show;
+
+    // Synth components
+    waveformComponent.setVisible (!show);
+    subOscillatorComponent.setVisible (!show);
+    detuneComponent.setVisible (!show);
+    chorusComponent.setVisible (!show);
+    vibratoComponent.setVisible (!show);
+    volumeComponent.setVisible (!show);
+    noiseComponent.setVisible (!show);
+    chorusMixComponent.setVisible (!show);
+    portamentoComponent.setVisible (!show);
+
+    // Effects components
+    delayComponent.setVisible (show);
+    delayModComponent.setVisible (show);
+    delayRateComponent.setVisible (show);
+    delayBpmToggle.setVisible (show);
+    delayHighpassComponent.setVisible (show);
+    delayLowpassComponent.setVisible (show);
+    reverbComponent.setVisible (show);
+    reverbModComponent.setVisible (show);
+    reverbSizeComponent.setVisible (show);
+    reverbPreDelayComponent.setVisible (show);
+    reverbBassMultComponent.setVisible (show);
+    reverbDampingComponent.setVisible (show);
+
+    resized();
+}
+
 void MainTabContent::resized()
 {
     auto area = getLocalBounds();
+    constexpr int toggleRowHeight = 30;
+    area.removeFromTop (toggleRowHeight);
     auto rowHeight = area.getHeight() / 2;
     auto squareCol = rowHeight;
 
-    // Row 1: 2x2 grid | Chorus | Vibrato | FilterDisplay (fills remaining)
     auto row1 = area.removeFromTop (rowHeight);
-    auto mixCol = row1.removeFromLeft (squareCol);
-    auto topRow = mixCol.removeFromTop (mixCol.getHeight() / 2);
-    volumeComponent.setBounds (topRow.removeFromLeft (topRow.getWidth() / 2).reduced (5));
-    noiseComponent.setBounds (topRow.reduced (5));
-    chorusMixComponent.setBounds (mixCol.removeFromLeft (mixCol.getWidth() / 2).reduced (5));
-    portamentoComponent.setBounds (mixCol.reduced (5));
-    chorusComponent.setBounds (row1.removeFromLeft (squareCol).reduced (5));
-    vibratoComponent.setBounds (row1.removeFromLeft (squareCol).reduced (5));
-    filterDisplay.setBounds (row1.reduced (5));
-
-    // Row 2: SubOsc | Waveform | Detune | HPF (fills remaining)
     auto row2 = area;
-    subOscillatorComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
-    waveformComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
-    detuneComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
-    hpfDisplay.setBounds (row2.reduced (5));
+
+    if (!showingEffects)
+    {
+        // Synth layout
+        // Row 1: 2x2 grid | Chorus | Vibrato | FilterDisplay (fills remaining)
+        auto mixCol = row1.removeFromLeft (squareCol);
+        auto topRow = mixCol.removeFromTop (mixCol.getHeight() / 2);
+        volumeComponent.setBounds (topRow.removeFromLeft (topRow.getWidth() / 2).reduced (5));
+        noiseComponent.setBounds (topRow.reduced (5));
+        chorusMixComponent.setBounds (mixCol.removeFromLeft (mixCol.getWidth() / 2).reduced (5));
+        portamentoComponent.setBounds (mixCol.reduced (5));
+        chorusComponent.setBounds (row1.removeFromLeft (squareCol).reduced (5));
+        vibratoComponent.setBounds (row1.removeFromLeft (squareCol).reduced (5));
+        filterDisplay.setBounds (row1.reduced (5));
+
+        // Row 2: SubOsc | Waveform | Detune | HPF (fills remaining)
+        subOscillatorComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
+        waveformComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
+        detuneComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
+        hpfDisplay.setBounds (row2.reduced (5));
+    }
+    else
+    {
+        // Effects layout
+        // Row 1: Delay | DelayMod | 2x2 delay grid | FilterDisplay (fills remaining)
+        delayComponent.setBounds (row1.removeFromLeft (squareCol).reduced (5));
+        delayModComponent.setBounds (row1.removeFromLeft (squareCol).reduced (5));
+        auto delayGrid = row1.removeFromLeft (squareCol);
+        auto delayGridTop = delayGrid.removeFromTop (delayGrid.getHeight() / 2);
+        delayRateComponent.setBounds (delayGridTop.removeFromLeft (delayGridTop.getWidth() / 2).reduced (5));
+        delayBpmToggle.setBounds (delayGridTop.reduced (5));
+        delayHighpassComponent.setBounds (delayGrid.removeFromLeft (delayGrid.getWidth() / 2).reduced (5));
+        delayLowpassComponent.setBounds (delayGrid.reduced (5));
+        filterDisplay.setBounds (row1.reduced (5));
+
+        // Row 2: Reverb | ReverbMod | 2x2 reverb grid | HPF (fills remaining)
+        reverbComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
+        reverbModComponent.setBounds (row2.removeFromLeft (squareCol).reduced (5));
+        auto reverbGrid = row2.removeFromLeft (squareCol);
+        auto reverbGridTop = reverbGrid.removeFromTop (reverbGrid.getHeight() / 2);
+        reverbSizeComponent.setBounds (reverbGridTop.removeFromLeft (reverbGridTop.getWidth() / 2).reduced (5));
+        reverbPreDelayComponent.setBounds (reverbGridTop.reduced (5));
+        reverbBassMultComponent.setBounds (reverbGrid.removeFromLeft (reverbGrid.getWidth() / 2).reduced (5));
+        reverbDampingComponent.setBounds (reverbGrid.reduced (5));
+        hpfDisplay.setBounds (row2.reduced (5));
+    }
 }
 
 // =============================================================================
@@ -79,7 +173,9 @@ void KeyboardTabContent::paint (juce::Graphics& g)
 
 void KeyboardTabContent::resized()
 {
-    oscilloscope.setBounds (getLocalBounds().reduced (5));
+    auto area = getLocalBounds();
+    area.removeFromTop (30);
+    oscilloscope.setBounds (area.reduced (5));
 }
 
 // =============================================================================
@@ -101,7 +197,9 @@ void ModulationTabContent::paint (juce::Graphics& g)
 
 void ModulationTabContent::resized()
 {
-    matrixViewport.setBounds (getLocalBounds().reduced (5));
+    auto area = getLocalBounds();
+    area.removeFromTop (30);
+    matrixViewport.setBounds (area.reduced (5));
     matrixComponent.setSize (matrixViewport.getWidth() - matrixViewport.getScrollBarThickness(), 43 * 16);
 }
 
@@ -149,6 +247,7 @@ void EffectsTabContent::paint (juce::Graphics& g)
 void EffectsTabContent::resized()
 {
     auto area = getLocalBounds();
+    area.removeFromTop (30);
     auto rowHeight = area.getHeight() / 2;
 
     // --- Delay row ---
@@ -340,6 +439,7 @@ void ExperimentTabContent::paint (juce::Graphics& g)
 void ExperimentTabContent::resized()
 {
     auto area = getLocalBounds();
+    area.removeFromTop (30);
     int halfW = area.getWidth() / 2;
 
     // BPM row at top

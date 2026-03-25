@@ -85,28 +85,6 @@ protected:
         g.setOpacity (isActive ? 1.0f : 0.5f);
         g.setColour (isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
         drawTimeArcs (g, bounds, arcParam);
-
-        // if (isSyncMode() && noteDivParam != nullptr)
-        // {
-        //     g.setOpacity (1.0f);
-        //     g.setColour (isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
-        //     drawFractionText (g, bounds.toFloat());
-        // }
-        // else
-        // {
-        //     // Show delay time in ms
-        //     float ms = param->convertFrom0to1 (paramValue);
-        //     juce::String text;
-        //     if (ms < 10.0f)
-        //         text = juce::String (ms, 1) + " ms";
-        //     else
-        //         text = juce::String (static_cast<int> (ms)) + " ms";
-        //
-        //     g.setOpacity (1.0f);
-        //     g.setColour (isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
-        //     g.setFont (13.0f);
-        //     g.drawText (text, bounds, juce::Justification::centred, true);
-        // }
     }
 
     juce::String getParameterText() const override

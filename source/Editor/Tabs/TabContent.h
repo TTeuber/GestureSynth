@@ -397,7 +397,10 @@ public:
     void resized() override;
     void paint (juce::Graphics& g) override;
 
+    void setShowEffects (bool show);
+
 private:
+    // Synth components
     WaveformComponent waveformComponent;
     FilterDisplay filterDisplay;
     HPFDisplay hpfDisplay;
@@ -409,6 +412,23 @@ private:
     NoiseComponent noiseComponent;
     ChorusMixComponent chorusMixComponent;
     PortamentoComponent portamentoComponent;
+
+    // Effects components
+    DelayComponent delayComponent;
+    DelayModComponent delayModComponent;
+    DelayRateComponent delayRateComponent;
+    CustomToggleComponent delayBpmToggle;
+    DelayHighpassComponent delayHighpassComponent;
+    DelayLowpassComponent delayLowpassComponent;
+
+    ReverbComponent reverbComponent;
+    ReverbModComponent reverbModComponent;
+    ReverbSizeComponent reverbSizeComponent;
+    ReverbPreDelayComponent reverbPreDelayComponent;
+    ReverbBassMultComponent reverbBassMultComponent;
+    ReverbDampingComponent reverbDampingComponent;
+
+    bool showingEffects = false;
 };
 
 // =============================================================================
