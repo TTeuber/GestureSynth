@@ -133,31 +133,14 @@ private:
         if (isDotted || isTriplet)
             cleanDiv = divName.dropLastCharacters (1);
 
-        juce::String numerator, denominator;
-        if (cleanDiv.contains ("/"))
-        {
-            numerator = cleanDiv.upToFirstOccurrenceOf ("/", false, false);
-            denominator = cleanDiv.fromFirstOccurrenceOf ("/", false, false);
-        }
-        else
-        {
-            numerator = cleanDiv;
-            denominator = "";
-        }
-
         juce::String suffix;
         if (isDotted) suffix = ".";
         else if (isTriplet) suffix = "T";
 
-        float lineHeight = area.getHeight() / 3.0f;
-        g.setFont (12.0f);
-        g.drawText (numerator, area.removeFromTop (lineHeight), juce::Justification::centred, true);
-        g.setFont (10.0f);
-        auto slashArea = area.removeFromTop (lineHeight);
-        g.drawText ("/", slashArea, juce::Justification::centred, true);
+        juce::String displayText = cleanDiv + suffix;
 
         g.setFont (12.0f);
-        g.drawText (denominator + suffix, area, juce::Justification::centred, true);
+        g.drawText (displayText, area, juce::Justification::centred, true);
     }
 
     // Helper listener to avoid diamond inheritance with AudioProcessorParameter::Listener
