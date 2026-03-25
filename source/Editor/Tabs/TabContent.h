@@ -580,7 +580,7 @@ private:
 
     // Reverb sliders
     juce::Slider reverbDecaySlider, reverbSizeSlider, reverbDampingSlider, reverbBassMultSlider, reverbModRateSlider;
-    juce::Slider reverbModDepthSlider, reverbDiffusionSlider, reverbPreDelaySlider, reverbWidthSlider, reverbMixSlider;
+    juce::Slider reverbModDepthSlider, reverbDiffusionSlider, reverbPreDelaySlider, reverbWidthSlider, reverbLevelSlider;
 
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     std::unique_ptr<SliderAttachment> manualBpmAttachment;
@@ -589,7 +589,7 @@ private:
     std::unique_ptr<SliderAttachment> reverbDecayAttachment, reverbSizeAttachment, reverbDampingAttachment;
     std::unique_ptr<SliderAttachment> reverbBassMultAttachment, reverbModRateAttachment, reverbModDepthAttachment;
     std::unique_ptr<SliderAttachment> reverbDiffusionAttachment, reverbPreDelayAttachment;
-    std::unique_ptr<SliderAttachment> reverbWidthAttachment, reverbMixAttachment;
+    std::unique_ptr<SliderAttachment> reverbWidthAttachment, reverbLevelAttachment;
 
     // Delay sliders
     juce::Slider delayTimeSlider, delayFeedbackSlider, delayMixSlider, delayLowpassSlider, delayHighpassSlider;

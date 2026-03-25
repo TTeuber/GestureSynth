@@ -285,7 +285,7 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     setupSlider (reverbDiffusionSlider);
     setupSlider (reverbPreDelaySlider);
     setupSlider (reverbWidthSlider);
-    setupSlider (reverbMixSlider);
+    setupSlider (reverbLevelSlider);
 
     reverbDecayAttachment     = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbDecay, reverbDecaySlider);
     reverbSizeAttachment      = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbSize, reverbSizeSlider);
@@ -296,7 +296,7 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     reverbDiffusionAttachment = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbDiffusion, reverbDiffusionSlider);
     reverbPreDelayAttachment  = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbPreDelay, reverbPreDelaySlider);
     reverbWidthAttachment     = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbWidth, reverbWidthSlider);
-    reverbMixAttachment       = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbMix, reverbMixSlider);
+    reverbLevelAttachment       = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::reverbLevel, reverbLevelSlider);
 
     // Delay sliders
     setupSlider (delayTimeSlider);
@@ -437,7 +437,7 @@ void ExperimentTabContent::resized()
     int reverbRightSliderX = halfW / 2 + 5 + labelW + 5;
 
     juce::Slider* reverbLeft[] = { &reverbDecaySlider, &reverbSizeSlider, &reverbDampingSlider, &reverbBassMultSlider, &reverbModRateSlider };
-    juce::Slider* reverbRight[] = { &reverbModDepthSlider, &reverbDiffusionSlider, &reverbPreDelaySlider, &reverbWidthSlider, &reverbMixSlider };
+    juce::Slider* reverbRight[] = { &reverbModDepthSlider, &reverbDiffusionSlider, &reverbPreDelaySlider, &reverbWidthSlider, &reverbLevelSlider };
 
     for (int i = 0; i < 5; ++i)
     {

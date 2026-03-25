@@ -108,7 +108,7 @@ namespace ParamIDs
     inline constexpr auto reverbDiffusion  = "reverbDiffusion";
     inline constexpr auto reverbPreDelay   = "reverbPreDelay";
     inline constexpr auto reverbWidth      = "reverbWidth";
-    inline constexpr auto reverbMix        = "reverbMix";
+    inline constexpr auto reverbLevel      = "reverbLevel";
 
     // Delay
     inline constexpr auto delayTime         = "delayTime";
@@ -259,7 +259,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
         Normalize (0.0f, 300.0f, 1.0f), 20.0f));
     layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbWidth, 1), "Reverb Width",
         Normalize (0.0f, 1.0f, 0.01f), 1.0f));
-    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbMix, 1), "Mix",
+    layout.add (std::make_unique<Parameter> (ID (ParamIDs::reverbLevel, 1), "Level",
         Normalize (0.0f, 1.0f, 0.01f), 0.35f));
 
     // ================================================================================================================================================
@@ -273,7 +273,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (make_unique<Parameter> (ID (ParamIDs::delayFeedback, 1), "Feedback",
         Normalize (0.0f, 0.95f, 0.01f), 0.4f));
     layout.add (make_unique<Parameter> (ID (ParamIDs::delayMix, 1), "Mix",
-        Normalize (0.0f, 1.0f, 0.01f), 0.3f));
+        Normalize (0.0f, 0.5f, 0.01f), 0.3f));
     auto delayLowpass = make_unique<Parameter> (ID (ParamIDs::delayLowpass, 1), "Lowpass",
         Normalize (200.0f, 18000.0f, 1.0f, 0.35f), 4000.0f);
     layout.add (std::move (delayLowpass));

@@ -23,7 +23,7 @@ public:
         parameters.addParameterListener (ParamIDs::reverbDiffusion, this);
         parameters.addParameterListener (ParamIDs::reverbPreDelay, this);
         parameters.addParameterListener (ParamIDs::reverbWidth, this);
-        parameters.addParameterListener (ParamIDs::reverbMix, this);
+        parameters.addParameterListener (ParamIDs::reverbLevel, this);
     }
 
     ~Reverb() override
@@ -38,7 +38,7 @@ public:
         parameters.removeParameterListener (ParamIDs::reverbDiffusion, this);
         parameters.removeParameterListener (ParamIDs::reverbPreDelay, this);
         parameters.removeParameterListener (ParamIDs::reverbWidth, this);
-        parameters.removeParameterListener (ParamIDs::reverbMix, this);
+        parameters.removeParameterListener (ParamIDs::reverbLevel, this);
     }
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
@@ -53,7 +53,7 @@ public:
         else if (parameterID == ParamIDs::reverbDiffusion) AtomicHelpers::paramStore (diffusion, newValue);
         else if (parameterID == ParamIDs::reverbPreDelay)  AtomicHelpers::paramStore (preDelayMs, newValue);
         else if (parameterID == ParamIDs::reverbWidth)     AtomicHelpers::paramStore (width, newValue);
-        else if (parameterID == ParamIDs::reverbMix)       AtomicHelpers::paramStore (mix, newValue);
+        else if (parameterID == ParamIDs::reverbLevel)       AtomicHelpers::paramStore (level, newValue);
     }
 
     void prepare (const juce::dsp::ProcessSpec& spec)
@@ -147,7 +147,7 @@ public:
         const float localDiffusion  = AtomicHelpers::paramLoad (diffusion);
         const float localPreDelay   = AtomicHelpers::paramLoad (preDelayMs);
         const float localWidth      = AtomicHelpers::paramLoad (width);
-        const float localMix        = AtomicHelpers::paramLoad (mix);
+        const float localLevel      = AtomicHelpers::paramLoad (level);
 
         auto* leftChannel  = buffer.getWritePointer (0);
         auto* rightChannel = buffer.getWritePointer (1);
@@ -272,9 +272,9 @@ public:
             outL = mid + side;
             outR = mid - side;
 
-            // 10. Wet/dry mix
-            leftChannel[n]  = leftChannel[n]  * (1.0f - localMix) + outL * localMix;
-            rightChannel[n] = rightChannel[n] * (1.0f - localMix) + outR * localMix;
+            // 10. Add wet signal at level (dry stays at 100%)
+            leftChannel[n]  = leftChannel[n] + outL * localLevel;
+            rightChannel[n] = rightChannel[n] + outR * localLevel;
         }
     }
 
@@ -291,7 +291,7 @@ private:
     std::atomic<float> diffusion { 0.7f };
     std::atomic<float> preDelayMs { 0.0f };
     std::atomic<float> width { 1.0f };
-    std::atomic<float> mix { 0.0f };
+    std::atomic<float> level { 0.0f };
 
     double sampleRate = 44100.0;
 

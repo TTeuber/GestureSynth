@@ -15,7 +15,7 @@ public:
         const juce::String& param1DestID = {},
         const juce::String& param2DestID = {})
         : DualParameterComponent (
-              apvts.getParameter (ParamIDs::reverbMix),
+              apvts.getParameter (ParamIDs::reverbLevel),
               apvts.getParameter (ParamIDs::reverbDecay),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::reverbOn)),
               ctx,
