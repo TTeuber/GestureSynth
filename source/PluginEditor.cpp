@@ -28,12 +28,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     modeLabel.setJustificationType (juce::Justification::centredLeft);
     contentWrapper.addAndMakeVisible (modeLabel);
 
-    // Scale label — child of contentWrapper
-    scaleLabel.setText ("100%", juce::dontSendNotification);
-    scaleLabel.setColour (juce::Label::textColourId, TEXT_COLOR.withAlpha (0.5f));
-    scaleLabel.setFont (juce::Font (12.0f));
-    scaleLabel.setJustificationType (juce::Justification::centredRight);
-    contentWrapper.addAndMakeVisible (scaleLabel);
 
     processorRef.keyboardState.addListener (this);
 
@@ -253,10 +247,6 @@ void PluginEditor::resized()
     voiceCountControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
     volumeControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
     portamentoBottomControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
-    // Scale label in bottom-right of control row
-    scaleLabel.setBounds (controlRow.removeFromRight (80).reduced (2, 2));
-    int scalePercent = juce::roundToInt (scaleFactor * 100.0f);
-    scaleLabel.setText (juce::String (scalePercent) + "%", juce::dontSendNotification);
 
     // Keyboard row
     constexpr int keyboardRowHeight = 160;

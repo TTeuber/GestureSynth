@@ -58,7 +58,6 @@ private:
 
     juce::Component contentWrapper;
     juce::Label modeLabel;
-    juce::Label scaleLabel;
 
     std::unique_ptr<MainTabContent> mainTab;
     std::unique_ptr<KeyboardTabContent> keyboardTab;
