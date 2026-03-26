@@ -792,7 +792,8 @@ public:
 
 private:
     MatrixComponent matrixComponent;
-    juce::Viewport matrixViewport;
+    NotifyingViewport matrixViewport;
+    ScrollIndicator scrollIndicator;
 };
 
 // =============================================================================

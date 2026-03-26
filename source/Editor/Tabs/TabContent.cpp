@@ -158,8 +158,12 @@ ModulationTabContent::ModulationTabContent (PluginProcessor& p, AnimationFrameSo
     : matrixComponent (p.modTree, p.modSourceOutputs.data(), &p.undoManager, &p.activeGestureCount, animSource)
 {
     matrixViewport.setViewedComponent (&matrixComponent, false);
-    matrixViewport.setScrollBarsShown (true, false);
+    matrixViewport.setScrollBarsShown (false, false, true, false);
     addAndMakeVisible (matrixViewport);
+
+    scrollIndicator.setViewport (&matrixViewport);
+    addAndMakeVisible (scrollIndicator);
+    matrixViewport.onScroll = [this] { scrollIndicator.showIndicator(); };
 }
 
 void ModulationTabContent::paint (juce::Graphics& g)
@@ -172,7 +176,8 @@ void ModulationTabContent::resized()
     auto area = getLocalBounds();
     area.removeFromTop (30);
     matrixViewport.setBounds (area.reduced (5));
-    matrixComponent.setSize (matrixViewport.getWidth() - matrixViewport.getScrollBarThickness(), 43 * 16);
+    scrollIndicator.setBounds (matrixViewport.getBounds());
+    matrixComponent.setSize (matrixViewport.getWidth(), 43 * 16);
 }
 
 // =============================================================================
