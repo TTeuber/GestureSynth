@@ -6,11 +6,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       modWheel (p, &modModeState, &animationSource),
       pitchWheel (p, &animationSource),
       keyboard (p.keyboardState, &animationSource),
+      keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &modModeState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr(), &animationSource),
       pitchBendRangeControl (p.parameters.getParameter (ParamIDs::pitchBendRange)),
       voiceCountControl (dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::voiceCount)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::monoOn)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::legatoOn))),
-      keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &modModeState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr(), &animationSource),
+      volumeControl (p.parameters.getParameter (ParamIDs::volume)),
       lfoComponent (p.lfoData[0], p.parameters, true, 1, p.getSynth().getLFOPtr (0), &animationSource),
       adsrGraph (p.parameters, ParamIDs::envParamID (1, "Attack"), ParamIDs::envParamID (1, "AttackCurve"), ParamIDs::envParamID (1, "Decay"), ParamIDs::envParamID (1, "DecayCurve"), ParamIDs::envParamID (1, "Sustain"), ParamIDs::envParamID (1, "Release"), ParamIDs::envParamID (1, "ReleaseCurve"), p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount, &animationSource)
 {
@@ -62,6 +63,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     persistentPanel.addAndMakeVisible (keyboard);
     persistentPanel.addAndMakeVisible (pitchBendRangeControl);
     persistentPanel.addAndMakeVisible (voiceCountControl);
+    persistentPanel.addAndMakeVisible (volumeControl);
     persistentPanel.addAndMakeVisible (keyVelComponent);
     persistentPanel.addAndMakeVisible (lfoComponent);
     persistentPanel.addAndMakeVisible (adsrGraph);
@@ -200,14 +202,27 @@ void PluginEditor::resized()
     contentWrapper.setTransform (juce::AffineTransform::scale (scaleFactor));
     contentWrapper.setBounds (0, 0, WIDTH, HEIGHT);
 
-    constexpr int persistentHeight = 380;
+    constexpr int persistentHeight = 408;
     tabbedComponent.setBounds (0, 0, WIDTH, HEIGHT - persistentHeight);
     persistentPanel.setBounds (0, HEIGHT - persistentHeight, WIDTH, persistentHeight);
 
     // Layout persistent panel
     auto panelArea = persistentPanel.getLocalBounds();
 
-    // Bottom: keyboard row (~160px)
+    // Bottom control row (below keyboard)
+    constexpr int controlRowHeight = 28;
+    auto controlRow = panelArea.removeFromBottom (controlRowHeight);
+
+    int controlWidth = controlRow.getWidth();
+    int pbWidth = controlWidth * 30 / 100;
+    int vcWidth = controlWidth * 30 / 100;
+    int volWidth = controlWidth * 30 / 100;
+
+    pitchBendRangeControl.setBounds (controlRow.removeFromLeft (pbWidth).reduced (2, 2));
+    voiceCountControl.setBounds (controlRow.removeFromLeft (vcWidth).reduced (2, 2));
+    volumeControl.setBounds (controlRow.removeFromLeft (volWidth).reduced (2, 2));
+
+    // Keyboard row
     constexpr int keyboardRowHeight = 160;
     auto keyboardRow = panelArea.removeFromBottom (keyboardRowHeight);
 
@@ -219,16 +234,6 @@ void PluginEditor::resized()
     int kvWidth = keyboardRow.getHeight() + 10;
     auto kvColumn = keyboardRow.removeFromRight (kvWidth);
     keyVelComponent.setBounds (kvColumn.reduced (5));
-
-    constexpr int controlRowHeight = 28;
-    auto controlRow = keyboardRow.removeFromBottom (controlRowHeight);
-
-    int controlWidth = controlRow.getWidth();
-    int pbWidth = controlWidth * 30 / 100;
-    int vcWidth = controlWidth * 40 / 100;
-
-    pitchBendRangeControl.setBounds (controlRow.removeFromLeft (pbWidth).reduced (2, 2));
-    voiceCountControl.setBounds (controlRow.removeFromLeft (vcWidth).reduced (2, 2));
 
     keyboard.setBounds (keyboardRow.reduced (2));
 

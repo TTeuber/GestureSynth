@@ -260,6 +260,92 @@ private:
 };
 
 // =============================================================================
+// VolumeControl: drag-to-adjust volume inline display
+// =============================================================================
+class VolumeControl final : public juce::Component,
+                             private juce::AudioProcessorParameter::Listener
+{
+public:
+    explicit VolumeControl (juce::RangedAudioParameter* param)
+        : param (param)
+    {
+        jassert (param != nullptr);
+        param->addListener (this);
+    }
+
+    ~VolumeControl() override
+    {
+        if (param != nullptr)
+            param->removeListener (this);
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        auto bounds = getLocalBounds().toFloat();
+
+        // Label on left
+        auto labelArea = bounds.removeFromLeft (bounds.getWidth() * 0.6f);
+        g.setColour (TEXT_COLOR);
+        g.setFont (11.0f);
+        g.drawText ("Volume", labelArea, juce::Justification::centredRight, true);
+
+        // Number in rounded rect on right
+        auto numArea = bounds.reduced (2.0f, 2.0f);
+        g.setColour (SECONDARY_COLOR);
+        g.fillRoundedRectangle (numArea, 4.0f);
+        g.setColour (TEXT_COLOR);
+        g.drawRoundedRectangle (numArea, 4.0f, 1.0f);
+        g.setFont (12.0f);
+        int val = juce::roundToInt (param->convertFrom0to1 (param->getValue()) * 100.0f);
+        g.drawText (juce::String (val), numArea, juce::Justification::centred, true);
+    }
+
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        isDragging = true;
+        dragStartY = static_cast<float> (e.y);
+        dragStartValue = param->getValue();
+        param->beginChangeGesture();
+    }
+
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        if (!isDragging) return;
+        float deltaY = dragStartY - static_cast<float> (e.y);
+        float newValue = juce::jlimit (0.0f, 1.0f, dragStartValue + deltaY / 200.0f);
+        param->setValueNotifyingHost (newValue);
+    }
+
+    void mouseUp (const juce::MouseEvent&) override
+    {
+        if (isDragging)
+        {
+            param->endChangeGesture();
+            isDragging = false;
+        }
+    }
+
+    juce::MouseCursor getMouseCursor() override
+    {
+        return juce::MouseCursor::UpDownResizeCursor;
+    }
+
+private:
+    void parameterValueChanged (int, float) override
+    {
+        juce::MessageManager::callAsync ([this] { repaint(); });
+    }
+    void parameterGestureChanged (int, bool) override {}
+
+    juce::RangedAudioParameter* param = nullptr;
+    bool isDragging = false;
+    float dragStartY = 0.0f;
+    float dragStartValue = 0.0f;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VolumeControl)
+};
+
+// =============================================================================
 // VoiceCountControl: click-to-select voice count via popup menu
 // =============================================================================
 class VoiceCountControl final : public juce::Component,

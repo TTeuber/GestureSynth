@@ -74,9 +74,12 @@ private:
     ModWheelComponent modWheel;
     PitchWheelComponent pitchWheel;
     CustomKeyboard keyboard;
+    KeyVelComponent keyVelComponent;
+
+    // Bottom control row
     PitchBendRangeControl pitchBendRangeControl;
     VoiceCountControl voiceCountControl;
-    KeyVelComponent keyVelComponent;
+    VolumeControl volumeControl;
 
     // LFO/ENV row
     LFOComponent lfoComponent;
