@@ -268,8 +268,13 @@ void LFOComponent::paint (juce::Graphics& g)
     for (int i = 0; i < static_cast<int> (points.size()) - 1; ++i)
     {
         auto handlePos = getCurveHandlePosition (static_cast<size_t> (i));
-        bool selected = (dragTarget == DragTarget::CurveHandle && selectedCurveIndex == i);
-        g.setColour (selected ? juce::Colours::cyan : juce::Colours::grey);
+        if (hoveredCurveIndex == i)
+        {
+            g.setColour (juce::Colours::grey.withAlpha (0.3f));
+            g.fillEllipse (handlePos.x - kCurveHandleRadius * 2.0f, handlePos.y - kCurveHandleRadius * 2.0f,
+                kCurveHandleRadius * 4.0f, kCurveHandleRadius * 4.0f);
+        }
+        g.setColour (juce::Colours::grey);
         g.fillEllipse (handlePos.x - kCurveHandleRadius, handlePos.y - kCurveHandleRadius,
             kCurveHandleRadius * 2.0f, kCurveHandleRadius * 2.0f);
     }
@@ -279,18 +284,23 @@ void LFOComponent::paint (juce::Graphics& g)
     {
         float px = positionToX (points[i].position);
         float py = valueToY (points[i].value);
-        bool selected = (dragTarget == DragTarget::Point && selectedPointIndex == i);
         bool isBoundary = (i == 0 || i == static_cast<int> (points.size()) - 1);
 
         // Boundary indicator ring
         if (isBoundary)
         {
-            g.setColour (juce::Colours::orange.withAlpha (0.4f));
+            g.setColour (juce::Colours::white.withAlpha (0.4f));
             g.drawEllipse (px - kPointRadius - 2.0f, py - kPointRadius - 2.0f,
                 (kPointRadius + 2.0f) * 2.0f, (kPointRadius + 2.0f) * 2.0f, 1.5f);
         }
 
-        g.setColour (selected ? juce::Colours::yellow : juce::Colours::orange);
+        if (hoveredPointIndex == i)
+        {
+            g.setColour (juce::Colours::white.withAlpha (0.3f));
+            g.fillEllipse (px - kPointRadius * 2.0f, py - kPointRadius * 2.0f,
+                kPointRadius * 4.0f, kPointRadius * 4.0f);
+        }
+        g.setColour (juce::Colours::white);
         g.fillEllipse (px - kPointRadius, py - kPointRadius,
             kPointRadius * 2.0f, kPointRadius * 2.0f);
     }
@@ -545,8 +555,28 @@ void LFOComponent::mouseMove (const juce::MouseEvent& e)
     float mx = static_cast<float> (e.x);
     float my = static_cast<float> (e.y);
 
-    if (hitTestPoint (mx, my) >= 0 || hitTestCurveHandle (mx, my) >= 0)
+    int newHoveredPoint = hitTestPoint (mx, my);
+    int newHoveredCurve = newHoveredPoint < 0 ? hitTestCurveHandle (mx, my) : -1;
+
+    if (newHoveredPoint != hoveredPointIndex || newHoveredCurve != hoveredCurveIndex)
+    {
+        hoveredPointIndex = newHoveredPoint;
+        hoveredCurveIndex = newHoveredCurve;
+        repaint();
+    }
+
+    if (hoveredPointIndex >= 0 || hoveredCurveIndex >= 0)
         setMouseCursor (juce::MouseCursor::PointingHandCursor);
     else
         setMouseCursor (juce::MouseCursor::NormalCursor);
+}
+
+void LFOComponent::mouseExit (const juce::MouseEvent&)
+{
+    if (hoveredPointIndex >= 0 || hoveredCurveIndex >= 0)
+    {
+        hoveredPointIndex = -1;
+        hoveredCurveIndex = -1;
+        repaint();
+    }
 }

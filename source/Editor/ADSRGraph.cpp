@@ -178,35 +178,48 @@ void ADSRGraph::paint (juce::Graphics& g)
     float releaseCurveX = (releaseX - decayX) / 2 + decayX;
     releaseCurvePoint = { releaseCurveX, getCurveY (releaseCurveX) };
 
-    juce::Path attackCircle;
-    attackCircle.addEllipse (attackX - 10, attackPoint.getY() - 10, 20, 20);
-    g.fillPath (attackCircle);
+    // Main control points (matching LFO style: radius 5, white)
+    constexpr float kPointRadius = 5.0f;
+    constexpr float kCurveHandleRadius = 4.0f;
 
-    juce::Path attackCurveCircle;
-    attackCurveCircle.addEllipse (attackX / 2 - 5, getCurveY (attackX / 2) - 5, 10, 10);
-    g.fillPath (attackCurveCircle);
+    auto drawMainPoint = [&] (float x, float y, Point which) {
+        if (hoveredPoint == which)
+        {
+            g.setColour (juce::Colours::white.withAlpha (0.3f));
+            g.fillEllipse (x - kPointRadius * 2.0f, y - kPointRadius * 2.0f,
+                kPointRadius * 4.0f, kPointRadius * 4.0f);
+        }
+        g.setColour (juce::Colours::white);
+        g.fillEllipse (x - kPointRadius, y - kPointRadius,
+            kPointRadius * 2.0f, kPointRadius * 2.0f);
+    };
 
-    juce::Path decayCircle;
-    decayCircle.addEllipse (decayX - 10, decayPoint.getY() - 10, 20, 20);
-    g.fillPath (decayCircle);
+    drawMainPoint (attackX, attackPoint.getY(), Attack);
+    drawMainPoint (decayX, decayPoint.getY(), Decay);
+    drawMainPoint (releaseX, releasePoint.getY(), Release);
 
-    juce::Path decayCurveCircle;
-    decayCurveCircle.addEllipse (decayCurveX - 5, getCurveY (decayCurveX) - 5, 10, 10);
-    g.fillPath (decayCurveCircle);
+    // Curve handles (matching LFO style: radius 4, grey)
+    auto drawCurveHandle = [&] (float x, float y, Point which) {
+        if (hoveredPoint == which)
+        {
+            g.setColour (juce::Colours::grey.withAlpha (0.3f));
+            g.fillEllipse (x - kCurveHandleRadius * 2.0f, y - kCurveHandleRadius * 2.0f,
+                kCurveHandleRadius * 4.0f, kCurveHandleRadius * 4.0f);
+        }
+        g.setColour (juce::Colours::grey);
+        g.fillEllipse (x - kCurveHandleRadius, y - kCurveHandleRadius,
+            kCurveHandleRadius * 2.0f, kCurveHandleRadius * 2.0f);
+    };
 
-    juce::Path releaseCircle;
-    releaseCircle.addEllipse (releaseX - 10, releasePoint.getY() - 10, 20, 20);
-    g.fillPath (releaseCircle);
-
-    juce::Path releaseCurveCircle;
-    releaseCurveCircle.addEllipse (releaseCurveX - 5, getCurveY (releaseCurveX) - 5, 10, 10);
-    g.fillPath (releaseCurveCircle);
+    drawCurveHandle (attackCurvePoint.x, attackCurvePoint.y, AttackCurve);
+    drawCurveHandle (decayCurvePoint.x, decayCurvePoint.y, DecayCurve);
+    drawCurveHandle (releaseCurvePoint.x, releaseCurvePoint.y, ReleaseCurve);
 
     if (showTimePoint)
     {
-        juce::Path timeCircle;
-        timeCircle.addEllipse (timePoint.getX() - 5, timePoint.getY() - 5, 10, 10);
-        g.fillPath (timeCircle);
+        g.setColour (juce::Colours::white);
+        g.fillEllipse (timePoint.getX() - kCurveHandleRadius, timePoint.getY() - kCurveHandleRadius,
+            kCurveHandleRadius * 2.0f, kCurveHandleRadius * 2.0f);
     }
 
     juce::Path adsrPath;
@@ -302,15 +315,37 @@ void ADSRGraph::onAnimationFrame()
 
 void ADSRGraph::mouseMove (const juce::MouseEvent& event)
 {
-    for (auto p : points)
+    auto mousePos = juce::Point (event.position.x, event.position.y);
+    constexpr Point pointEnums[] = { Attack, AttackCurve, Decay, DecayCurve, Release, ReleaseCurve };
+    Point newHovered = None;
+    for (int i = 0; i < static_cast<int> (points.size()); ++i)
     {
-        if (p->getDistanceFrom (juce::Point (event.position.x, event.position.y)) < 20)
+        if (points[i]->getDistanceFrom (mousePos) < 20)
         {
-            setMouseCursor (juce::MouseCursor::PointingHandCursor);
-            return;
+            newHovered = pointEnums[i];
+            break;
         }
     }
-    setMouseCursor (juce::MouseCursor::NormalCursor);
+
+    if (newHovered != hoveredPoint)
+    {
+        hoveredPoint = newHovered;
+        repaint();
+    }
+
+    if (hoveredPoint != None)
+        setMouseCursor (juce::MouseCursor::PointingHandCursor);
+    else
+        setMouseCursor (juce::MouseCursor::NormalCursor);
+}
+
+void ADSRGraph::mouseExit (const juce::MouseEvent&)
+{
+    if (hoveredPoint != None)
+    {
+        hoveredPoint = None;
+        repaint();
+    }
 }
 
 void ADSRGraph::mouseDown (const juce::MouseEvent& event)

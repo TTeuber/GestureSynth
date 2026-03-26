@@ -21,13 +21,6 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     modModeState.setUndoManager (&processorRef.undoManager);
     modModeState.addListener (this);
 
-    // Mode label — child of contentWrapper
-    modeLabel.setText ("Normal Mode", juce::dontSendNotification);
-    modeLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
-    modeLabel.setFont (juce::Font (14.0f));
-    modeLabel.setJustificationType (juce::Justification::centredLeft);
-    contentWrapper.addAndMakeVisible (modeLabel);
-
 
     processorRef.keyboardState.addListener (this);
 
@@ -346,11 +339,6 @@ void PluginEditor::resized()
     presetButton.setBounds (tabBarRight + arrowWidth, presetGroupY, nameWidth, presetGroupH);
     nextPresetButton.setBounds (tabBarRight + arrowWidth + nameWidth, presetGroupY, arrowWidth, presetGroupH);
 
-    modeLabel.setBounds (tabBarRight + presetGroupWidth + 15,
-        tabBarBounds.getY(),
-        200,
-        tabBarBounds.getHeight());
-
 
     // Resize grip at physical bottom-right corner (not inside contentWrapper)
     resizeGrip->setBounds (getWidth() - 16, getHeight() - 16, 16, 16);
@@ -392,17 +380,6 @@ void PluginEditor::timerCallback()
 
 void PluginEditor::modulationModeChanged (ModulationModeState::Mode newMode)
 {
-    if (newMode == ModulationModeState::Mode::Modulation)
-    {
-        modeLabel.setText ("Modulation Mode", juce::dontSendNotification);
-        modeLabel.setColour (juce::Label::textColourId, getModColor (modModeState.getTargetSourceID()));
-    }
-    else
-    {
-        modeLabel.setText ("Normal Mode", juce::dontSendNotification);
-        modeLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
-    }
-
     // Repaint mod source tabs
     for (int i = 0; i < 4; ++i)
     {
@@ -419,8 +396,6 @@ void PluginEditor::modulationModeChanged (ModulationModeState::Mode newMode)
 
 void PluginEditor::targetSourceChanged (const juce::String& newSourceID)
 {
-    if (modModeState.isModulationMode())
-        modeLabel.setColour (juce::Label::textColourId, getModColor (newSourceID));
     for (int i = 0; i < 4; ++i)
     {
         lfoTabs[i].repaint();

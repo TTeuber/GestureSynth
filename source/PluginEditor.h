@@ -57,7 +57,6 @@ private:
     AnimationFrameSource animationSource;
 
     juce::Component contentWrapper;
-    juce::Label modeLabel;
 
     std::unique_ptr<MainTabContent> mainTab;
     std::unique_ptr<KeyboardTabContent> keyboardTab;

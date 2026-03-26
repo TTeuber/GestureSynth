@@ -33,6 +33,7 @@ public:
     void mouseDrag (const juce::MouseEvent& e) override;
     void mouseUp (const juce::MouseEvent& e) override;
     void mouseMove (const juce::MouseEvent& e) override;
+    void mouseExit (const juce::MouseEvent& e) override;
 
 private:
     enum class DragTarget
@@ -80,6 +81,8 @@ private:
     int selectedCurveIndex = -1;
     bool isStuck = false;
     float stickAccumulator = 0.0f;
+    int hoveredPointIndex = -1;
+    int hoveredCurveIndex = -1;
 
     static constexpr float kPointRadius = 5.0f;
     static constexpr float kHitRadius = 12.0f;

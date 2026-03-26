@@ -37,6 +37,7 @@ public:
     void mouseUp (const juce::MouseEvent& event) override;
     void mouseDrag (const juce::MouseEvent& event) override;
     void mouseWheelMove (const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel) override;
+    void mouseExit (const juce::MouseEvent& event) override;
     void mouseMagnify (const juce::MouseEvent& event, float scaleFactor) override;
 
     void setADSRPointer (std::shared_ptr<MyADSR*> adsr) { myADSR = std::move (adsr); }
@@ -104,6 +105,7 @@ private:
         None
     };
     Point selectedPoint;
+    Point hoveredPoint = None;
 
     float sustain;
 
