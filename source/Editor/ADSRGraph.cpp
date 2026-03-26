@@ -229,15 +229,31 @@ void ADSRGraph::paint (juce::Graphics& g)
     for (float i = 0; i < durationWidth * 3; i += 1.0f)
     {
         const auto markerPosition = width / durationWidth * (i + 1);
+        const auto secondNumber = static_cast<int> (i + 1);
+        const bool isOdd = (secondNumber % 2 != 0);
+        const bool subdivisionsVisible = durationWidth < 6.0f;
 
-        juce::Path marker;
-        marker.startNewSubPath (markerPosition - xOffset, 0);
-        marker.lineTo (markerPosition - xOffset, height);
-        g.strokePath (marker, juce::PathStrokeType (2.0f));
-        g.drawText (juce::String (i + 1), markerPosition - (durationWidth / 10) - xOffset, height - 20, 20, 20, juce::Justification::centred);
-
-        if (durationWidth < 6.0f)
+        if (! subdivisionsVisible && isOdd)
         {
+            g.setColour (juce::Colours::grey.withAlpha (0.15f));
+            juce::Path marker;
+            marker.startNewSubPath (markerPosition - xOffset, 0);
+            marker.lineTo (markerPosition - xOffset, height);
+            g.strokePath (marker, juce::PathStrokeType (1.0f));
+        }
+        else
+        {
+            g.setColour (juce::Colours::grey.withAlpha (0.3f));
+            juce::Path marker;
+            marker.startNewSubPath (markerPosition - xOffset, 0);
+            marker.lineTo (markerPosition - xOffset, height);
+            g.strokePath (marker, juce::PathStrokeType (2.0f));
+            g.drawText (juce::String (secondNumber), markerPosition - (durationWidth / 10) - xOffset, height - 20, 20, 20, juce::Justification::centred);
+        }
+
+        if (subdivisionsVisible)
+        {
+            g.setColour (juce::Colours::grey.withAlpha (0.15f));
             juce::Path subMarker;
             subMarker.startNewSubPath (markerPosition - xOffset - width / durationWidth / 2, 0);
             subMarker.lineTo (markerPosition - xOffset - width / durationWidth / 2, height);
@@ -255,8 +271,22 @@ void ADSRGraph::drawCurve (juce::Graphics& g) const
     constexpr auto startX = 0.0f;
     constexpr auto step = 2.0f;
 
-    bool firstPoint = true;
+    // Build a sorted list of x values to sample, including critical transition points
+    std::vector<float> xValues;
     for (float x = startX; x <= releaseX; x += step)
+        xValues.push_back (x);
+
+    for (const auto cp : { attackX, decayX, releaseX })
+    {
+        if (cp >= startX && cp <= releaseX)
+            xValues.push_back (cp);
+    }
+
+    std::sort (xValues.begin(), xValues.end());
+    xValues.erase (std::unique (xValues.begin(), xValues.end()), xValues.end());
+
+    bool firstPoint = true;
+    for (const float x : xValues)
     {
         const float y = getCurveY (x);
 
