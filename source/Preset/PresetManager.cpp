@@ -134,3 +134,20 @@ bool PresetManager::deletePreset (const juce::File& presetFile) const
 {
     return presetFile.deleteFile();
 }
+
+std::vector<PresetManager::PresetInfo> PresetManager::getFlatPresetList() const
+{
+    std::vector<PresetInfo> result;
+    auto presets = scanPresets();
+
+    for (auto& [category, presetList] : presets)
+    {
+        std::sort (presetList.begin(), presetList.end(),
+                   [] (const PresetInfo& a, const PresetInfo& b) { return a.name < b.name; });
+
+        for (const auto& preset : presetList)
+            result.push_back (preset);
+    }
+
+    return result;
+}

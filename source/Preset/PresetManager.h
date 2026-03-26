@@ -32,4 +32,6 @@ public:
     juce::StringArray getCategories() const;
 
     bool deletePreset (const juce::File& presetFile) const;
+
+    std::vector<PresetInfo> getFlatPresetList() const;
 };

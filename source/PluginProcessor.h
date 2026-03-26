@@ -58,6 +58,7 @@ public:
 
     PresetManager presetManager;
     juce::String currentPresetName;
+    juce::File currentPresetFile;
 
     juce::MidiKeyboardState keyboardState;
     juce::UndoManager undoManager;

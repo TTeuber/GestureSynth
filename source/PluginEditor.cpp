@@ -63,6 +63,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     persistentPanel.addAndMakeVisible (volumeControl);
     persistentPanel.addAndMakeVisible (portamentoBottomControl);
 
+    prevPresetButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
+    prevPresetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
+    prevPresetButton.onClick = [this] { navigatePreset (-1); };
+    contentWrapper.addAndMakeVisible (prevPresetButton);
+    prevPresetButton.setAlwaysOnTop (true);
+
     presetButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
     presetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
     presetButton.onClick = [this]
@@ -77,20 +83,18 @@ PluginEditor::PluginEditor (PluginProcessor& p)
                 {
                     auto it = idToFile.find (result);
                     if (it != idToFile.end())
-                    {
-                        auto state = processorRef.presetManager.loadPreset (it->second);
-                        if (state.isValid())
-                        {
-                            processorRef.restoreFromStateTree (state);
-                            processorRef.currentPresetName = it->second.getFileNameWithoutExtension();
-                            presetButton.setButtonText (processorRef.currentPresetName);
-                        }
-                    }
+                        loadPresetByFile (it->second);
                 }
             });
     };
     contentWrapper.addAndMakeVisible (presetButton);
     presetButton.setAlwaysOnTop (true);
+
+    nextPresetButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
+    nextPresetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
+    nextPresetButton.onClick = [this] { navigatePreset (1); };
+    contentWrapper.addAndMakeVisible (nextPresetButton);
+    nextPresetButton.setAlwaysOnTop (true);
 
     persistentPanel.addAndMakeVisible (keyVelComponent);
     persistentPanel.addAndMakeVisible (lfoComponent);
@@ -219,6 +223,43 @@ void PluginEditor::selectKeyVel (int index)
     keyVelComponent.setActiveTab (index);
 }
 
+void PluginEditor::loadPresetByFile (const juce::File& file)
+{
+    auto state = processorRef.presetManager.loadPreset (file);
+    if (state.isValid())
+    {
+        processorRef.restoreFromStateTree (state);
+        processorRef.currentPresetName = file.getFileNameWithoutExtension();
+        processorRef.currentPresetFile = file;
+        presetButton.setButtonText (processorRef.currentPresetName);
+    }
+}
+
+void PluginEditor::navigatePreset (int direction)
+{
+    auto flatList = processorRef.presetManager.getFlatPresetList();
+    if (flatList.empty())
+        return;
+
+    int currentIndex = -1;
+    for (int i = 0; i < (int) flatList.size(); ++i)
+    {
+        if (flatList[i].file == processorRef.currentPresetFile)
+        {
+            currentIndex = i;
+            break;
+        }
+    }
+
+    int newIndex;
+    if (currentIndex < 0)
+        newIndex = (direction > 0) ? 0 : (int) flatList.size() - 1;
+    else
+        newIndex = (currentIndex + direction + (int) flatList.size()) % (int) flatList.size();
+
+    loadPresetByFile (flatList[newIndex].file);
+}
+
 void PluginEditor::paint (juce::Graphics& g)
 {
     g.fillAll (PRIMARY_COLOR);
@@ -294,13 +335,21 @@ void PluginEditor::resized()
             tabBarRight = juce::jmax (tabBarRight, btn->getRight());
     }
     auto tabBarBounds = tabBar.getBounds();
-    modeLabel.setBounds (tabBarRight + 15,
+    // Preset navigation group: same width as one tab column (1/6)
+    int presetGroupWidth = WIDTH / 6;
+    int presetGroupY = tabBarBounds.getY() + 2;
+    int presetGroupH = tabBarBounds.getHeight() - 4;
+    int arrowWidth = presetGroupH;
+    int nameWidth = presetGroupWidth - 2 * arrowWidth;
+
+    prevPresetButton.setBounds (tabBarRight, presetGroupY, arrowWidth, presetGroupH);
+    presetButton.setBounds (tabBarRight + arrowWidth, presetGroupY, nameWidth, presetGroupH);
+    nextPresetButton.setBounds (tabBarRight + arrowWidth + nameWidth, presetGroupY, arrowWidth, presetGroupH);
+
+    modeLabel.setBounds (tabBarRight + presetGroupWidth + 15,
         tabBarBounds.getY(),
         200,
         tabBarBounds.getHeight());
-
-    // Preset button right-aligned in the tab bar row
-    presetButton.setBounds (WIDTH - 135, tabBarBounds.getY() + 2, 130, tabBarBounds.getHeight() - 4);
 
 
     // Resize grip at physical bottom-right corner (not inside contentWrapper)
