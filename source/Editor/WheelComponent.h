@@ -118,18 +118,14 @@ private:
 // =============================================================================
 // PitchWheelComponent
 // =============================================================================
-class PitchWheelComponent final : public juce::Component, public AnimationFrameSource::Listener,
-                                   private juce::AudioProcessorParameter::Listener
+class PitchWheelComponent final : public juce::Component, public AnimationFrameSource::Listener
 {
 public:
     explicit PitchWheelComponent (PluginProcessor& p, AnimationFrameSource* animSource = nullptr)
         : processor (p),
           pitchBendRawPtr (p.getSynth().getPitchBendRawPtr()),
-          pitchBendRangeParam (p.parameters.getParameter (ParamIDs::pitchBendRange)),
           animSource (animSource)
     {
-        if (pitchBendRangeParam != nullptr)
-            pitchBendRangeParam->addListener (this);
         if (animSource != nullptr)
             animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
     }
@@ -138,20 +134,11 @@ public:
     {
         if (animSource != nullptr)
             animSource->removeListener (this);
-        if (pitchBendRangeParam != nullptr)
-            pitchBendRangeParam->removeListener (this);
     }
 
     void paint (juce::Graphics& g) override
     {
         auto bounds = getLocalBounds().toFloat();
-
-        // Semitone number at top
-        float topHeight = juce::jmin (bounds.getWidth(), 24.0f);
-        auto topArea = bounds.removeFromTop (topHeight);
-        drawSemitoneNumber (g, topArea);
-
-        bounds.removeFromTop (2.0f);
 
         // Track
         float trackWidth = bounds.getWidth() * 0.7f;
@@ -184,53 +171,21 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
-        auto bounds = getLocalBounds().toFloat();
-        float topHeight = juce::jmin (bounds.getWidth(), 24.0f);
-
-        if (e.y < topHeight)
-        {
-            isDraggingNumber = true;
-            numberDragStartY = e.y;
-            numberDragStartValue = getCurrentPitchBendRange();
-            if (pitchBendRangeParam != nullptr)
-                pitchBendRangeParam->beginChangeGesture();
-            return;
-        }
-
-        isDraggingTrack = true;
+        isDragging = true;
         updatePitchFromMouse (e);
     }
 
     void mouseDrag (const juce::MouseEvent& e) override
     {
-        if (isDraggingNumber)
-        {
-            float deltaY = numberDragStartY - static_cast<float> (e.y);
-            int steps = static_cast<int> (deltaY / 20.0f);
-            int newRange = juce::jlimit (1, 12, numberDragStartValue + steps);
-            if (pitchBendRangeParam != nullptr)
-            {
-                float normalised = pitchBendRangeParam->convertTo0to1 (static_cast<float> (newRange));
-                pitchBendRangeParam->setValueNotifyingHost (normalised);
-            }
-            return;
-        }
-        if (isDraggingTrack)
+        if (isDragging)
             updatePitchFromMouse (e);
     }
 
     void mouseUp (const juce::MouseEvent&) override
     {
-        if (isDraggingNumber)
+        if (isDragging)
         {
-            if (pitchBendRangeParam != nullptr)
-                pitchBendRangeParam->endChangeGesture();
-            isDraggingNumber = false;
-            return;
-        }
-        if (isDraggingTrack)
-        {
-            isDraggingTrack = false;
+            isDragging = false;
             // Spring back to center
             currentPitchValue = 8192;
             AtomicHelpers::paramStore (processor.uiPitchBendValue, 8192);
@@ -242,7 +197,7 @@ public:
 
     void onAnimationFrame() override
     {
-        if (isDraggingTrack || pitchBendRawPtr == nullptr)
+        if (isDragging || pitchBendRawPtr == nullptr)
             return;
 
         int hw = static_cast<int> (AtomicHelpers::paramLoad (*pitchBendRawPtr));
@@ -253,39 +208,15 @@ public:
         }
     }
 
-    // AudioProcessorParameter::Listener
-    void parameterValueChanged (int, float) override
-    {
-        juce::MessageManager::callAsync ([this] { repaint(); });
-    }
-    void parameterGestureChanged (int, bool) override {}
-
 private:
-    int getCurrentPitchBendRange() const
-    {
-        if (pitchBendRangeParam != nullptr)
-            return static_cast<int> (pitchBendRangeParam->convertFrom0to1 (pitchBendRangeParam->getValue()));
-        return 2;
-    }
-
-    void drawSemitoneNumber (juce::Graphics& g, juce::Rectangle<float> area)
-    {
-        int range = getCurrentPitchBendRange();
-        g.setColour (TEXT_COLOR);
-        g.setFont (14.0f);
-        g.drawText (juce::String (range), area, juce::Justification::centred, false);
-    }
-
     void updatePitchFromMouse (const juce::MouseEvent& e)
     {
         auto bounds = getLocalBounds().toFloat();
-        float topHeight = juce::jmin (bounds.getWidth(), 24.0f);
-        auto trackBounds = bounds.withTrimmedTop (topHeight + 2.0f);
 
-        float thumbHeight = trackBounds.getHeight() * 0.15f;
-        float usableHeight = trackBounds.getHeight() - thumbHeight;
+        float thumbHeight = bounds.getHeight() * 0.15f;
+        float usableHeight = bounds.getHeight() - thumbHeight;
 
-        float relY = static_cast<float> (e.y) - trackBounds.getY() - thumbHeight * 0.5f;
+        float relY = static_cast<float> (e.y) - bounds.getY() - thumbHeight * 0.5f;
         float normalised = 1.0f - juce::jlimit (0.0f, 1.0f, relY / usableHeight);
 
         if (e.mods.isShiftDown())
@@ -301,11 +232,7 @@ private:
 
     PluginProcessor& processor;
     std::atomic<float>* pitchBendRawPtr = nullptr;
-    juce::RangedAudioParameter* pitchBendRangeParam = nullptr;
     AnimationFrameSource* animSource = nullptr;
     int currentPitchValue = 8192;
-    bool isDraggingTrack = false;
-    bool isDraggingNumber = false;
-    float numberDragStartY = 0.0f;
-    int numberDragStartValue = 2;
+    bool isDragging = false;
 };
