@@ -11,9 +11,11 @@ class JuneDCO final : public juce::AudioProcessorValueTreeState::Listener
 {
 public:
     JuneDCO (juce::AudioProcessorValueTreeState& p, DynamicParameter& pw, DynamicParameter& wf,
-        DynamicParameter& dt, DynamicParameter& ow, DynamicParameter& so, DynamicParameter& sw)
+        DynamicParameter& dt, DynamicParameter& ow, DynamicParameter& so, DynamicParameter& sw,
+        DynamicParameter& mol)
         : parameters (p), pulseWidth (pw), waveformMix (wf),
-          detuneParam (dt), widthParam (ow), subOscParam (so), subOscWaveParam (sw)
+          detuneParam (dt), widthParam (ow), subOscParam (so), subOscWaveParam (sw),
+          mainOscLevelParam (mol)
     {
         oscillatorEnabled = *p.getRawParameterValue (ParamIDs::oscOn) > 0.5f;
         subOscillatorEnabled = *p.getRawParameterValue (ParamIDs::subOn) > 0.5f;
@@ -243,13 +245,14 @@ public:
         float outputL, outputR;
 
         const float currentSubLevel = subOscParam.getCurrentValue();
+        const float currentMainOscLevel = mainOscLevelParam.getCurrentValue();
         const float currentStereoWidth = widthParam.getCurrentValue();
 
         if (detuneEnabled)
         {
             // Mix stereo signals
-            float leftSignal = sawOutputL * liveSawLevel + pulseOutputL * livePulseLevel + subOutput * currentSubLevel;
-            float rightSignal = sawOutputR * liveSawLevel + pulseOutputR * livePulseLevel + subOutput * currentSubLevel;
+            float leftSignal = (sawOutputL * liveSawLevel + pulseOutputL * livePulseLevel) * currentMainOscLevel + subOutput * currentSubLevel;
+            float rightSignal = (sawOutputR * liveSawLevel + pulseOutputR * livePulseLevel) * currentMainOscLevel + subOutput * currentSubLevel;
 
             // Apply stereo width
             // When stereoWidth is 0, both channels should be the same (mono)
@@ -262,7 +265,7 @@ public:
         else
         {
             // Mix mono signal
-            float monoOut = sawOutput * liveSawLevel + pulseOutput * livePulseLevel + subOutput * currentSubLevel;
+            float monoOut = (sawOutput * liveSawLevel + pulseOutput * livePulseLevel) * currentMainOscLevel + subOutput * currentSubLevel;
             outputL = monoOut;
             outputR = monoOut;
         }
@@ -270,7 +273,7 @@ public:
         // Normalize output to prevent clipping
         float activeMixSum = 0.0f;
         if (oscillatorEnabled)
-            activeMixSum += liveSawLevel + livePulseLevel;
+            activeMixSum += (liveSawLevel + livePulseLevel) * currentMainOscLevel;
         if (subOscillatorEnabled)
             activeMixSum += currentSubLevel;
 
@@ -323,6 +326,7 @@ private:
     DynamicParameter& widthParam;
     DynamicParameter& subOscParam;
     DynamicParameter& subOscWaveParam;
+    DynamicParameter& mainOscLevelParam;
     float detuneAmount = 0.25f;
     bool oscillatorEnabled = false;
     bool subOscillatorEnabled = false;

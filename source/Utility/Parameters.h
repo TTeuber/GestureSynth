@@ -23,6 +23,7 @@ namespace ModDest
         "vibratoRate",      // 11
         "chorusDepth",      // 12
         "chorusRate",       // 13
+        "mainOscLevel",     // 14
     };
 
     inline constexpr int count = static_cast<int> (sizeof (paramIDs) / sizeof (paramIDs[0]));
@@ -41,6 +42,7 @@ namespace ModDest
     inline constexpr int vibratoRate     = 11;
     inline constexpr int chorusDepth     = 12;
     inline constexpr int chorusRate      = 13;
+    inline constexpr int mainOscLevel    = 14;
 
     inline juce::StringArray buildDestIDs()
     {
@@ -70,6 +72,7 @@ namespace ParamIDs
     inline constexpr auto oscWidth     = "oscWidth";
     inline constexpr auto subOsc       = "subOsc";
     inline constexpr auto subOscWave   = "subOscWave";
+    inline constexpr auto mainOscLevel = "mainOscLevel";
     inline constexpr auto fineTune     = "fineTune";
 
     // Chorus
@@ -184,6 +187,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (make_unique<Parameter> (ID (ParamIDs::oscWidth, 1), "Width", 0.0f, 1.0f, 1.0f));
     layout.add (make_unique<Parameter> (ID (ParamIDs::subOsc, 1), "Sub Level", 0.0f, 1.0f, 0.75f));
     layout.add (make_unique<Parameter> (ID (ParamIDs::subOscWave, 2), "Sub Wave", 0.0f, 1.0f, 0.67f));
+    layout.add (make_unique<Parameter> (ID (ParamIDs::mainOscLevel, 1), "Osc Level", 0.0f, 1.0f, 1.0f));
     layout.add (make_unique<Parameter> (ID (ParamIDs::fineTune, 1), "Fine Tune", -0.5f, 0.5f, 0.0f));
 
     // ================================================================================================================================================

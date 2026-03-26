@@ -140,7 +140,8 @@ private:
     DynamicParameter oscWidth = DynamicParameter (parameters.getParameter (ParamIDs::oscWidth));
     DynamicParameter subOsc = DynamicParameter (parameters.getParameter (ParamIDs::subOsc));
     DynamicParameter subOscWave = DynamicParameter (parameters.getParameter (ParamIDs::subOscWave));
-    JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth, oscWaveform, oscDetune, oscWidth, subOsc, subOscWave);
+    DynamicParameter mainOscLevel = DynamicParameter (parameters.getParameter (ParamIDs::mainOscLevel));
+    JuneDCO juneOscillator = JuneDCO (parameters, pulseWidth, oscWaveform, oscDetune, oscWidth, subOsc, subOscWave, mainOscLevel);
 
     std::array<MyLFO, 4> lfos = {
         MyLFO { "lfo1", "LFO 1", 1.0f },
@@ -292,6 +293,7 @@ private:
             { &vibratoRateParam,  ModDest::vibratoRate },
             { &chorusDepthParam,  ModDest::chorusDepth },
             { &chorusRateParam,   ModDest::chorusRate },
+            { &mainOscLevel,      ModDest::mainOscLevel },
         };
         for (const auto& r : regs)
         {

@@ -13,7 +13,7 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
       detuneComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[6], &p.modDestOutputs[7], ParamIDs::oscDetune, ParamIDs::oscWidth),
       chorusComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[12], &p.modDestOutputs[13], ParamIDs::chorusDepth, ParamIDs::chorusRate),
       vibratoComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[10], &p.modDestOutputs[11], ParamIDs::vibratoDepth, ParamIDs::vibratoRate),
-      volumeComponent (p.parameters.getParameter (ParamIDs::volume), { &p.undoManager, &p.activeGestureCount, modState }),
+      volumeComponent (p.parameters.getParameter (ParamIDs::mainOscLevel), { &p.undoManager, &p.activeGestureCount, modState }, ParamIDs::mainOscLevel),
       noiseComponent (p.parameters.getParameter (ParamIDs::noiseLevel), { &p.undoManager, &p.activeGestureCount, modState }),
       chorusMixComponent (p.parameters.getParameter (ParamIDs::chorusMix), { &p.undoManager, &p.activeGestureCount, modState }),
       portamentoComponent (p.parameters.getParameter (ParamIDs::portamentoTime), { &p.undoManager, &p.activeGestureCount, modState }),
