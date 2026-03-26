@@ -66,6 +66,35 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     persistentPanel.addAndMakeVisible (voiceCountControl);
     persistentPanel.addAndMakeVisible (volumeControl);
     persistentPanel.addAndMakeVisible (portamentoBottomControl);
+
+    presetButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
+    presetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
+    presetButton.onClick = [this]
+    {
+        std::map<int, juce::File> idToFile;
+        auto menu = processorRef.presetManager.buildMenu (idToFile);
+
+        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&presetButton),
+            [this, idToFile = std::move (idToFile)] (int result)
+            {
+                if (result > 0)
+                {
+                    auto it = idToFile.find (result);
+                    if (it != idToFile.end())
+                    {
+                        auto state = processorRef.presetManager.loadPreset (it->second);
+                        if (state.isValid())
+                        {
+                            processorRef.restoreFromStateTree (state);
+                            processorRef.currentPresetName = it->second.getFileNameWithoutExtension();
+                            presetButton.setButtonText (processorRef.currentPresetName);
+                        }
+                    }
+                }
+            });
+    };
+    persistentPanel.addAndMakeVisible (presetButton);
+
     persistentPanel.addAndMakeVisible (keyVelComponent);
     persistentPanel.addAndMakeVisible (lfoComponent);
     persistentPanel.addAndMakeVisible (adsrGraph);
@@ -220,6 +249,12 @@ void PluginEditor::resized()
     voiceCountControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
     volumeControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
     portamentoBottomControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
+    presetButton.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
+
+    // Scale label in bottom-right of control row
+    scaleLabel.setBounds (controlRow.removeFromRight (80).reduced (2, 2));
+    int scalePercent = juce::roundToInt (scaleFactor * 100.0f);
+    scaleLabel.setText (juce::String (scalePercent) + "%", juce::dontSendNotification);
 
     // Keyboard row
     constexpr int keyboardRowHeight = 160;
@@ -272,10 +307,6 @@ void PluginEditor::resized()
         200,
         tabBarBounds.getHeight());
 
-    // Scale label in top-right of tab bar area
-    scaleLabel.setBounds (WIDTH - 80, tabBarBounds.getY(), 70, tabBarBounds.getHeight());
-    int scalePercent = juce::roundToInt (scaleFactor * 100.0f);
-    scaleLabel.setText (juce::String (scalePercent) + "%", juce::dontSendNotification);
 
     // Resize grip at physical bottom-right corner (not inside contentWrapper)
     resizeGrip->setBounds (getWidth() - 16, getHeight() - 16, 16, 16);

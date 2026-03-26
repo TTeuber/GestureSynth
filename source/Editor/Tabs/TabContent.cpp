@@ -251,6 +251,9 @@ void EffectsTabContent::resized()
 // =============================================================================
 
 ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
+#if SYNTHDEMO_DEV_MODE
+    : processorRef (p)
+#endif
 {
     manualBpmSlider.setSliderStyle (juce::Slider::LinearHorizontal);
     manualBpmSlider.setTextBoxStyle (juce::Slider::TextBoxRight, false, 60, 24);
@@ -342,6 +345,55 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     reverbOnToggle = std::make_unique<CustomToggleComponent> (
         dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::reverbOn)), "Reverb");
     addAndMakeVisible (*reverbOnToggle);
+
+#if SYNTHDEMO_DEV_MODE
+    presetSectionLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
+    presetSectionLabel.setFont (juce::Font (14.0f));
+    addAndMakeVisible (presetSectionLabel);
+
+    presetNameEditor.setColour (juce::TextEditor::backgroundColourId, SECONDARY_COLOR);
+    presetNameEditor.setColour (juce::TextEditor::textColourId, TEXT_COLOR);
+    presetNameEditor.setColour (juce::TextEditor::outlineColourId, juce::Colours::transparentBlack);
+    presetNameEditor.setTextToShowWhenEmpty ("Preset name...", TEXT_COLOR.withAlpha (0.4f));
+    addAndMakeVisible (presetNameEditor);
+
+    categoryCombo.setColour (juce::ComboBox::backgroundColourId, SECONDARY_COLOR);
+    categoryCombo.setColour (juce::ComboBox::textColourId, TEXT_COLOR);
+    categoryCombo.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
+    categoryCombo.setEditableText (true);
+    categoryCombo.addItem ("Uncategorized", 1);
+    auto categories = p.presetManager.getCategories();
+    for (int i = 0; i < categories.size(); ++i)
+        categoryCombo.addItem (categories[i], i + 2);
+    categoryCombo.setSelectedId (1);
+    addAndMakeVisible (categoryCombo);
+
+    savePresetButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
+    savePresetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
+    savePresetButton.onClick = [this]
+    {
+        auto name = presetNameEditor.getText().trim();
+        if (name.isEmpty())
+            return;
+
+        auto category = categoryCombo.getText().trim();
+        if (category.isEmpty() || category == "Uncategorized")
+            category = "";
+
+        auto stateTree = processorRef.buildStateTree();
+        if (processorRef.presetManager.savePreset (name, category, stateTree))
+        {
+            // Refresh category combo
+            categoryCombo.clear();
+            categoryCombo.addItem ("Uncategorized", 1);
+            auto cats = processorRef.presetManager.getCategories();
+            for (int i = 0; i < cats.size(); ++i)
+                categoryCombo.addItem (cats[i], i + 2);
+            categoryCombo.setSelectedId (1);
+        }
+    };
+    addAndMakeVisible (savePresetButton);
+#endif
 }
 
 void ExperimentTabContent::paint (juce::Graphics& g)
@@ -471,4 +523,13 @@ void ExperimentTabContent::resized()
     delayTempoSyncToggle->setBounds (delayRightSliderX, toggleRowY, toggleW, sliderH);
     delayNoteDivisionCombo.setBounds (delayRightSliderX + toggleW + 5, toggleRowY, comboW, sliderH);
     delayPingPongToggle->setBounds (delayRightSliderX + toggleW + comboW + 10, toggleRowY, toggleW + 10, sliderH);
+
+#if SYNTHDEMO_DEV_MODE
+    auto presetArea = getLocalBounds().removeFromBottom (70).reduced (10, 5);
+    presetSectionLabel.setBounds (presetArea.removeFromTop (20));
+    auto saveRow = presetArea.removeFromTop (30);
+    presetNameEditor.setBounds (saveRow.removeFromLeft (200).reduced (2));
+    categoryCombo.setBounds (saveRow.removeFromLeft (150).reduced (2));
+    savePresetButton.setBounds (saveRow.removeFromLeft (100).reduced (2));
+#endif
 }

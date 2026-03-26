@@ -239,12 +239,11 @@ juce::AudioProcessorEditor* PluginProcessor::createEditor()
 }
 
 //==============================================================================
-void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
+juce::ValueTree PluginProcessor::buildStateTree()
 {
-    juce::ValueTree state ("PluginState"); // Get the ValueTree state
+    juce::ValueTree state ("PluginState");
 
     state.addChild (parameters.copyState(), -1, nullptr);
-
     state.addChild (modTree.createCopy(), -1, nullptr);
 
     for (int i = 0; i < 4; ++i)
@@ -254,7 +253,68 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
         state.addChild (lfoTree, -1, nullptr);
     }
 
-    // Convert to XML and write to MemoryBlock
+    return state;
+}
+
+void PluginProcessor::restoreFromStateTree (const juce::ValueTree& state)
+{
+    if (! state.isValid())
+        return;
+
+    // Restore APVTS state
+    juce::ValueTree paramState = state.getChildWithName (parameters.state.getType());
+    if (paramState.isValid())
+        parameters.replaceState (paramState);
+
+    // Restore custom state — replace children in-place to preserve the
+    // SharedObject identity so that MySynthVoice listeners stay valid.
+    juce::ValueTree customStateRestored = state.getChildWithName (modTree.getType());
+    if (customStateRestored.isValid())
+    {
+        while (modTree.getNumChildren() > 0)
+            modTree.removeChild (0, nullptr);
+
+        for (int i = 0; i < customStateRestored.getNumChildren(); ++i)
+            modTree.appendChild (customStateRestored.getChild (i).createCopy(), nullptr);
+
+        // Backward compat: pad to 12 children if saved state had fewer
+        while (modTree.getNumChildren() < 12)
+        {
+            juce::ValueTree child ("modulation" + juce::String (modTree.getNumChildren()));
+            child.setProperty ("source", "None", nullptr);
+            child.setProperty ("depth", 0.0f, nullptr);
+            child.setProperty ("destination", "None", nullptr);
+            child.setProperty ("isBipolar", false, nullptr);
+            child.setProperty ("bypassed", false, nullptr);
+            modTree.appendChild (child, nullptr);
+        }
+    }
+
+    // Restore LFO state
+    bool foundIndexed = false;
+    for (int i = 0; i < state.getNumChildren(); ++i)
+    {
+        auto child = state.getChild (i);
+        if (child.getType().toString() == "LFOData" && child.hasProperty ("lfoIndex"))
+        {
+            int idx = static_cast<int> (child.getProperty ("lfoIndex"));
+            if (idx >= 0 && idx < 4)
+                lfoData[idx]->fromValueTree (child);
+            foundIndexed = true;
+        }
+    }
+    // Backward compat: old single-LFOData presets without lfoIndex
+    if (! foundIndexed)
+    {
+        juce::ValueTree lfoState = state.getChildWithName ("LFOData");
+        if (lfoState.isValid())
+            lfoData[0]->fromValueTree (lfoState);
+    }
+}
+
+void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
+{
+    auto state = buildStateTree();
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     juce::MemoryOutputStream stream (destData, true);
     xml->writeTo (stream);
@@ -262,73 +322,12 @@ void PluginProcessor::getStateInformation (juce::MemoryBlock& destData)
 
 void PluginProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // Create a MemoryInputStream from the provided data
     juce::MemoryInputStream inputStream (data, static_cast<size_t> (sizeInBytes), false);
-
-    // Read the stream into a String
     juce::String xmlString = inputStream.readString();
+    auto xml = juce::XmlDocument::parse (xmlString);
 
-    // Parse the string as XML
-    std::unique_ptr<juce::XmlElement> xml = juce::XmlDocument::parse (xmlString);
     if (xml != nullptr)
-    {
-        // Convert XML to ValueTree
-        juce::ValueTree state = juce::ValueTree::fromXml (*xml);
-
-        // Restore APVTS state (look for the child with the APVTS identifier, e.g., "MyPlugin")
-        juce::ValueTree paramState = state.getChildWithName (parameters.state.getType());
-        if (paramState.isValid())
-        {
-            parameters.replaceState (paramState);
-        }
-
-        // Restore custom state — replace children in-place to preserve the
-        // SharedObject identity so that MySynthVoice listeners stay valid.
-        juce::ValueTree customStateRestored = state.getChildWithName (modTree.getType());
-        if (customStateRestored.isValid())
-        {
-            // Remove existing children
-            while (modTree.getNumChildren() > 0)
-                modTree.removeChild (0, nullptr);
-
-            // Re-add from restored state
-            for (int i = 0; i < customStateRestored.getNumChildren(); ++i)
-                modTree.appendChild (customStateRestored.getChild (i).createCopy(), nullptr);
-
-            // Backward compat: pad to 12 children if saved state had fewer
-            while (modTree.getNumChildren() < 12)
-            {
-                juce::ValueTree child ("modulation" + juce::String (modTree.getNumChildren()));
-                child.setProperty ("source", "None", nullptr);
-                child.setProperty ("depth", 0.0f, nullptr);
-                child.setProperty ("destination", "None", nullptr);
-                child.setProperty ("isBipolar", false, nullptr);
-                child.setProperty ("bypassed", false, nullptr);
-                modTree.appendChild (child, nullptr);
-            }
-        }
-
-        // Restore LFO state
-        bool foundIndexed = false;
-        for (int i = 0; i < state.getNumChildren(); ++i)
-        {
-            auto child = state.getChild (i);
-            if (child.getType().toString() == "LFOData" && child.hasProperty ("lfoIndex"))
-            {
-                int idx = static_cast<int> (child.getProperty ("lfoIndex"));
-                if (idx >= 0 && idx < 4)
-                    lfoData[idx]->fromValueTree (child);
-                foundIndexed = true;
-            }
-        }
-        // Backward compat: old single-LFOData presets without lfoIndex
-        if (!foundIndexed)
-        {
-            juce::ValueTree lfoState = state.getChildWithName ("LFOData");
-            if (lfoState.isValid())
-                lfoData[0]->fromValueTree (lfoState);
-        }
-    }
+        restoreFromStateTree (juce::ValueTree::fromXml (*xml));
 }
 
 //==============================================================================

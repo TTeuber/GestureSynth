@@ -81,6 +81,7 @@ private:
     VoiceCountControl voiceCountControl;
     VolumeControl volumeControl;
     PortamentoBottomControl portamentoBottomControl;
+    juce::TextButton presetButton { "Presets" };
 
     // LFO/ENV row
     LFOComponent lfoComponent;

@@ -2,6 +2,7 @@
 
 #include "Modulation/LFOData.h"
 #include "Modulation/Modulation.h"
+#include "Preset/PresetManager.h"
 #include "Processor/EffectsChain.h"
 #include "Synthesizer/MySynth.h"
 #include "Utility/Parameters.h"
@@ -51,6 +52,12 @@ public:
 
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+
+    juce::ValueTree buildStateTree();
+    void restoreFromStateTree (const juce::ValueTree& state);
+
+    PresetManager presetManager;
+    juce::String currentPresetName;
 
     juce::MidiKeyboardState keyboardState;
     juce::UndoManager undoManager;

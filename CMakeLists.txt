@@ -123,6 +123,9 @@ include(Assets)
 # MacOS only: Cleans up folder and target organization on Xcode.
 include(XcodePrettify)
 
+# Enable developer-only preset save UI (set to OFF for production builds)
+option(SYNTHDEMO_DEV_MODE "Enable developer preset save UI" ON)
+
 # This is where you can set preprocessor definitions for JUCE and your plugin
 target_compile_definitions(SharedCode
     INTERFACE
@@ -141,6 +144,9 @@ target_compile_definitions(SharedCode
 
     # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
     PRODUCT_NAME_WITHOUT_VERSION="Demosynth"
+
+    # Developer preset save UI
+    $<$<BOOL:${SYNTHDEMO_DEV_MODE}>:SYNTHDEMO_DEV_MODE=1>
 )
 
 # Link to any other modules you added (with juce_add_module) here!
