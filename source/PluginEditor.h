@@ -2,6 +2,7 @@
 
 #include "Editor/Tabs/TabContent.h"
 #include "Editor/Utility/AnimationFrameSource.h"
+#include "Editor/Utility/CustomLookAndFeel.h"
 #include "Editor/Utility/ModulationModeState.h"
 #include "PluginProcessor.h"
 #include "Theme.h"
@@ -64,6 +65,7 @@ private:
     std::unique_ptr<ModulationTabContent> modulationTab;
     std::unique_ptr<ExperimentTabContent> experimentTab;
 
+    CustomLookAndFeel customLookAndFeel;
     juce::TabbedComponent tabbedComponent { juce::TabbedButtonBar::TabsAtTop };
 
     // Persistent bottom panel and its components

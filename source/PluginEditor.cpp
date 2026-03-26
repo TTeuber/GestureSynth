@@ -50,9 +50,9 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     tabbedComponent.addTab ("Experiment", PRIMARY_COLOR, experimentTab.get(), false);
 
     // Style the tab bar
-    auto& tabBar = tabbedComponent.getTabbedButtonBar();
-    tabBar.setColour (juce::TabbedButtonBar::tabOutlineColourId, juce::Colours::transparentBlack);
-    tabBar.setColour (juce::TabbedButtonBar::tabTextColourId, TEXT_COLOR);
+    tabbedComponent.setLookAndFeel (&customLookAndFeel);
+    tabbedComponent.setTabBarDepth (30);
+    tabbedComponent.setOutline (0);
 
     contentWrapper.addAndMakeVisible (tabbedComponent);
 
@@ -180,6 +180,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
 PluginEditor::~PluginEditor()
 {
+    tabbedComponent.setLookAndFeel (nullptr);
     animationSource.stop();
     stopTimer();
     modModeState.removeListener (this);
