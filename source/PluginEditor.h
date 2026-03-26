@@ -80,6 +80,7 @@ private:
     PitchBendRangeControl pitchBendRangeControl;
     VoiceCountControl voiceCountControl;
     VolumeControl volumeControl;
+    PortamentoBottomControl portamentoBottomControl;
 
     // LFO/ENV row
     LFOComponent lfoComponent;

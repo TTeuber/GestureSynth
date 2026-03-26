@@ -12,6 +12,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::monoOn)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::legatoOn))),
       volumeControl (p.parameters.getParameter (ParamIDs::volume)),
+      portamentoBottomControl (p.parameters.getParameter (ParamIDs::portamentoTime)),
       lfoComponent (p.lfoData[0], p.parameters, true, 1, p.getSynth().getLFOPtr (0), &animationSource),
       adsrGraph (p.parameters, ParamIDs::envParamID (1, "Attack"), ParamIDs::envParamID (1, "AttackCurve"), ParamIDs::envParamID (1, "Decay"), ParamIDs::envParamID (1, "DecayCurve"), ParamIDs::envParamID (1, "Sustain"), ParamIDs::envParamID (1, "Release"), ParamIDs::envParamID (1, "ReleaseCurve"), p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount, &animationSource)
 {
@@ -64,6 +65,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     persistentPanel.addAndMakeVisible (pitchBendRangeControl);
     persistentPanel.addAndMakeVisible (voiceCountControl);
     persistentPanel.addAndMakeVisible (volumeControl);
+    persistentPanel.addAndMakeVisible (portamentoBottomControl);
     persistentPanel.addAndMakeVisible (keyVelComponent);
     persistentPanel.addAndMakeVisible (lfoComponent);
     persistentPanel.addAndMakeVisible (adsrGraph);
@@ -213,14 +215,11 @@ void PluginEditor::resized()
     constexpr int controlRowHeight = 28;
     auto controlRow = panelArea.removeFromBottom (controlRowHeight);
 
-    int controlWidth = controlRow.getWidth();
-    int pbWidth = controlWidth * 30 / 100;
-    int vcWidth = controlWidth * 30 / 100;
-    int volWidth = controlWidth * 30 / 100;
-
-    pitchBendRangeControl.setBounds (controlRow.removeFromLeft (pbWidth).reduced (2, 2));
-    voiceCountControl.setBounds (controlRow.removeFromLeft (vcWidth).reduced (2, 2));
-    volumeControl.setBounds (controlRow.removeFromLeft (volWidth).reduced (2, 2));
+    constexpr int controlItemWidth = 130;
+    pitchBendRangeControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
+    voiceCountControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
+    volumeControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
+    portamentoBottomControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
 
     // Keyboard row
     constexpr int keyboardRowHeight = 160;
