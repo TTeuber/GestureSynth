@@ -41,14 +41,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     mainTab = std::make_unique<MainTabContent> (p, &modModeState, &animationSource);
     keyboardTab = std::make_unique<KeyboardTabContent> (p, &animationSource);
     modulationTab = std::make_unique<ModulationTabContent> (p, &animationSource);
-    effectsTab = std::make_unique<EffectsTabContent> (p, &modModeState, &animationSource);
     experimentTab = std::make_unique<ExperimentTabContent> (p);
 
     // Add tabs
     tabbedComponent.addTab ("Main", PRIMARY_COLOR, mainTab.get(), false);
     tabbedComponent.addTab ("Keyboard", PRIMARY_COLOR, keyboardTab.get(), false);
     tabbedComponent.addTab ("Modulation", PRIMARY_COLOR, modulationTab.get(), false);
-    tabbedComponent.addTab ("Effects", PRIMARY_COLOR, effectsTab.get(), false);
     tabbedComponent.addTab ("Experiment", PRIMARY_COLOR, experimentTab.get(), false);
 
     // Style the tab bar
@@ -93,7 +91,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
                 }
             });
     };
-    persistentPanel.addAndMakeVisible (presetButton);
+    contentWrapper.addAndMakeVisible (presetButton);
+    presetButton.setAlwaysOnTop (true);
 
     persistentPanel.addAndMakeVisible (keyVelComponent);
     persistentPanel.addAndMakeVisible (lfoComponent);
@@ -249,8 +248,6 @@ void PluginEditor::resized()
     voiceCountControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
     volumeControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
     portamentoBottomControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
-    presetButton.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
-
     // Scale label in bottom-right of control row
     scaleLabel.setBounds (controlRow.removeFromRight (80).reduced (2, 2));
     int scalePercent = juce::roundToInt (scaleFactor * 100.0f);
@@ -306,6 +303,9 @@ void PluginEditor::resized()
         tabBarBounds.getY(),
         200,
         tabBarBounds.getHeight());
+
+    // Preset button right-aligned in the tab bar row
+    presetButton.setBounds (WIDTH - 135, tabBarBounds.getY() + 2, 130, tabBarBounds.getHeight() - 4);
 
 
     // Resize grip at physical bottom-right corner (not inside contentWrapper)

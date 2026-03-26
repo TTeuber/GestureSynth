@@ -796,32 +796,6 @@ private:
 };
 
 // =============================================================================
-// Effects Tab: Chorus, Vibrato, Volume, Noise, ChorusMix, Portamento
-// =============================================================================
-class EffectsTabContent final : public juce::Component
-{
-public:
-    explicit EffectsTabContent (PluginProcessor& p, ModulationModeState* modState = nullptr, AnimationFrameSource* animSource = nullptr);
-    void resized() override;
-    void paint (juce::Graphics& g) override;
-
-private:
-    DelayComponent delayComponent;
-    DelayModComponent delayModComponent;
-    DelayRateComponent delayRateComponent;
-    CustomToggleComponent delayBpmToggle;
-    DelayHighpassComponent delayHighpassComponent;
-    DelayLowpassComponent delayLowpassComponent;
-
-    ReverbComponent reverbComponent;
-    ReverbModComponent reverbModComponent;
-    ReverbSizeComponent reverbSizeComponent;
-    ReverbPreDelayComponent reverbPreDelayComponent;
-    ReverbBassMultComponent reverbBassMultComponent;
-    ReverbDampingComponent reverbDampingComponent;
-};
-
-// =============================================================================
 // Experiment Tab: Reverb + BBD Delay side-by-side
 // =============================================================================
 class ExperimentTabContent final : public juce::Component
