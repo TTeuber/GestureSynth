@@ -19,7 +19,7 @@ public:
     void drawTabButton (juce::TabBarButton& button, juce::Graphics& g,
                         bool isMouseOver, bool /*isMouseDown*/) override
     {
-        auto area = button.getActiveArea().toFloat().reduced (2.0f, 4.0f);
+        auto area = button.getActiveArea().toFloat().reduced (5.0f, 4.0f);
 
         // Background
         auto bgColour = SECONDARY_COLOR;
@@ -49,7 +49,7 @@ public:
 
     int getTabButtonBestWidth (juce::TabBarButton& button, int /*tabDepth*/) override
     {
-        return juce::jmax (80, button.getTabbedButtonBar().getWidth()
-                                   / button.getTabbedButtonBar().getNumTabs());
+        // Match the grid column width used by tab content (availableWidth / 6)
+        return button.getTabbedButtonBar().getWidth() / 6;
     }
 };

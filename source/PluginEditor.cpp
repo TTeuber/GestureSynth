@@ -39,15 +39,19 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     // Create tab content components
     mainTab = std::make_unique<MainTabContent> (p, &modModeState, &animationSource);
-    keyboardTab = std::make_unique<KeyboardTabContent> (p, &animationSource);
     modulationTab = std::make_unique<ModulationTabContent> (p, &animationSource);
-    experimentTab = std::make_unique<ExperimentTabContent> (p);
 
     // Add tabs
     tabbedComponent.addTab ("Main", PRIMARY_COLOR, mainTab.get(), false);
+#if SYNTHDEMO_DEV_MODE
+    keyboardTab = std::make_unique<KeyboardTabContent> (p, &animationSource);
     tabbedComponent.addTab ("Keyboard", PRIMARY_COLOR, keyboardTab.get(), false);
+#endif
     tabbedComponent.addTab ("Modulation", PRIMARY_COLOR, modulationTab.get(), false);
+#if SYNTHDEMO_DEV_MODE
+    experimentTab = std::make_unique<ExperimentTabContent> (p);
     tabbedComponent.addTab ("Experiment", PRIMARY_COLOR, experimentTab.get(), false);
+#endif
 
     // Style the tab bar
     tabbedComponent.setLookAndFeel (&customLookAndFeel);
