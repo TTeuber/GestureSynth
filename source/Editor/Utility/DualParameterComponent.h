@@ -10,12 +10,12 @@
 #include "../../Theme.h"
 #include "ModulationModeState.h"
 #include "ModulationContextMenu.h"
+#include "HoverAnimator.h"
 #include "UIContext.h"
 
 // Base Component Class
 class DualParameterComponent : public juce::Component,
-                               private juce::AudioProcessorParameter::Listener,
-                               private juce::Timer
+                               private juce::AudioProcessorParameter::Listener
 {
 public:
     DualParameterComponent (juce::RangedAudioParameter* param1,
@@ -57,8 +57,6 @@ public:
 
     ~DualParameterComponent() override
     {
-        stopTimer();
-
         // Remove listeners
         param1->removeListener (this);
         param2->removeListener (this);
@@ -78,7 +76,7 @@ public:
         // Apply darkening if inactive
         if (!isActive)
         {
-            g.setOpacity (0.5f);
+            g.setOpacity (Style::alphaInactive);
             g.setColour (TEXT_INACTIVE_COLOR);
         }
         else
@@ -93,7 +91,7 @@ public:
         drawModulationOverlay (g, bounds);
 
         // Draw text indicators
-        g.setFont (14.0f);
+        g.setFont (Style::fontComponent);
 
         if (!isActive)
             g.setColour (TEXT_INACTIVE_COLOR);
@@ -101,9 +99,9 @@ public:
             g.setColour (TEXT_COLOR);
 
         // Draw label with fading opacity (visible when not hovering)
-        if (componentLabel.isNotEmpty() && hoverAlpha < 0.99f)
+        if (componentLabel.isNotEmpty() && hoverAnimator.getAlpha() < 0.99f)
         {
-            g.setOpacity ((1.0f - hoverAlpha) * (isActive ? 1.0f : 0.5f));
+            g.setOpacity ((1.0f - hoverAnimator.getAlpha()) * (isActive ? 1.0f : Style::alphaInactive));
             g.drawText (componentLabel,
                 0,
                 5,
@@ -114,9 +112,9 @@ public:
         }
 
         // Draw parameter texts with fading opacity (visible when hovering)
-        if (hoverAlpha > 0.01f)
+        if (hoverAnimator.getAlpha() > 0.01f)
         {
-            g.setOpacity (hoverAlpha * (isActive ? 1.0f : 0.5f));
+            g.setOpacity (hoverAnimator.getAlpha() * (isActive ? 1.0f : Style::alphaInactive));
 
             // Display parameter 1 text (bottom left)
             g.drawText (getParam1Text(),
@@ -336,14 +334,12 @@ public:
 
     void mouseEnter (const juce::MouseEvent&) override
     {
-        hoverTarget = true;
-        startTimerHz (60);
+        hoverAnimator.setHovered (true);
     }
 
     void mouseExit (const juce::MouseEvent&) override
     {
-        hoverTarget = false;
-        startTimerHz (60);
+        hoverAnimator.setHovered (false);
     }
 
 protected:
@@ -352,10 +348,9 @@ protected:
     juce::RangedAudioParameter* param2;
     juce::AudioParameterBool* activeParam;
 
-    // Label and hover state
+    // Label and hover animation
     juce::String componentLabel;
-    float hoverAlpha = 0.0f;
-    bool hoverTarget = false;
+    HoverAnimator hoverAnimator { *this };
 
     // Active state
     bool isActive = true;
@@ -439,20 +434,6 @@ private:
         // Not needed for this implementation
     }
 
-    void timerCallback() override
-    {
-        const float target = hoverTarget ? 1.0f : 0.0f;
-        hoverAlpha += 0.25f * (target - hoverAlpha);
-
-        if (std::abs (hoverAlpha - target) < 0.01f)
-        {
-            hoverAlpha = target;
-            stopTimer();
-        }
-
-        repaint();
-    }
-
     void drawModulationOverlay (juce::Graphics& g, const juce::Rectangle<int>& bounds)
     {
         if (modModeState == nullptr || !modModeState->isModulationMode())
@@ -473,7 +454,7 @@ private:
         float modP1 = juce::jlimit (0.0f, 1.0f, param1Value + depth1);
         float modP2 = juce::jlimit (0.0f, 1.0f, param2Value + depth2);
 
-        g.setColour (getModColor (sourceID).withAlpha (0.7f));
+        g.setColour (getModColor (sourceID).withAlpha (Style::alphaMod));
         drawVisualizationWithValues (g, bounds, modP1, modP2);
 
         // Draw faint ghost for bipolar (opposite direction)
@@ -482,7 +463,7 @@ private:
             float ghostP1 = bipolar1 ? juce::jlimit (0.0f, 1.0f, param1Value - depth1) : modP1;
             float ghostP2 = bipolar2 ? juce::jlimit (0.0f, 1.0f, param2Value - depth2) : modP2;
 
-            g.setColour (getModColor (sourceID).withAlpha (0.2f));
+            g.setColour (getModColor (sourceID).withAlpha (Style::alphaModGhost));
             drawVisualizationWithValues (g, bounds, ghostP1, ghostP2);
         }
     }

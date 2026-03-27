@@ -108,7 +108,7 @@ protected:
                 text = juce::String (hz, 1) + " Hz";
             else
                 text = juce::String (static_cast<int> (hz)) + " Hz";
-            g.setFont (13.0f);
+            g.setFont (Style::fontLabel);
             g.drawText (text, area, juce::Justification::centred, true);
         }
     }
@@ -139,7 +139,7 @@ private:
 
         juce::String displayText = cleanDiv + suffix;
 
-        g.setFont (12.0f);
+        g.setFont (Style::fontBody);
         g.drawText (displayText, area, juce::Justification::centred, true);
     }
 

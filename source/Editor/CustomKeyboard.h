@@ -73,7 +73,7 @@ public:
             {
                 int octave = (note / 12) - 2; // MIDI 24 = C0
                 g.setColour (juce::Colour (90, 95, 95));
-                g.setFont (juce::jmin (11.0f, whiteKeyWidth * 0.55f));
+                g.setFont (juce::jmin (Style::fontSmall, whiteKeyWidth * 0.55f));
                 auto labelArea = keyRect.removeFromBottom (18.0f);
                 g.drawText ("C" + juce::String (octave), labelArea, juce::Justification::centred, false);
             }

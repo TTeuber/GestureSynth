@@ -7,6 +7,7 @@
 #include "../Theme.h"
 #include "Utility/ModulationModeState.h"
 #include "Utility/ModulationContextMenu.h"
+#include "Utility/HoverAnimator.h"
 #include "Utility/UIContext.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -14,8 +15,7 @@
 //==============================================================================
 class HPFDisplay final : public juce::Component,
                          juce::AudioProcessorValueTreeState::Listener,
-                         public ModulationModeState::Listener,
-                         private juce::Timer
+                         public ModulationModeState::Listener
 {
 public:
     explicit HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
@@ -38,8 +38,7 @@ public:
     void mouseExit (const juce::MouseEvent&) override;
 
 private:
-    float hoverAlpha = 0.0f;
-    bool hoverTarget = false;
+    HoverAnimator hoverAnimator { *this };
     juce::AudioProcessorValueTreeState& apvts;
 
     juce::RangedAudioParameter* cutoffParam = nullptr;
@@ -95,7 +94,6 @@ private:
 
     void drawModModeOverlay (juce::Graphics& g) const;
 
-    void timerCallback() override;
     void modulationModeChanged (ModulationModeState::Mode newMode) override;
     void targetSourceChanged (const juce::String& newSourceID) override;
 

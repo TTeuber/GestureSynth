@@ -1,6 +1,7 @@
 #pragma once
 
 #include "SingleParameterComponent.h"
+#include "PaintHelpers.h"
 
 class TextParameterComponent : public SingleParameterComponent
 {
@@ -11,17 +12,11 @@ public:
     {
         auto bounds = getLocalBounds().toFloat();
 
-        // Background
-        g.setColour (SECONDARY_COLOR);
-        g.fillRoundedRectangle (bounds, 6.0f);
-
-        // Border
-        g.setColour (TEXT_COLOR.withAlpha (0.3f));
-        g.drawRoundedRectangle (bounds.reduced (0.5f), 6.0f, 1.0f);
+        PaintHelpers::drawComponentBox (g, bounds, Style::radiusLarge);
 
         // Name at top
         g.setColour (TEXT_COLOR.withAlpha (0.6f));
-        g.setFont (10.0f);
+        g.setFont (Style::fontCaption);
         g.drawText (param->getName (15), bounds.reduced (4.0f, 2.0f),
             juce::Justification::centredTop, true);
 
@@ -39,7 +34,7 @@ protected:
     virtual void drawValueText (juce::Graphics& g, juce::Rectangle<float> area) const
     {
         g.setColour (TEXT_COLOR);
-        g.setFont (13.0f);
+        g.setFont (Style::fontLabel);
         g.drawText (getParameterText(), area, juce::Justification::centred, true);
     }
 };

@@ -6,6 +6,7 @@
 #include "../Modulation/LFOData.h"
 #include "../Modulation/MyLFO.h"
 #include "../Theme.h"
+#include "Utility/PaintHelpers.h"
 #include "LFORateComponent.h"
 #include "Utility/AnimationFrameSource.h"
 #include "Utility/CustomToggleComponent.h"
@@ -109,12 +110,9 @@ private:
         {
             const auto fullBounds = getLocalBounds().toFloat();
 
-            // Background + border (matches LFO tab selector style)
-            auto bg = isMouseOver() ? SECONDARY_COLOR.brighter (0.15f) : SECONDARY_COLOR;
-            g.setColour (bg);
-            g.fillRoundedRectangle (fullBounds, 4.0f);
-            g.setColour (TEXT_COLOR.withAlpha (0.3f));
-            g.drawRoundedRectangle (fullBounds.reduced (0.5f), 4.0f, 1.0f);
+            PaintHelpers::drawHoverBox (g, fullBounds, isMouseOver());
+            g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
+            g.drawRoundedRectangle (fullBounds.reduced (0.5f), Style::radiusMedium, 1.0f);
 
             const auto bounds = fullBounds.reduced (5.0f);
             juce::Path icon;

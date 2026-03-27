@@ -8,6 +8,7 @@
 #include "../../Theme.h"
 #include "ModulationModeState.h"
 #include "ModulationIconDrawing.h"
+#include "PaintHelpers.h"
 
 class ModulationContextMenu : public juce::Component
 {
@@ -52,7 +53,7 @@ public:
 
             // Parameter name
             g.setColour (TEXT_COLOR);
-            g.setFont (12.0f);
+            g.setFont (Style::fontBody);
             g.drawText (entries[i].name, sectionBounds.withTrimmedLeft (6).withTrimmedRight (iconSize * 3 + iconPad * 3),
                         juce::Justification::centredLeft, true);
 
@@ -74,8 +75,7 @@ public:
                 else if (hoveredButton == 1) hoverBounds = bypassBounds.expanded (2.0f);
                 else hoverBounds = clearBounds.expanded (3.0f);
 
-                g.setColour (SECONDARY_COLOR.brighter (0.15f));
-                g.fillRoundedRectangle (hoverBounds, 3.0f);
+                PaintHelpers::drawHoverBox (g, hoverBounds, true, Style::radiusSmall);
             }
 
             bool bipolar = modModeState->isBipolar (entries[i].sourceID, entries[i].destID);

@@ -109,7 +109,7 @@ void KeyVelComponent::paint (juce::Graphics& g)
 {
     auto graphArea = getGraphArea();
     g.setColour (SECONDARY_COLOR);
-    g.fillRoundedRectangle (graphArea, 3.0f);
+    g.fillRoundedRectangle (graphArea, Style::radiusSmall);
 
     float curve = getCurveParam();
 

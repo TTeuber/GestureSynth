@@ -17,6 +17,33 @@
 #define CONTROLLER_COLOR juce::Colours::lightcoral // aftertouch, expression, mod wheel
 #define KEY_VEL_COLOR juce::Colours::deepskyblue // velocity, keyboard
 
+namespace Style
+{
+    // Font sizes (semantic names)
+    constexpr float fontCaption   = 10.0f; // small labels
+    constexpr float fontSmall     = 11.0f; // keyboard labels, hover state labels
+    constexpr float fontBody      = 12.0f; // toggles, context menus, rate displays
+    constexpr float fontLabel     = 13.0f; // tab text, parameter values
+    constexpr float fontComponent = 14.0f; // parameter names, filter titles
+    constexpr float fontHeading   = 16.0f; // section headers
+
+    // Border radii
+    constexpr float radiusSmall  = 3.0f; // tabs, small buttons, thumbs
+    constexpr float radiusMedium = 4.0f; // standard controls, displays, tracks
+    constexpr float radiusLarge  = 6.0f; // toggles, text parameters
+
+    // Common alpha values
+    constexpr float alphaBorder   = 0.3f; // standard border opacity
+    constexpr float alphaInactive = 0.5f; // inactive component opacity
+    constexpr float alphaMod      = 0.7f; // modulation overlay
+    constexpr float alphaModGhost = 0.2f; // bipolar ghost
+
+    // Hover animation
+    constexpr float hoverSmoothing = 0.25f; // lerp factor per frame
+    constexpr float hoverThreshold = 0.01f; // snap-to-target threshold
+    constexpr int   hoverFrameRate = 60;    // timer Hz for hover
+}
+
 inline auto getModColor (const juce::String& sourceID) -> juce::Colour
 {
     if (sourceID.startsWith ("lfo"))

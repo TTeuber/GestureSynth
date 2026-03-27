@@ -6,6 +6,21 @@
 class CustomLookAndFeel : public juce::LookAndFeel_V4
 {
 public:
+    CustomLookAndFeel()
+    {
+        // ComboBox colours — applied automatically to all ComboBoxes using this L&F
+        setColour (juce::ComboBox::backgroundColourId, SECONDARY_COLOR);
+        setColour (juce::ComboBox::textColourId, TEXT_COLOR);
+        setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
+        setColour (juce::ComboBox::arrowColourId, TEXT_COLOR);
+
+        // PopupMenu colours for consistent dropdown appearance
+        setColour (juce::PopupMenu::backgroundColourId, SECONDARY_COLOR);
+        setColour (juce::PopupMenu::textColourId, TEXT_COLOR);
+        setColour (juce::PopupMenu::highlightedBackgroundColourId, SECONDARY_COLOR.brighter (0.15f));
+        setColour (juce::PopupMenu::highlightedTextColourId, TEXT_COLOR);
+    }
+
     void drawTabbedButtonBarBackground (juce::TabbedButtonBar&, juce::Graphics&) override
     {
         // No-op — parent component already paints PRIMARY_COLOR
@@ -26,18 +41,18 @@ public:
         if (isMouseOver && ! button.isFrontTab())
             bgColour = bgColour.brighter (0.06f);
         g.setColour (bgColour);
-        g.fillRoundedRectangle (area, 3.0f);
+        g.fillRoundedRectangle (area, Style::radiusSmall);
 
         // Selected border
         if (button.isFrontTab())
         {
             g.setColour (TEXT_COLOR);
-            g.drawRoundedRectangle (area.reduced (0.5f), 3.0f, 1.5f);
+            g.drawRoundedRectangle (area.reduced (0.5f), Style::radiusSmall, 1.5f);
         }
 
         // Text
         g.setColour (TEXT_COLOR);
-        g.setFont (13.0f);
+        g.setFont (Style::fontLabel);
         g.drawText (button.getButtonText(), area, juce::Justification::centred, false);
     }
 

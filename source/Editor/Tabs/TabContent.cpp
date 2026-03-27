@@ -259,9 +259,6 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     delayDiffusionAttachment  = std::make_unique<SliderAttachment> (p.parameters, ParamIDs::delayDiffusion, delayDiffusionSlider);
 
     // Delay note division combo box
-    delayNoteDivisionCombo.setColour (juce::ComboBox::backgroundColourId, SECONDARY_COLOR);
-    delayNoteDivisionCombo.setColour (juce::ComboBox::textColourId, TEXT_COLOR);
-    delayNoteDivisionCombo.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
     addAndMakeVisible (delayNoteDivisionCombo);
     delayNoteDivisionAttachment = std::make_unique<ComboBoxAttachment> (p.parameters, ParamIDs::delayNoteDivision, delayNoteDivisionCombo);
 
@@ -284,7 +281,7 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
 
 #if SYNTHDEMO_DEV_MODE
     presetSectionLabel.setColour (juce::Label::textColourId, TEXT_COLOR);
-    presetSectionLabel.setFont (juce::Font (14.0f));
+    presetSectionLabel.setFont (juce::Font (Style::fontComponent));
     addAndMakeVisible (presetSectionLabel);
 
     presetNameEditor.setColour (juce::TextEditor::backgroundColourId, SECONDARY_COLOR);
@@ -293,9 +290,6 @@ ExperimentTabContent::ExperimentTabContent (PluginProcessor& p)
     presetNameEditor.setTextToShowWhenEmpty ("Preset name...", TEXT_COLOR.withAlpha (0.4f));
     addAndMakeVisible (presetNameEditor);
 
-    categoryCombo.setColour (juce::ComboBox::backgroundColourId, SECONDARY_COLOR);
-    categoryCombo.setColour (juce::ComboBox::textColourId, TEXT_COLOR);
-    categoryCombo.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
     categoryCombo.setEditableText (true);
     categoryCombo.addItem ("Uncategorized", 1);
     auto categories = p.presetManager.getCategories();
@@ -341,7 +335,7 @@ void ExperimentTabContent::paint (juce::Graphics& g)
 
     // Manual BPM header
     g.setColour (TEXT_COLOR);
-    g.setFont (16.0f);
+    g.setFont (Style::fontHeading);
     g.drawText ("Manual BPM", area.removeFromTop (35), juce::Justification::centred);
 
     area.removeFromTop (30); // BPM slider space
@@ -353,14 +347,14 @@ void ExperimentTabContent::paint (juce::Graphics& g)
 
     // Reverb header (left half) - leave space for toggle on left
     auto reverbHeaderArea = juce::Rectangle<int> (0, contentTop, halfW, 25);
-    g.setFont (16.0f);
+    g.setFont (Style::fontHeading);
     g.drawText ("Reverb", reverbHeaderArea, juce::Justification::centred);
 
     // Delay header (right half) - leave space for toggle on left
     auto delayHeaderArea = juce::Rectangle<int> (halfW, contentTop, halfW, 25);
     g.drawText ("BBD Delay", delayHeaderArea, juce::Justification::centred);
 
-    g.setFont (12.0f);
+    g.setFont (Style::fontBody);
     int sliderTop = contentTop + 28;
 
     // Reverb labels (2 columns within left half)

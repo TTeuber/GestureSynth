@@ -170,12 +170,12 @@ private:
         else if (isTriplet) suffix = "T";
 
         float lineHeight = area.getHeight() / 3.0f;
-        g.setFont (12.0f);
+        g.setFont (Style::fontBody);
         g.drawText (numerator, area.removeFromTop (lineHeight), juce::Justification::centred, true);
-        g.setFont (10.0f);
+        g.setFont (Style::fontCaption);
         auto slashArea = area.removeFromTop (lineHeight);
         g.drawText ("/", slashArea, juce::Justification::centred, true);
-        g.setFont (12.0f);
+        g.setFont (Style::fontBody);
         g.drawText (denominator + suffix, area, juce::Justification::centred, true);
     }
 

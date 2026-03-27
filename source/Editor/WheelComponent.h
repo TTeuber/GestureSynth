@@ -37,9 +37,9 @@ public:
         auto trackArea = bounds.withSizeKeepingCentre (trackWidth, bounds.getHeight());
 
         g.setColour (SECONDARY_COLOR);
-        g.fillRoundedRectangle (trackArea, 4.0f);
-        g.setColour (TEXT_COLOR.withAlpha (0.3f));
-        g.drawRoundedRectangle (trackArea, 4.0f, 1.0f);
+        g.fillRoundedRectangle (trackArea, Style::radiusMedium);
+        g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
+        g.drawRoundedRectangle (trackArea, Style::radiusMedium, 1.0f);
 
         // Thumb
         float thumbHeight = trackArea.getHeight() * 0.15f;
@@ -52,7 +52,7 @@ public:
             thumbHeight);
 
         g.setColour (TEXT_COLOR);
-        g.fillRoundedRectangle (thumbArea, 3.0f);
+        g.fillRoundedRectangle (thumbArea, Style::radiusSmall);
     }
 
     void mouseDown (const juce::MouseEvent& e) override
@@ -145,13 +145,13 @@ public:
         auto trackArea = bounds.withSizeKeepingCentre (trackWidth, bounds.getHeight());
 
         g.setColour (SECONDARY_COLOR);
-        g.fillRoundedRectangle (trackArea, 4.0f);
-        g.setColour (TEXT_COLOR.withAlpha (0.3f));
-        g.drawRoundedRectangle (trackArea, 4.0f, 1.0f);
+        g.fillRoundedRectangle (trackArea, Style::radiusMedium);
+        g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
+        g.drawRoundedRectangle (trackArea, Style::radiusMedium, 1.0f);
 
         // Center line
         float centerY = trackArea.getCentreY();
-        g.setColour (TEXT_COLOR.withAlpha (0.3f));
+        g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
         g.drawLine (trackArea.getX() + 2, centerY, trackArea.getRight() - 2, centerY, 1.0f);
 
         // Thumb — map 0-16383 to position (0=bottom, 16383=top, 8192=center)
@@ -166,7 +166,7 @@ public:
             thumbHeight);
 
         g.setColour (TEXT_COLOR);
-        g.fillRoundedRectangle (thumbArea, 3.0f);
+        g.fillRoundedRectangle (thumbArea, Style::radiusSmall);
     }
 
     void mouseDown (const juce::MouseEvent& e) override

@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "../../Theme.h"
+#include "PaintHelpers.h"
 
 class CustomToggleComponent final : public juce::Component,
                                      private juce::AudioProcessorParameter::Listener
@@ -51,18 +52,15 @@ public:
         if (active)
         {
             g.setColour (TEXT_COLOR);
-            g.fillRoundedRectangle (bounds, 6.0f);
+            g.fillRoundedRectangle (bounds, Style::radiusLarge);
             g.setColour (PRIMARY_COLOR);
         }
         else
         {
-            g.setColour (SECONDARY_COLOR);
-            g.fillRoundedRectangle (bounds, 6.0f);
-            g.setColour (TEXT_COLOR);
-            g.drawRoundedRectangle (bounds.reduced (0.5f), 6.0f, 1.0f);
+            PaintHelpers::drawComponentBox (g, bounds, Style::radiusLarge, 1.0f);
         }
 
-        g.setFont (12.0f);
+        g.setFont (Style::fontBody);
         g.drawText (label, bounds, juce::Justification::centred, true);
     }
 

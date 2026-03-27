@@ -10,12 +10,12 @@
 #include "../../Theme.h"
 #include "ModulationModeState.h"
 #include "ModulationContextMenu.h"
+#include "HoverAnimator.h"
 #include "UIContext.h"
 
 // Base Component Class for single parameter controls
 class SingleParameterComponent : public juce::Component,
-                                 private juce::AudioProcessorParameter::Listener,
-                                 private juce::Timer
+                                 private juce::AudioProcessorParameter::Listener
 {
 public:
     explicit SingleParameterComponent (juce::RangedAudioParameter* param,
@@ -49,7 +49,6 @@ public:
 
     ~SingleParameterComponent() override
     {
-        stopTimer();
         // Remove listeners
         param->removeListener (this);
 
@@ -68,7 +67,7 @@ public:
         // Apply darkening if inactive
         if (!isActive)
         {
-            g.setOpacity (0.5f);
+            g.setOpacity (Style::alphaInactive);
             g.setColour (TEXT_INACTIVE_COLOR);
         }
         else
@@ -76,12 +75,12 @@ public:
             g.setColour (TEXT_COLOR);
         }
 
-        g.setFont (14.0f);
+        g.setFont (Style::fontComponent);
 
         // Draw the parameter name at the top (fades out on hover)
-        if (hoverAlpha < 0.99f)
+        if (hoverAnimator.getAlpha() < 0.99f)
         {
-            g.setOpacity (isActive ? (1.0f - hoverAlpha) : 0.5f * (1.0f - hoverAlpha));
+            g.setOpacity (isActive ? (1.0f - hoverAnimator.getAlpha()) : Style::alphaInactive * (1.0f - hoverAnimator.getAlpha()));
             g.drawText (param->getName (15),
                 bounds.getX(),
                 5,
@@ -92,9 +91,9 @@ public:
         }
 
         // Draw the parameter value at the top (fades in on hover)
-        if (hoverAlpha > 0.01f)
+        if (hoverAnimator.getAlpha() > 0.01f)
         {
-            g.setOpacity (isActive ? hoverAlpha : 0.5f * hoverAlpha);
+            g.setOpacity (isActive ? hoverAnimator.getAlpha() : Style::alphaInactive * hoverAnimator.getAlpha());
             g.drawText (getParameterText(),
                 bounds.getX(),
                 5,
@@ -104,7 +103,7 @@ public:
                 true);
         }
 
-        g.setOpacity (isActive ? 1.0f : 0.5f);
+        g.setOpacity (isActive ? 1.0f : Style::alphaInactive);
 
         // Draw the main visualization (implemented by derived classes)
         drawVisualization (g, bounds.withTrimmedTop (20));
@@ -138,14 +137,12 @@ public:
 
     void mouseEnter (const juce::MouseEvent&) override
     {
-        hoverTarget = true;
-        startTimerHz (60);
+        hoverAnimator.setHovered (true);
     }
 
     void mouseExit (const juce::MouseEvent&) override
     {
-        hoverTarget = false;
-        startTimerHz (60);
+        hoverAnimator.setHovered (false);
     }
 
     void mouseDown (const juce::MouseEvent& e) override
@@ -275,9 +272,8 @@ protected:
     // Active state
     bool isActive = true;
 
-    // Hover state
-    float hoverAlpha = 0.0f;
-    bool hoverTarget = false;
+    // Hover animation
+    HoverAnimator hoverAnimator { *this };
 
     // Current parameter value
     float paramValue = 0.0f;
@@ -361,18 +357,6 @@ private:
         repaint();
     }
 
-    void timerCallback() override
-    {
-        const float target = hoverTarget ? 1.0f : 0.0f;
-        hoverAlpha += 0.25f * (target - hoverAlpha);
-        if (std::abs (hoverAlpha - target) < 0.01f)
-        {
-            hoverAlpha = target;
-            stopTimer();
-        }
-        repaint();
-    }
-
     void parameterGestureChanged (int, bool) override
     {
         // Not needed for this implementation
@@ -397,14 +381,14 @@ private:
         float modValue = juce::jlimit (0.0f, 1.0f, paramValue + depth);
         float modY = bounds.getBottom() - modValue * bounds.getHeight();
 
-        g.setColour (getModColor (sourceID).withAlpha (0.7f));
+        g.setColour (getModColor (sourceID).withAlpha (Style::alphaMod));
         g.drawHorizontalLine (static_cast<int> (modY), static_cast<float> (bounds.getX()), static_cast<float> (bounds.getRight()));
 
         if (bipolar)
         {
             float ghostValue = juce::jlimit (0.0f, 1.0f, paramValue - depth);
             float ghostY = bounds.getBottom() - ghostValue * bounds.getHeight();
-            g.setColour (getModColor (sourceID).withAlpha (0.2f));
+            g.setColour (getModColor (sourceID).withAlpha (Style::alphaModGhost));
             g.drawHorizontalLine (static_cast<int> (ghostY), static_cast<float> (bounds.getX()), static_cast<float> (bounds.getRight()));
         }
     }

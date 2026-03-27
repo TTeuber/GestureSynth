@@ -11,7 +11,7 @@ public:
     void paint (juce::Graphics& g) override
     {
         const auto bounds = getLocalBounds().toFloat().reduced (2.0f, 4.0f);
-        const float cornerSize = 4.0f;
+        const float cornerSize = Style::radiusMedium;
 
         // Track background
         g.setColour (PRIMARY_COLOR);

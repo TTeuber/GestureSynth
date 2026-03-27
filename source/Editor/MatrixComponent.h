@@ -2,6 +2,7 @@
 
 #include "../PluginProcessor.h"
 #include "../Theme.h"
+#include "Utility/PaintHelpers.h"
 #include "../Utility/AtomicHelpers.h"
 #include "Utility/AnimationFrameSource.h"
 #include "Utility/DepthSlider.h"
@@ -30,9 +31,6 @@ public:
             row.sourceBox.setSelectedId (
                 PluginProcessor::modSourceIDs.indexOf (child.getProperty ("source").toString()) + 1,
                 juce::dontSendNotification);
-            row.sourceBox.setColour (juce::ComboBox::backgroundColourId, SECONDARY_COLOR);
-            row.sourceBox.setColour (juce::ComboBox::textColourId, TEXT_COLOR);
-            row.sourceBox.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
             addAndMakeVisible (row.sourceBox);
 
             // Depth slider
@@ -50,9 +48,6 @@ public:
             row.destBox.setSelectedId (
                 PluginProcessor::modDestIDs.indexOf (child.getProperty ("destination").toString()) + 1,
                 juce::dontSendNotification);
-            row.destBox.setColour (juce::ComboBox::backgroundColourId, SECONDARY_COLOR);
-            row.destBox.setColour (juce::ComboBox::textColourId, TEXT_COLOR);
-            row.destBox.setColour (juce::ComboBox::outlineColourId, juce::Colours::transparentBlack);
             addAndMakeVisible (row.destBox);
 
             // Bypass button
@@ -259,11 +254,9 @@ private:
         {
             const auto bounds = getLocalBounds().toFloat();
 
-            auto bg = isMouseOver() ? SECONDARY_COLOR.brighter (0.15f) : SECONDARY_COLOR;
-            g.setColour (bg);
-            g.fillRoundedRectangle (bounds, 4.0f);
-            g.setColour (TEXT_COLOR.withAlpha (0.3f));
-            g.drawRoundedRectangle (bounds.reduced (0.5f), 4.0f, 1.0f);
+            PaintHelpers::drawHoverBox (g, bounds, isMouseOver());
+            g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
+            g.drawRoundedRectangle (bounds.reduced (0.5f), Style::radiusMedium, 1.0f);
 
             ModulationIcons::drawBipolarIcon (g, bounds.reduced (5.0f), bipolar);
         }
@@ -295,9 +288,7 @@ private:
         {
             const auto bounds = getLocalBounds().toFloat();
 
-            auto bg = isMouseOver() ? SECONDARY_COLOR.brighter (0.15f) : SECONDARY_COLOR;
-            g.setColour (bg);
-            g.fillRoundedRectangle (bounds, 4.0f);
+            PaintHelpers::drawHoverBox (g, bounds, isMouseOver());
 
             ModulationIcons::drawBypassIcon (g, bounds.reduced (5.0f), bypassed);
         }
@@ -329,9 +320,7 @@ private:
         {
             const auto bounds = getLocalBounds().toFloat();
 
-            auto bg = isMouseOver() ? SECONDARY_COLOR.brighter (0.15f) : SECONDARY_COLOR;
-            g.setColour (bg);
-            g.fillRoundedRectangle (bounds, 4.0f);
+            PaintHelpers::drawHoverBox (g, bounds, isMouseOver());
 
             ModulationIcons::drawClearIcon (g, bounds.reduced (6.0f), isMouseOver());
         }

@@ -36,7 +36,6 @@ FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
 }
 FilterDisplay::~FilterDisplay()
 {
-    stopTimer();
     if (animSource != nullptr)
         animSource->removeListener (this);
     // Remove listeners
@@ -51,18 +50,18 @@ void FilterDisplay::paint (juce::Graphics& g)
     g.fillAll (SECONDARY_COLOR);
 
     // Draw label with fading opacity
-    if (hoverAlpha < 0.99f)
+    if (hoverAnimator.getAlpha() < 0.99f)
     {
         g.setColour (filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
-        g.setFont (14.0f);
-        g.setOpacity (1.0f - hoverAlpha);
+        g.setFont (Style::fontComponent);
+        g.setOpacity (1.0f - hoverAnimator.getAlpha());
         g.drawText ("Low Pass Filter", 0, 5, getWidth(), 20, juce::Justification::centredTop, true);
     }
 
     // Draw parameter values with fading opacity
-    if (hoverAlpha > 0.01f)
+    if (hoverAnimator.getAlpha() > 0.01f)
     {
-        g.setOpacity (hoverAlpha);
+        g.setOpacity (hoverAnimator.getAlpha());
         drawParameterValues (g);
     }
 
@@ -286,28 +285,12 @@ void FilterDisplay::mouseUp (const juce::MouseEvent& e)
 
 void FilterDisplay::mouseEnter (const juce::MouseEvent&)
 {
-    hoverTarget = true;
-    startTimerHz (60);
+    hoverAnimator.setHovered (true);
 }
 
 void FilterDisplay::mouseExit (const juce::MouseEvent&)
 {
-    hoverTarget = false;
-    startTimerHz (60);
-}
-
-void FilterDisplay::timerCallback()
-{
-    const float target = hoverTarget ? 1.0f : 0.0f;
-    hoverAlpha += 0.25f * (target - hoverAlpha);
-
-    if (std::abs (hoverAlpha - target) < 0.01f)
-    {
-        hoverAlpha = target;
-        stopTimer();
-    }
-
-    repaint();
+    hoverAnimator.setHovered (false);
 }
 
 void FilterDisplay::parameterChanged (const juce::String& parameterID, float newValue)
@@ -433,8 +416,8 @@ double FilterDisplay::computeFirstOrderStage (const double freq, const double cu
 
 void FilterDisplay::drawParameterValues (juce::Graphics& g) const
 {
-    g.setColour ((filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR).withAlpha (hoverAlpha));
-    g.setFont (14.0f);
+    g.setColour ((filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR).withAlpha (hoverAnimator.getAlpha()));
+    g.setFont (Style::fontComponent);
 
     // Format the frequency value
     juce::String freqText;
@@ -533,14 +516,14 @@ void FilterDisplay::drawModModeOverlay (juce::Graphics& g) const
     // Draw cyan curve at modulated position
     float modCutoff = juce::jlimit (0.0f, 1.0f, normalizedCutoff + cutoffDepth);
     float modRes = juce::jlimit (0.0f, 1.0f, normalizedResonance + resDepth);
-    drawFilterCurveAt (g, modCutoff, modRes, getModColor (sourceID).withAlpha (0.7f), 2.0f);
+    drawFilterCurveAt (g, modCutoff, modRes, getModColor (sourceID).withAlpha (Style::alphaMod), 2.0f);
 
     // Draw faint ghost for bipolar
     if (bipolarCutoff || bipolarRes)
     {
         float ghostCutoff = bipolarCutoff ? juce::jlimit (0.0f, 1.0f, normalizedCutoff - cutoffDepth) : modCutoff;
         float ghostRes = bipolarRes ? juce::jlimit (0.0f, 1.0f, normalizedResonance - resDepth) : modRes;
-        drawFilterCurveAt (g, ghostCutoff, ghostRes, getModColor (sourceID).withAlpha (0.2f), 1.5f);
+        drawFilterCurveAt (g, ghostCutoff, ghostRes, getModColor (sourceID).withAlpha (Style::alphaModGhost), 1.5f);
     }
 }
 

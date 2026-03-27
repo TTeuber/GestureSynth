@@ -8,6 +8,7 @@
 #include "Utility/AnimationFrameSource.h"
 #include "Utility/ModulationModeState.h"
 #include "Utility/ModulationContextMenu.h"
+#include "Utility/HoverAnimator.h"
 #include "Utility/UIContext.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -15,8 +16,7 @@
 //==============================================================================
 class FilterDisplay final : public juce::Component,
                             juce::AudioProcessorValueTreeState::Listener,
-                            public AnimationFrameSource::Listener,
-                            private juce::Timer
+                            public AnimationFrameSource::Listener
 {
 public:
     explicit FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
@@ -41,8 +41,7 @@ public:
     void mouseExit (const juce::MouseEvent&) override;
 
 private:
-    float hoverAlpha = 0.0f;
-    bool hoverTarget = false;
+    HoverAnimator hoverAnimator { *this };
     juce::AudioProcessorValueTreeState& apvts;
 
     juce::RangedAudioParameter* cutoffParam = nullptr;
@@ -104,7 +103,6 @@ private:
     float modulatedNormCutoff = 0.5f;
     float modulatedNormResonance = 0.5f;
 
-    void timerCallback() override;
     void onAnimationFrame() override;
     void drawModulatedFrequencyPath (juce::Graphics& g) const;
     AnimationFrameSource* animSource = nullptr;
