@@ -11,14 +11,16 @@ KeyVelComponent::KeyVelComponent (juce::AudioProcessorValueTreeState& apvts,
                                   ModulationModeState* modState,
                                   std::atomic<float>* velocityRaw,
                                   std::atomic<float>* keyboardRaw,
-                                  AnimationFrameSource* animSource)
+                                  AnimationFrameSource* animSource,
+                                  std::shared_ptr<MyADSR*> ampEnv)
     : parameters (apvts),
       undoManager (um),
       activeGestureCount (gestureCount),
       modModeState (modState),
       velocityRawPtr (velocityRaw),
       keyboardRawPtr (keyboardRaw),
-      animSource (animSource)
+      animSource (animSource),
+      ampEnvPtr (std::move (ampEnv))
 {
     velCurveParam = parameters.getParameter (ParamIDs::velocityCurve);
     keyCurveParam = parameters.getParameter (ParamIDs::keyboardCurve);
@@ -40,6 +42,9 @@ KeyVelComponent::~KeyVelComponent()
 
 void KeyVelComponent::onAnimationFrame()
 {
+    bool noteActive = ampEnvPtr != nullptr && *ampEnvPtr != nullptr && (*ampEnvPtr)->isActive();
+    bool needsRepaint = false;
+
     auto* ptr = (activeTab == 0) ? velocityRawPtr : keyboardRawPtr;
     if (ptr != nullptr)
     {
@@ -47,9 +52,18 @@ void KeyVelComponent::onAnimationFrame()
         if (newVal != currentInputValue)
         {
             currentInputValue = newVal;
-            repaint();
+            needsRepaint = true;
         }
     }
+
+    if (noteActive != wasNoteActive)
+    {
+        wasNoteActive = noteActive;
+        needsRepaint = true;
+    }
+
+    if (needsRepaint)
+        repaint();
 }
 
 void KeyVelComponent::modulationModeChanged (ModulationModeState::Mode)
@@ -73,12 +87,27 @@ float KeyVelComponent::getCurveParam() const
     return p->getNormalisableRange().convertFrom0to1 (p->getValue());
 }
 
-void KeyVelComponent::paint (juce::Graphics& g)
+juce::Rectangle<float> KeyVelComponent::getGraphArea() const
 {
-    // Graph area — force square aspect ratio
     auto graphRect = getLocalBounds().toFloat().reduced (4.0f);
     float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
-    auto graphArea = graphRect.withSizeKeepingCentre (side, side);
+    return graphRect.withSizeKeepingCentre (side, side);
+}
+
+bool KeyVelComponent::isOverHandle (const juce::MouseEvent& e) const
+{
+    auto graphArea = getGraphArea();
+    float curve = getCurveParam();
+    float handleX = graphArea.getX() + 0.5f * graphArea.getWidth();
+    float handleY = graphArea.getBottom() - VelocitySource::applyCurve (0.5f, curve) * graphArea.getHeight();
+    float dx = static_cast<float> (e.x) - handleX;
+    float dy = static_cast<float> (e.y) - handleY;
+    return std::sqrt (dx * dx + dy * dy) <= 12.0f;
+}
+
+void KeyVelComponent::paint (juce::Graphics& g)
+{
+    auto graphArea = getGraphArea();
     g.setColour (SECONDARY_COLOR);
     g.fillRoundedRectangle (graphArea, 3.0f);
 
@@ -98,27 +127,33 @@ void KeyVelComponent::paint (juce::Graphics& g)
         else
             path.lineTo (px, py);
     }
-    g.setColour (juce::Colours::orange);
+    g.setColour (juce::Colours::white);
     g.strokePath (path, juce::PathStrokeType (2.0f));
 
     // Draw handle at x=0.5 midpoint
     float handleX = graphArea.getX() + 0.5f * graphArea.getWidth();
     float handleY = graphArea.getBottom() - VelocitySource::applyCurve (0.5f, curve) * graphArea.getHeight();
+
+    // Hover ring (matches ADSR/LFO hover effect)
+    if (handleHovered || dragging)
+    {
+        g.setColour (juce::Colours::white.withAlpha (0.3f));
+        g.fillEllipse (handleX - 10.0f, handleY - 10.0f, 20.0f, 20.0f);
+    }
+
     g.setColour (juce::Colours::white);
     g.fillEllipse (handleX - 5.0f, handleY - 5.0f, 10.0f, 10.0f);
-    g.setColour (juce::Colours::orange);
-    g.drawEllipse (handleX - 5.0f, handleY - 5.0f, 10.0f, 10.0f, 1.5f);
 
-    // Draw current value indicator
-    auto* ptr = (activeTab == 0) ? velocityRawPtr : keyboardRawPtr;
-    if (ptr != nullptr)
+    // Draw current value indicator only when a note is playing
+    bool noteActive = ampEnvPtr != nullptr && *ampEnvPtr != nullptr && (*ampEnvPtr)->isActive();
+    if (noteActive)
     {
         float x = currentInputValue;
         float y = VelocitySource::applyCurve (x, curve);
         float px = graphArea.getX() + x * graphArea.getWidth();
         float py = graphArea.getBottom() - y * graphArea.getHeight();
-        g.setColour (TEXT_COLOR);
-        g.fillEllipse (px - 5.0f, py - 5.0f, 10.0f, 10.0f);
+        g.setColour (juce::Colours::white);
+        g.fillEllipse (px - 4.0f, py - 4.0f, 8.0f, 8.0f);
     }
 }
 
@@ -158,11 +193,31 @@ void KeyVelComponent::mouseUp (const juce::MouseEvent&)
     }
 }
 
+void KeyVelComponent::mouseMove (const juce::MouseEvent& e)
+{
+    bool over = isOverHandle (e);
+    if (over != handleHovered)
+    {
+        handleHovered = over;
+        setMouseCursor (over ? juce::MouseCursor::PointingHandCursor
+                             : juce::MouseCursor::NormalCursor);
+        repaint();
+    }
+}
+
+void KeyVelComponent::mouseExit (const juce::MouseEvent&)
+{
+    if (handleHovered)
+    {
+        handleHovered = false;
+        setMouseCursor (juce::MouseCursor::NormalCursor);
+        repaint();
+    }
+}
+
 void KeyVelComponent::updateCurveFromDrag (const juce::MouseEvent& e)
 {
-    auto graphRect = getLocalBounds().toFloat().reduced (4.0f);
-    float side = juce::jmin (graphRect.getWidth(), graphRect.getHeight());
-    auto graphArea = graphRect.withSizeKeepingCentre (side, side);
+    auto graphArea = getGraphArea();
 
     // Normalized Y in [0, 1]: 0 = bottom of graph, 1 = top
     float normalizedY = 1.0f - (static_cast<float> (e.y) - graphArea.getY()) / graphArea.getHeight();

@@ -6,7 +6,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       modWheel (p, &modModeState, &animationSource),
       pitchWheel (p, &animationSource),
       keyboard (p.keyboardState, &animationSource),
-      keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &modModeState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr(), &animationSource),
+      keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &modModeState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr(), &animationSource, p.getSynth().getAmpADSRPtr()),
       pitchBendRangeControl (p.parameters.getParameter (ParamIDs::pitchBendRange)),
       voiceCountControl (dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::voiceCount)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::monoOn)),
