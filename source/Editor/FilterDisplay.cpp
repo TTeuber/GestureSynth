@@ -46,8 +46,23 @@ FilterDisplay::~FilterDisplay()
 
 void FilterDisplay::paint (juce::Graphics& g)
 {
-    // Fill background
-    g.fillAll (SECONDARY_COLOR);
+    const int labelH = static_cast<int> (Style::labelHeight);
+
+    // Fill with parent background
+    g.fillAll (PRIMARY_COLOR);
+
+    // Outer box
+    auto outerBounds = getLocalBounds();
+    PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+
+    // Layout: top label, inner box, bottom label
+    auto innerArea = outerBounds.reduced (4);
+    auto topLabelArea = innerArea.removeFromTop (labelH);
+    auto bottomLabelArea = innerArea.removeFromBottom (labelH);
+    auto innerBoxBounds = innerArea.reduced (4);
+
+    // Inner box
+    PaintHelpers::drawInnerBox (g, innerBoxBounds.toFloat());
 
     // Draw label with fading opacity
     if (hoverAnimator.getAlpha() < 0.99f)
@@ -55,17 +70,33 @@ void FilterDisplay::paint (juce::Graphics& g)
         g.setColour (filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
         g.setFont (Style::fontComponent);
         g.setOpacity (1.0f - hoverAnimator.getAlpha());
-        g.drawText ("Low Pass Filter", 0, 5, getWidth(), 20, juce::Justification::centredTop, true);
+        g.drawText ("Low Pass Filter", topLabelArea, juce::Justification::centred, true);
     }
 
     // Draw parameter values with fading opacity
     if (hoverAnimator.getAlpha() > 0.01f)
     {
         g.setOpacity (hoverAnimator.getAlpha());
-        drawParameterValues (g);
+        g.setColour ((filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR).withAlpha (hoverAnimator.getAlpha()));
+        g.setFont (Style::fontComponent);
+
+        // Frequency text in top label area
+        juce::String freqText;
+        if (cutoffFrequency < 1000.0f)
+            freqText = juce::String (static_cast<int> (cutoffFrequency)) + " Hz";
+        else
+            freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
+        g.drawText ("Frequency: " + freqText, topLabelArea, juce::Justification::centred, true);
+
+        // Resonance text in bottom label area
+        g.drawText ("Resonance: " + juce::String (resonance, 2), bottomLabelArea, juce::Justification::centred, true);
     }
 
     g.setOpacity (1.0f);
+
+    // Clip visualization to inner box
+    g.saveState();
+    g.reduceClipRegion (innerBoxBounds);
 
     // Draw the modulated ghost curve behind the main curve
     drawModulatedFrequencyPath (g);
@@ -75,6 +106,8 @@ void FilterDisplay::paint (juce::Graphics& g)
 
     // Draw mod mode overlay
     drawModModeOverlay (g);
+
+    g.restoreState();
 }
 void FilterDisplay::resized()
 {

@@ -9,6 +9,7 @@
 #include "Utility/ModulationModeState.h"
 #include "Utility/ModulationContextMenu.h"
 #include "Utility/HoverAnimator.h"
+#include "Utility/PaintHelpers.h"
 #include "Utility/UIContext.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>

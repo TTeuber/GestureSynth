@@ -37,7 +37,23 @@ HPFDisplay::~HPFDisplay()
 
 void HPFDisplay::paint (juce::Graphics& g)
 {
-    g.fillAll (SECONDARY_COLOR);
+    const int labelH = static_cast<int> (Style::labelHeight);
+
+    // Fill with parent background
+    g.fillAll (PRIMARY_COLOR);
+
+    // Outer box
+    auto outerBounds = getLocalBounds();
+    PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+
+    // Layout: top label, inner box, bottom label
+    auto innerArea = outerBounds.reduced (4);
+    auto topLabelArea = innerArea.removeFromTop (labelH);
+    auto bottomLabelArea = innerArea.removeFromBottom (labelH);
+    auto innerBoxBounds = innerArea.reduced (4);
+
+    // Inner box
+    PaintHelpers::drawInnerBox (g, innerBoxBounds.toFloat());
 
     // Draw label with fading opacity
     if (hoverAnimator.getAlpha() < 0.99f)
@@ -45,20 +61,34 @@ void HPFDisplay::paint (juce::Graphics& g)
         g.setColour (hpfEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
         g.setFont (Style::fontComponent);
         g.setOpacity (1.0f - hoverAnimator.getAlpha());
-        g.drawText ("High Pass Filter", 0, 5, getWidth(), 20, juce::Justification::centredTop, true);
+        g.drawText ("High Pass Filter", topLabelArea, juce::Justification::centred, true);
     }
 
     // Draw parameter values with fading opacity
     if (hoverAnimator.getAlpha() > 0.01f)
     {
         g.setOpacity (hoverAnimator.getAlpha());
-        drawParameterValues (g);
+        g.setColour ((hpfEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR).withAlpha (hoverAnimator.getAlpha()));
+        g.setFont (Style::fontComponent);
+
+        juce::String freqText;
+        if (cutoffFrequency < 1000.0f)
+            freqText = juce::String (static_cast<int> (cutoffFrequency)) + " Hz";
+        else
+            freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
+        g.drawText ("HPF: " + freqText, topLabelArea, juce::Justification::centred, true);
     }
 
     g.setOpacity (1.0f);
 
+    // Clip visualization to inner box
+    g.saveState();
+    g.reduceClipRegion (innerBoxBounds);
+
     drawFrequencyPath (g);
     drawModModeOverlay (g);
+
+    g.restoreState();
 }
 
 void HPFDisplay::resized()
