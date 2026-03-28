@@ -63,13 +63,17 @@ public:
         auto bounds = getLocalBounds().toFloat().reduced (2.0f, 1.0f);
 
         // Background
-        g.setColour (TERTIARY_COLOR);
-        g.fillRoundedRectangle (bounds, Style::radiusSmall);
-
         if (selected)
         {
-            g.setColour (getModColor (sourceID));
+            g.setColour (TERTIARY_COLOR.interpolatedWith (getModColor (sourceID), 0.15f));
+            g.fillRoundedRectangle (bounds, Style::radiusSmall);
+            g.setColour (getModColor (sourceID).withAlpha (0.4f));
             g.drawRoundedRectangle (bounds.reduced (0.5f), Style::radiusSmall, 1.5f);
+        }
+        else
+        {
+            g.setColour (TERTIARY_COLOR);
+            g.fillRoundedRectangle (bounds, Style::radiusSmall);
         }
 
         bool isTarget = modModeState != nullptr
