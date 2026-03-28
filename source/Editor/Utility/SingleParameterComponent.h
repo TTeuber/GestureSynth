@@ -11,6 +11,7 @@
 #include "ModulationModeState.h"
 #include "ModulationContextMenu.h"
 #include "HoverAnimator.h"
+#include "PaintHelpers.h"
 #include "UIContext.h"
 
 // Base Component Class for single parameter controls
@@ -58,11 +59,26 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        // Draw background
-        g.fillAll (SECONDARY_COLOR);
+        const int labelH = static_cast<int> (Style::labelHeight);
+        constexpr int outerPad = 2; // tighter padding for small components
 
-        // Calculate dimensions for the drawing
-        const auto bounds = getLocalBounds().reduced (10);
+        // Fill with parent background
+        g.fillAll (PRIMARY_COLOR);
+
+        // Outer box
+        auto outerBounds = getLocalBounds();
+        PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+
+        // Layout: top label, inner box extends to bottom
+        auto innerArea = outerBounds.reduced (outerPad);
+        auto topLabelArea = innerArea.removeFromTop (labelH);
+        auto innerBoxBounds = innerArea.reduced (outerPad);
+
+        // Inner box (extends to bottom)
+        PaintHelpers::drawInnerBox (g, innerBoxBounds.toFloat());
+
+        // Calculate visualization bounds inside the inner box
+        const auto vizBounds = innerBoxBounds.reduced (6);
 
         // Apply darkening if inactive
         if (!isActive)
@@ -77,48 +93,44 @@ public:
 
         g.setFont (Style::fontComponent);
 
-        // Draw the parameter name at the top (fades out on hover)
+        // Draw the parameter name in top label area (fades out on hover)
         if (hoverAnimator.getAlpha() < 0.99f)
         {
             g.setOpacity (isActive ? (1.0f - hoverAnimator.getAlpha()) : Style::alphaInactive * (1.0f - hoverAnimator.getAlpha()));
             g.drawText (param->getName (15),
-                bounds.getX(),
-                5,
-                bounds.getWidth(),
-                20,
-                juce::Justification::centredTop,
+                topLabelArea,
+                juce::Justification::centred,
                 true);
         }
 
-        // Draw the parameter value at the top (fades in on hover)
+        // Draw the parameter value in top label area (fades in on hover)
         if (hoverAnimator.getAlpha() > 0.01f)
         {
             g.setOpacity (isActive ? hoverAnimator.getAlpha() : Style::alphaInactive * hoverAnimator.getAlpha());
             g.drawText (getParameterText(),
-                bounds.getX(),
-                5,
-                bounds.getWidth(),
-                20,
-                juce::Justification::centredTop,
+                topLabelArea,
+                juce::Justification::centred,
                 true);
         }
 
         g.setOpacity (isActive ? 1.0f : Style::alphaInactive);
 
         // Draw the main visualization (implemented by derived classes)
-        drawVisualization (g, bounds.withTrimmedTop (20));
+        drawVisualization (g, vizBounds);
 
         // Draw modulation overlay
-        drawModulationOverlay (g, bounds.withTrimmedTop (20));
+        drawModulationOverlay (g, vizBounds);
 
         // Draw the active toggle button in the top-left if we have an active parameter
         if (activeParam != nullptr)
         {
             constexpr int toggleSize = 12;
-            const juce::Rectangle toggleRect (10, 10, toggleSize, toggleSize);
+            const int toggleX = outerPad + 2;
+            const int toggleY = outerPad + (labelH - toggleSize) / 2;
+            const juce::Rectangle toggleRect (toggleX, toggleY, toggleSize, toggleSize);
 
-            g.setOpacity (1.0f); // Ensure the toggle is fully visible even when inactive
-            g.setColour (SECONDARY_COLOR);
+            g.setOpacity (1.0f);
+            g.setColour (TERTIARY_COLOR);
             g.drawRect (toggleRect, 1.0f);
 
             if (isActive)
@@ -223,7 +235,7 @@ public:
         if (isModDragging && modModeState != nullptr)
         {
             auto sourceID = modModeState->getTargetSourceID();
-            const auto bounds = getLocalBounds();
+            const auto bounds = getLocalBounds().withTrimmedTop (static_cast<int> (Style::labelHeight) + 4);
 
             float verticalDelta = (mouseDownY - e.y) / (bounds.getHeight() - padding) / 2.0f;
             float newDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialDepth + verticalDelta);
@@ -235,7 +247,7 @@ public:
         if (!isDragging || !isActive)
             return;
 
-        const auto bounds = getLocalBounds();
+        const auto bounds = getLocalBounds().withTrimmedTop (static_cast<int> (Style::labelHeight) + 4);
 
         // Calculate vertical movement for the parameter
         // Moving up increases the value
