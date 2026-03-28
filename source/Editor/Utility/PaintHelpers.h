@@ -12,8 +12,16 @@ namespace PaintHelpers
     {
         g.setColour (SECONDARY_COLOR);
         g.fillRoundedRectangle (bounds, cornerRadius);
-        g.setColour (TEXT_COLOR.withAlpha (borderAlpha));
+        g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
         g.drawRoundedRectangle (bounds.reduced (0.5f), cornerRadius, 1.0f);
+    }
+
+    // Inner visualization box: darker fill, no border
+    inline void drawInnerBox (juce::Graphics& g, juce::Rectangle<float> bounds,
+                               float cornerRadius = Style::radiusMedium)
+    {
+        g.setColour (TERTIARY_COLOR);
+        g.fillRoundedRectangle (bounds, cornerRadius);
     }
 
     // Hover-button variant: brighter on hover, no border

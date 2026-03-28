@@ -8,6 +8,8 @@
 
 #define PRIMARY_COLOR juce::Colour::fromRGB (20, 25, 25)
 #define SECONDARY_COLOR juce::Colour::fromRGB (30, 35, 35)
+#define TERTIARY_COLOR juce::Colour::fromRGB (2, 7, 7)
+#define BORDER_COLOR juce::Colour::fromRGB (0, 5, 5)
 #define TEXT_COLOR juce::Colour::fromRGB (220, 220, 220)
 #define TEXT_INACTIVE_COLOR juce::Colour::fromRGB (110, 110, 110)
 #define MOD_COLOR juce::Colours::cyan
@@ -28,9 +30,13 @@ namespace Style
     constexpr float fontHeading   = 16.0f; // section headers
 
     // Border radii
-    constexpr float radiusSmall  = 3.0f; // tabs, small buttons, thumbs
-    constexpr float radiusMedium = 4.0f; // standard controls, displays, tracks
-    constexpr float radiusLarge  = 6.0f; // toggles, text parameters
+    constexpr float radiusSmall  = 4.5f; // tabs, small buttons, thumbs
+    constexpr float radiusMedium = 6.0f; // standard controls, displays, tracks
+    constexpr float radiusLarge  = 9.0f; // toggles, text parameters
+
+    // Component layout
+    constexpr float labelHeight = 20.0f; // space for label above component box
+    constexpr float vizInset    = 20.0f; // inset from box edge to visualization
 
     // Common alpha values
     constexpr float alphaBorder   = 0.3f; // standard border opacity

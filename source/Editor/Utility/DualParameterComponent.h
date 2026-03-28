@@ -11,6 +11,7 @@
 #include "ModulationModeState.h"
 #include "ModulationContextMenu.h"
 #include "HoverAnimator.h"
+#include "PaintHelpers.h"
 #include "UIContext.h"
 
 // Base Component Class
@@ -67,11 +68,26 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        // Draw background
-        g.fillAll (SECONDARY_COLOR);
+        // Fill with parent background color
+        g.fillAll (PRIMARY_COLOR);
 
-        // Calculate dimensions for the drawing
-        const auto bounds = getLocalBounds().reduced (20);
+        const int labelH = static_cast<int> (Style::labelHeight);
+
+        // Outer box: bordered container with SECONDARY_COLOR background
+        auto outerBounds = getLocalBounds();
+        PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+
+        // Layout inside the outer box: top label, inner box, bottom label
+        auto innerArea = outerBounds.reduced (4); // padding inside outer box
+        auto topLabelArea = innerArea.removeFromTop (labelH);
+        auto bottomLabelArea = innerArea.removeFromBottom (labelH);
+        auto innerBoxBounds = innerArea.reduced (4);
+
+        // Inner box: darker fill for visualization area
+        PaintHelpers::drawInnerBox (g, innerBoxBounds.toFloat());
+
+        // Calculate visualization bounds inside the inner box
+        const auto vizBounds = innerBoxBounds.reduced (static_cast<int> (Style::vizInset));
 
         // Apply darkening if inactive
         if (!isActive)
@@ -85,10 +101,10 @@ public:
         }
 
         // Draw the main visualization
-        drawVisualization (g, bounds);
+        drawVisualization (g, vizBounds);
 
         // Draw modulation overlay if in mod mode
-        drawModulationOverlay (g, bounds);
+        drawModulationOverlay (g, vizBounds);
 
         // Draw text indicators
         g.setFont (Style::fontComponent);
@@ -98,16 +114,13 @@ public:
         else
             g.setColour (TEXT_COLOR);
 
-        // Draw label with fading opacity (visible when not hovering)
+        // Draw top label (component name, fades out on hover)
         if (componentLabel.isNotEmpty() && hoverAnimator.getAlpha() < 0.99f)
         {
             g.setOpacity ((1.0f - hoverAnimator.getAlpha()) * (isActive ? 1.0f : Style::alphaInactive));
             g.drawText (componentLabel,
-                0,
-                5,
-                getWidth(),
-                20,
-                juce::Justification::centredTop,
+                topLabelArea,
+                juce::Justification::centred,
                 true);
         }
 
@@ -116,22 +129,16 @@ public:
         {
             g.setOpacity (hoverAnimator.getAlpha() * (isActive ? 1.0f : Style::alphaInactive));
 
-            // Display parameter 1 text (bottom left)
+            // Display parameter 1 text (bottom label area, below inner box)
             g.drawText (getParam1Text(),
-                10,
-                getHeight() - 25,
-                120,
-                20,
-                juce::Justification::bottomLeft,
+                bottomLabelArea,
+                juce::Justification::centred,
                 true);
 
-            // Display parameter 2 text (top right)
+            // Display parameter 2 text (top label area, above inner box)
             g.drawText (getParam2Text(),
-                getWidth() - 120,
-                5,
-                110,
-                20,
-                juce::Justification::topRight,
+                topLabelArea,
+                juce::Justification::centred,
                 true);
         }
 
@@ -139,9 +146,6 @@ public:
 
     void resized() override
     {
-        // Ensure square aspect ratio
-        const int size = juce::jmin (getWidth(), getHeight());
-        setBounds (getX(), getY(), size, size);
     }
 
     void mouseDown (const juce::MouseEvent& e) override
@@ -229,7 +233,8 @@ public:
         if (isModDragging && modModeState != nullptr)
         {
             const auto& sourceID = modDragSourceID;
-            const auto bounds = getLocalBounds();
+            const int labelH = static_cast<int> (Style::labelHeight);
+            const auto bounds = getLocalBounds().reduced (4).withTrimmedTop (labelH).withTrimmedBottom (labelH);
             const int absX = std::abs (e.x - mouseDownX);
             const int absY = std::abs (e.y - mouseDownY);
 
@@ -280,7 +285,8 @@ public:
         if (!isDragging || !isActive)
             return;
 
-        const auto bounds = getLocalBounds();
+        const int labelH = static_cast<int> (Style::labelHeight);
+        const auto bounds = getLocalBounds().reduced (4).withTrimmedTop (labelH).withTrimmedBottom (labelH);
         const int absX = std::abs (e.x - mouseDownX);
         const int absY = std::abs (e.y - mouseDownY);
 
