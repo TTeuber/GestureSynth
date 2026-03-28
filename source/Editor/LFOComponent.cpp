@@ -137,7 +137,7 @@ juce::Rectangle<float> LFOComponent::getGraphBounds() const
     const float top = kTotalPadding;
     return { left, top,
         static_cast<float> (getWidth()) - left - kTotalPadding - controlSpace,
-        static_cast<float> (getHeight()) - 2.0f * kTotalPadding };
+        static_cast<float> (getHeight()) - 2.0f * kTotalPadding - static_cast<float> (bottomTabReserve) };
 }
 
 float LFOComponent::positionToX (float position) const
@@ -349,7 +349,7 @@ void LFOComponent::resized()
 
     if (hasRateSlider)
     {
-        auto area = getLocalBounds();
+        auto area = getLocalBounds().withTrimmedBottom (bottomTabReserve);
         area = area.reduced (static_cast<int> (kTotalPadding));
         auto controlCol = area.removeFromRight (static_cast<int> (kControlColumnWidth));
 

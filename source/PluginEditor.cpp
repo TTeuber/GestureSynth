@@ -286,6 +286,14 @@ void PluginEditor::resized()
     constexpr int keyboardRowHeight = 160;
     auto keyboardRow = panelArea.removeFromBottom (keyboardRowHeight);
 
+    // MW/AT/EXP tabs stacked vertically to the left of the mod wheel
+    constexpr int mwTabColumnWidth = 36;
+    auto mwTabArea = keyboardRow.removeFromLeft (mwTabColumnWidth);
+    int mwTabH = mwTabArea.getHeight() / 3;
+    mwTab.setBounds (mwTabArea.removeFromTop (mwTabH).reduced (1, 2));
+    atTab.setBounds (mwTabArea.removeFromTop (mwTabH).reduced (1, 2));
+    expTab.setBounds (mwTabArea.reduced (1, 2));
+
     int wheelWidth = juce::jmax (36, keyboardRow.getHeight() / 3);
     auto wheelsArea = keyboardRow.removeFromLeft (wheelWidth * 2 + 4);
     modWheel.setBounds (wheelsArea.removeFromLeft (wheelWidth).reduced (2));
@@ -293,30 +301,57 @@ void PluginEditor::resized()
 
     keyboard.setBounds (keyboardRow.reduced (2));
 
-    // Top: LFO/ADSR/KeyVel row with tab strip
+    // Top: LFO/ADSR/KeyVel row — tabs integrated into component boxes
     auto row3 = panelArea;
-    auto buttonRow = row3.removeFromBottom (30).reduced (Style::componentGap, 0);
+    constexpr int tabButtonHeight = 20;
+    constexpr int tabBottomPad = 8;  // match outer-to-inner box padding
+    constexpr int innerTabHeight = tabButtonHeight + tabBottomPad;
 
     int contentHalf = row3.getWidth() / 2;
     int adsrWidth = row3.getWidth() / 3;
-    int kvWidth = row3.getWidth() / 6;
-    lfoComponent.setBounds (row3.removeFromLeft (contentHalf).reduced (Style::componentGap));
-    adsrGraph.setBounds (row3.removeFromLeft (adsrWidth).reduced (Style::componentGap));
-    keyVelComponent.setBounds (row3.reduced (Style::componentGap));
 
-    // Tab strip
-    int tabWidth = buttonRow.getWidth() / 11;
-    int narrowTab = 3 * tabWidth / 5;
+    // Set component bounds
+    auto lfoBounds = row3.removeFromLeft (contentHalf).reduced (Style::componentGap);
+    auto adsrBounds = row3.removeFromLeft (adsrWidth).reduced (Style::componentGap);
+    auto kvBounds = row3.reduced (Style::componentGap);
 
-    mwTab.setBounds (buttonRow.removeFromLeft (narrowTab).reduced (1, 0));
-    atTab.setBounds (buttonRow.removeFromLeft (narrowTab).reduced (1, 0));
-    expTab.setBounds (buttonRow.removeFromLeft (narrowTab).reduced (1, 0));
-    for (int i = 0; i < 4; ++i)
-        lfoTabs[i].setBounds (buttonRow.removeFromLeft (tabWidth).reduced (1, 0));
-    for (int i = 0; i < 4; ++i)
-        envTabs[i].setBounds (buttonRow.removeFromLeft (tabWidth).reduced (1, 0));
-    velTab.setBounds (buttonRow.removeFromLeft (narrowTab).reduced (1, 0));
-    keyTab.setBounds (buttonRow.removeFromLeft (narrowTab).reduced (1, 0));
+    lfoComponent.setBottomTabReserve (innerTabHeight);
+    adsrGraph.setBottomTabReserve (innerTabHeight);
+    keyVelComponent.setBottomTabReserve (innerTabHeight);
+
+    lfoComponent.setBounds (lfoBounds);
+    adsrGraph.setBounds (adsrBounds);
+    keyVelComponent.setBounds (kvBounds);
+
+    // LFO tabs at bottom of LFO outer box
+    {
+        auto tabStrip = lfoBounds.removeFromBottom (innerTabHeight);
+        tabStrip.removeFromBottom (tabBottomPad);
+        tabStrip = tabStrip.reduced (8, 0);
+        int tabW = tabStrip.getWidth() / 4;
+        for (int i = 0; i < 4; ++i)
+            lfoTabs[i].setBounds (tabStrip.removeFromLeft (tabW).reduced (1, 0));
+    }
+
+    // ENV tabs at bottom of ADSR outer box
+    {
+        auto tabStrip = adsrBounds.removeFromBottom (innerTabHeight);
+        tabStrip.removeFromBottom (tabBottomPad);
+        tabStrip = tabStrip.reduced (8, 0);
+        int tabW = tabStrip.getWidth() / 4;
+        for (int i = 0; i < 4; ++i)
+            envTabs[i].setBounds (tabStrip.removeFromLeft (tabW).reduced (1, 0));
+    }
+
+    // Vel/Key tabs at bottom of KeyVel outer box
+    {
+        auto tabStrip = kvBounds.removeFromBottom (innerTabHeight);
+        tabStrip.removeFromBottom (tabBottomPad);
+        tabStrip = tabStrip.reduced (8, 0);
+        int tabW = tabStrip.getWidth() / 2;
+        velTab.setBounds (tabStrip.removeFromLeft (tabW).reduced (1, 0));
+        keyTab.setBounds (tabStrip.reduced (1, 0));
+    }
 
     // Position mode label to the right of the tab bar
     auto& tabBar = tabbedComponent.getTabbedButtonBar();

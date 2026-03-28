@@ -89,7 +89,7 @@ float KeyVelComponent::getCurveParam() const
 
 juce::Rectangle<float> KeyVelComponent::getGraphArea() const
 {
-    return getLocalBounds().reduced (4).reduced (4).toFloat();
+    return getLocalBounds().withTrimmedBottom (bottomTabReserve).reduced (4).reduced (4).toFloat();
 }
 
 bool KeyVelComponent::isOverHandle (const juce::MouseEvent& e) const
@@ -113,7 +113,8 @@ void KeyVelComponent::paint (juce::Graphics& g)
     PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
 
     // Inner box area — padding matches DualParameterComponent (4 + 4 = 8px per side)
-    auto innerArea = outerBounds.reduced (4);
+    auto adjustedBounds = outerBounds.withTrimmedBottom (bottomTabReserve);
+    auto innerArea = adjustedBounds.reduced (4);
     auto innerBoxBounds = innerArea.reduced (4);
     PaintHelpers::drawInnerBox (g, innerBoxBounds.toFloat());
 

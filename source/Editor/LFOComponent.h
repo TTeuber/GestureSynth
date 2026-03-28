@@ -29,6 +29,8 @@ public:
     void paint (juce::Graphics& g) override;
     void resized() override;
 
+    void setBottomTabReserve (int pixels) { bottomTabReserve = pixels; resized(); repaint(); }
+
     void mouseDown (const juce::MouseEvent& e) override;
     void mouseDoubleClick (const juce::MouseEvent& e) override;
     void mouseDrag (const juce::MouseEvent& e) override;
@@ -84,6 +86,8 @@ private:
     float stickAccumulator = 0.0f;
     int hoveredPointIndex = -1;
     int hoveredCurveIndex = -1;
+
+    int bottomTabReserve = 0;
 
     static constexpr float kPointRadius = 5.0f;
     static constexpr float kHitRadius = 12.0f;

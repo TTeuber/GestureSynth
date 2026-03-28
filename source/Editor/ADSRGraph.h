@@ -42,6 +42,7 @@ public:
     void mouseMagnify (const juce::MouseEvent& event, float scaleFactor) override;
 
     void setADSRPointer (std::shared_ptr<MyADSR*> adsr) { myADSR = std::move (adsr); }
+    void setBottomTabReserve (int pixels) { bottomTabReserve = pixels; resized(); repaint(); }
 
     void rebind (juce::StringRef newAttackParam,
         juce::StringRef newAttackCurveParam,
@@ -95,6 +96,7 @@ private:
     float durationWidth = 3.2f;
     float xOffset = 0.0f;
 
+    int bottomTabReserve = 0;
     juce::Point<int> innerBoxOrigin; // offset from component to inner box
 
     enum Point {

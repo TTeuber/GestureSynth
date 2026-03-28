@@ -63,7 +63,7 @@ public:
         auto bounds = getLocalBounds().toFloat();
 
         // Background
-        g.setColour (SECONDARY_COLOR);
+        g.setColour (TERTIARY_COLOR);
         g.fillRoundedRectangle (bounds, Style::radiusSmall);
 
         if (selected)

@@ -56,6 +56,7 @@ private:
     juce::RangedAudioParameter* keyCurveParam = nullptr;
 
     int activeTab = 0; // 0 = Vel, 1 = Key
+    int bottomTabReserve = 0;
     bool dragging = false;
     bool handleHovered = false;
 
@@ -70,4 +71,5 @@ private:
 
 public:
     void setActiveTab (int index) { activeTab = index; repaint(); }
+    void setBottomTabReserve (int pixels) { bottomTabReserve = pixels; resized(); repaint(); }
 };
