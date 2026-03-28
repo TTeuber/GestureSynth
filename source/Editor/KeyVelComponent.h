@@ -7,6 +7,7 @@
 #include "../Modulation/VelocitySource.h"
 #include "../Theme.h"
 #include "Utility/AnimationFrameSource.h"
+#include "Utility/PaintHelpers.h"
 #include "Utility/ModulationModeState.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
