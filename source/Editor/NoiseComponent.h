@@ -4,28 +4,57 @@
 
 #pragma once
 
+#include "Utility/AnimationFrameSource.h"
 #include "Utility/DualParameterComponent.h"
+#include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
 
-class NoiseComponent final : public DualParameterComponent
+class NoiseComponent final : public DualParameterComponent, public AnimationFrameSource::Listener
 {
 public:
     NoiseComponent (const juce::AudioProcessorValueTreeState& apvts,
-        const UIContext& ctx = {})
+        const UIContext& ctx = {},
+        std::atomic<float>* modLevelOutput = nullptr,
+        std::atomic<float>* modToneOutput = nullptr,
+        const juce::String& param1DestID = {},
+        const juce::String& param2DestID = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::noiseLevel),
               apvts.getParameter (ParamIDs::noiseTone),
-              nullptr,
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::noiseOn)),
               ctx,
-              {},
-              {},
-              "Noise")
+              param1DestID,
+              param2DestID,
+              "Noise"),
+          modLevelOutput (modLevelOutput),
+          modToneOutput (modToneOutput),
+          animSource (ctx.animationSource)
     {
+        if ((modLevelOutput != nullptr || modToneOutput != nullptr) && animSource != nullptr)
+            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
+    }
+
+    ~NoiseComponent() override
+    {
+        if (animSource != nullptr)
+            animSource->removeListener (this);
     }
 
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
+        g.setOpacity (isActive ? 1.0f : 0.5f);
+
+        // Draw ghost path at modulated values (behind main)
+        if ((modLevelOutput != nullptr || modToneOutput != nullptr)
+            && (std::abs (modulatedLevel - param1Value) > 0.001f
+                || std::abs (modulatedTone - param2Value) > 0.001f))
+        {
+            g.setColour (getDrawColor().withAlpha (0.25f));
+            drawNoisePath (g, bounds, modulatedLevel, modulatedTone);
+        }
+
+        g.setColour (getDrawColor());
         drawNoisePath (g, bounds, param1Value, param2Value);
     }
 
@@ -46,6 +75,28 @@ protected:
     }
 
 private:
+    std::atomic<float>* modLevelOutput = nullptr;
+    std::atomic<float>* modToneOutput = nullptr;
+    AnimationFrameSource* animSource = nullptr;
+    float modulatedLevel = 0.0f;
+    float modulatedTone = 0.0f;
+
+    void onAnimationFrame() override
+    {
+        constexpr float alpha = 0.3f;
+        if (modLevelOutput != nullptr)
+        {
+            float target = AtomicHelpers::paramLoad (*modLevelOutput);
+            modulatedLevel += alpha * (target - modulatedLevel);
+        }
+        if (modToneOutput != nullptr)
+        {
+            float target = AtomicHelpers::paramLoad (*modToneOutput);
+            modulatedTone += alpha * (target - modulatedTone);
+        }
+        repaint();
+    }
+
     static void drawNoisePath (juce::Graphics& g, const juce::Rectangle<int>& bounds,
         float level, float tone)
     {

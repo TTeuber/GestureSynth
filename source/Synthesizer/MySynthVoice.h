@@ -105,9 +105,8 @@ public:
     float getLFOPhase (int index) const { return lfos[index].getPhase(); }
     uint64_t getVoiceStartOrder() const { return voiceStartOrder; }
 
-    void setNoiseLevel (float level) { noiseLevel = level; }
-    void setNoiseTone (float tone) { noiseTone = tone; }
 
+    void setNoiseEnabled (bool enabled) { noiseEnabled = enabled; }
     void setPortamentoTime (float timeMs) { portamentoTimeMs = timeMs; }
 
     void setPortamentoStart (float freq, bool skip)
@@ -182,8 +181,9 @@ private:
     float slewRate = 0.005f;
 
     float volume = 1.0f;
-    float noiseLevel = 0.0f;
-    float noiseTone = 0.5f;
+    DynamicParameter noiseLevelParam = DynamicParameter (parameters.getParameter (ParamIDs::noiseLevel));
+    DynamicParameter noiseToneParam = DynamicParameter (parameters.getParameter (ParamIDs::noiseTone));
+    bool noiseEnabled = false;
     float noiseTiltState = 0.0f;
     juce::Random noiseRandom;
     float velocity = 0.0f;
@@ -297,6 +297,8 @@ private:
             { &chorusDepthParam,  ModDest::chorusDepth },
             { &chorusRateParam,   ModDest::chorusRate },
             { &mainOscLevel,      ModDest::mainOscLevel },
+            { &noiseLevelParam,   ModDest::noiseLevel },
+            { &noiseToneParam,    ModDest::noiseTone },
         };
         for (const auto& r : regs)
         {

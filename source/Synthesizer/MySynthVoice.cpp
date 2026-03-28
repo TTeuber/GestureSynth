@@ -119,19 +119,21 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     juneOscillator.setFrequency (frequency * vibrato.getFrequencyMultiplier (numSamples) * pitchBendMultiplier);
     juneOscillator.processBlock (block);
 
-    if (noiseLevel > 0.0f)
+    const float currentNoiseLevel = noiseLevelParam.getCurrentValue();
+    const float currentNoiseTone = noiseToneParam.getCurrentValue();
+    if (noiseEnabled && currentNoiseLevel > 0.0f)
     {
-        const float fc = 200.0f * std::pow (40.0f, noiseTone);
+        const float fc = 200.0f * std::pow (40.0f, currentNoiseTone);
         const float coeff = std::exp (-juce::MathConstants<float>::twoPi * fc / currentSampleRate);
-        const float blend = noiseTone * 2.0f;
+        const float blend = currentNoiseTone * 2.0f;
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
             const float white = noiseRandom.nextFloat() * 2.0f - 1.0f;
             noiseTiltState = coeff * noiseTiltState + (1.0f - coeff) * white;
             const float shaped = blend * white + (1.0f - blend) * noiseTiltState;
-            tempDataL[sample] += shaped * noiseLevel;
-            tempDataR[sample] += shaped * noiseLevel;
+            tempDataL[sample] += shaped * currentNoiseLevel;
+            tempDataR[sample] += shaped * currentNoiseLevel;
         }
     }
 

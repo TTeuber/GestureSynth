@@ -58,8 +58,7 @@ private:
 
     // APVTS atomic pointers — cached once, read directly from APVTS atomics
     std::atomic<float>* volumeParam           = nullptr;
-    std::atomic<float>* noiseLevelParam       = nullptr;
-    std::atomic<float>* noiseToneParam        = nullptr;
+    std::atomic<float>* noiseOnParam          = nullptr;
     std::atomic<float>* filterCutoffParam     = nullptr;
     std::atomic<float>* filterResonanceParam  = nullptr;
     std::atomic<float>* portamentoTimeParam   = nullptr;
@@ -81,8 +80,7 @@ private:
 
     // Previous-value cache for change detection (only stores last-applied values)
     float prevVolume          = -1.0f;
-    float prevNoiseLevel      = -1.0f;
-    float prevNoiseTone       = -1.0f;
+    bool  prevNoiseOn         = false;
     float prevFilterCutoff    = -1.0f;
     float prevFilterResonance = -1.0f;
     float prevPortamentoTime  = -1.0f;

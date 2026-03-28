@@ -4,8 +4,7 @@ MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, st
 {
     // Cache APVTS atomic pointers (stable for lifetime of APVTS)
     volumeParam          = parameters.getRawParameterValue (ParamIDs::volume);
-    noiseLevelParam      = parameters.getRawParameterValue (ParamIDs::noiseLevel);
-    noiseToneParam       = parameters.getRawParameterValue (ParamIDs::noiseTone);
+    noiseOnParam         = parameters.getRawParameterValue (ParamIDs::noiseOn);
     filterCutoffParam    = parameters.getRawParameterValue (ParamIDs::filterFrequency);
     filterResonanceParam = parameters.getRawParameterValue (ParamIDs::filterResonance);
     portamentoTimeParam  = parameters.getRawParameterValue (ParamIDs::portamentoTime);
@@ -29,6 +28,9 @@ MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, st
         addVoice (new MySynthVoice (parameters, modTree, envPtrs, lfoPtrs, pt, lfoData, &currentVelocityRaw, &currentKeyboardRaw, &currentModWheelRaw, &currentPitchBendRaw, &currentAftertouchRaw, &currentExpressionRaw));
 
     monoVoice = dynamic_cast<MySynthVoice*> (voices.getUnchecked (0));
+
+    prevNoiseOn = noiseOnParam->load() > 0.5f;
+    applyToAllVoices ([noise = prevNoiseOn] (MySynthVoice* voice) { voice->setNoiseEnabled (noise); });
 
     prevVibratoOn = vibratoOnParam->load() > 0.5f;
     applyToAllVoices ([vib = prevVibratoOn] (MySynthVoice* voice) { voice->setVibratoEnabled (vib); });
@@ -85,8 +87,7 @@ void MySynth::setVoiceCount (int count)
 
     // Reset previous-value cache so updateParameters() re-applies everything
     prevVolume = -1.0f;
-    prevNoiseLevel = -1.0f;
-    prevNoiseTone = -1.0f;
+    prevNoiseOn = false;
     prevFilterCutoff = -1.0f;
     prevFilterResonance = -1.0f;
     prevPortamentoTime = -1.0f;
@@ -102,18 +103,11 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
         applyToAllVoices ([newVolume] (MySynthVoice* voice) { voice->setVolume (newVolume); });
     }
 
-    const float newNoiseLevel = noiseLevelParam->load();
-    if (prevNoiseLevel != newNoiseLevel)
+    const bool newNoiseOn = noiseOnParam->load() > 0.5f;
+    if (prevNoiseOn != newNoiseOn)
     {
-        prevNoiseLevel = newNoiseLevel;
-        applyToAllVoices ([newNoiseLevel] (MySynthVoice* voice) { voice->setNoiseLevel (newNoiseLevel); });
-    }
-
-    const float newNoiseTone = noiseToneParam->load();
-    if (prevNoiseTone != newNoiseTone)
-    {
-        prevNoiseTone = newNoiseTone;
-        applyToAllVoices ([newNoiseTone] (MySynthVoice* voice) { voice->setNoiseTone (newNoiseTone); });
+        prevNoiseOn = newNoiseOn;
+        applyToAllVoices ([newNoiseOn] (MySynthVoice* voice) { voice->setNoiseEnabled (newNoiseOn); });
     }
 
     const float newFilterCutoff = filterCutoffParam->load();

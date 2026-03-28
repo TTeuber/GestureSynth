@@ -24,6 +24,8 @@ namespace ModDest
         "chorusDepth",      // 12
         "chorusRate",       // 13
         "mainOscLevel",     // 14
+        "noiseLevel",       // 15
+        "noiseTone",        // 16
     };
 
     inline constexpr int count = static_cast<int> (sizeof (paramIDs) / sizeof (paramIDs[0]));
@@ -43,6 +45,8 @@ namespace ModDest
     inline constexpr int chorusDepth     = 12;
     inline constexpr int chorusRate      = 13;
     inline constexpr int mainOscLevel    = 14;
+    inline constexpr int noiseLevel      = 15;
+    inline constexpr int noiseTone       = 16;
 
     inline juce::StringArray buildDestIDs()
     {
@@ -94,6 +98,7 @@ namespace ParamIDs
     inline constexpr auto subOn        = "subOn";
     inline constexpr auto filterOn     = "filterOn";
     inline constexpr auto hpfOn        = "hpfOn";
+    inline constexpr auto noiseOn      = "noiseOn";
     inline constexpr auto chorusOn     = "chorusOn";
     inline constexpr auto vibratoOn    = "vibratoOn";
     inline constexpr auto delayOn      = "delayOn";
@@ -234,6 +239,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::subOn, 1), "Sub On", false));
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::filterOn, 1), "Filter On", true));
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::hpfOn, 1), "HPF On", true));
+    layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::noiseOn, 1), "Noise On", false));
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::chorusOn, 1), "Chorus On", false));
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::vibratoOn, 1), "Vibrato On", true));
     layout.add (make_unique<AudioParameterBool> (ID (ParamIDs::delayOn, 1), "Delay On", false));
