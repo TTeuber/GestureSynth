@@ -119,6 +119,25 @@ void KeyVelComponent::paint (juce::Graphics& g)
 
     auto graphArea = innerBoxBounds.toFloat();
 
+    // Grid lines: 3 vertical and 3 horizontal, center lines thicker
+    for (int i = 1; i <= 3; ++i)
+    {
+        float frac = static_cast<float> (i) / 4.0f;
+        bool isCenter = (i == 2);
+        float alpha = isCenter ? 0.3f : 0.15f;
+        float thickness = isCenter ? 2.0f : 1.0f;
+
+        g.setColour (juce::Colours::grey.withAlpha (alpha));
+
+        // Vertical line
+        float vx = graphArea.getX() + frac * graphArea.getWidth();
+        g.drawLine (vx, graphArea.getY(), vx, graphArea.getBottom(), thickness);
+
+        // Horizontal line
+        float hy = graphArea.getY() + frac * graphArea.getHeight();
+        g.drawLine (graphArea.getX(), hy, graphArea.getRight(), hy, thickness);
+    }
+
     float curve = getCurveParam();
 
     // Draw curve path
