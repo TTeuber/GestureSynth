@@ -303,7 +303,7 @@ void PluginEditor::resized()
 
     // Top: LFO/ADSR/KeyVel row — tabs integrated into component boxes
     auto row3 = panelArea;
-    constexpr int tabButtonHeight = 20;
+    constexpr int tabButtonHeight = 26;
     constexpr int tabBottomPad = 8;  // match outer-to-inner box padding
     constexpr int innerTabHeight = tabButtonHeight + tabBottomPad;
 

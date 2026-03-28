@@ -60,7 +60,7 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        auto bounds = getLocalBounds().toFloat();
+        auto bounds = getLocalBounds().toFloat().reduced (2.0f, 1.0f);
 
         // Background
         g.setColour (TERTIARY_COLOR);
