@@ -3,6 +3,7 @@
 #include "../Modulation/MyADSR.h"
 #include "../Theme.h"
 #include "Utility/AnimationFrameSource.h"
+#include "Utility/PaintHelpers.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <vector>
@@ -93,6 +94,8 @@ private:
 
     float durationWidth = 3.2f;
     float xOffset = 0.0f;
+
+    juce::Point<int> innerBoxOrigin; // offset from component to inner box
 
     enum Point {
         Attack,

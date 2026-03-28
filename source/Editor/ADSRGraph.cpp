@@ -111,7 +111,7 @@ void ADSRGraph::rebind (
     attackCurve = parameters.getRawParameterValue (attackCurveId)->load();
     decayTime = parameters.getRawParameterValue (decayId)->load();
     decayCurve = parameters.getRawParameterValue (decayCurveId)->load();
-    sustainLevel = (1 - parameters.getRawParameterValue (sustainId)->load()) * static_cast<float> (getHeight());
+    sustainLevel = (1 - parameters.getRawParameterValue (sustainId)->load()) * height;
     releaseTime = parameters.getRawParameterValue (releaseId)->load();
     releaseCurve = parameters.getRawParameterValue (releaseCurveId)->load();
 
@@ -131,7 +131,7 @@ void ADSRGraph::parameterChanged (const juce::String& parameterID, float newValu
     else if (parameterID == decayCurveId)
         decayCurve = newValue;
     else if (parameterID == sustainId)
-        sustainLevel = (1 - newValue) * static_cast<float> (getHeight());
+        sustainLevel = (1 - newValue) * height;
     else if (parameterID == releaseId)
         releaseTime = juce::jmax<float> (0.01, newValue);
     else if (parameterID == releaseCurveId)
@@ -144,31 +144,51 @@ void ADSRGraph::setParameters (const float attack, const float decay, const floa
 {
     attackTime = juce::jmax<float> (0.01, attack);
     decayTime = decay;
-    sustainLevel = (1 - sustain) * static_cast<float> (getHeight());
+    sustainLevel = (1 - sustain) * height;
     releaseTime = release;
     repaint();
 }
 
 void ADSRGraph::resized()
 {
-    width = static_cast<float> (getWidth());
-    height = static_cast<float> (getHeight());
+    auto innerBoxBounds = getLocalBounds().reduced (4).reduced (4);
+    innerBoxOrigin = innerBoxBounds.getPosition();
+    width = static_cast<float> (innerBoxBounds.getWidth());
+    height = static_cast<float> (innerBoxBounds.getHeight());
     sustainLevel = (1 - parameters.getRawParameterValue (sustainId)->load()) * height;
 }
 
 void ADSRGraph::paint (juce::Graphics& g)
 {
-    g.fillAll (SECONDARY_COLOR);
+    // Fill with parent background
+    g.fillAll (PRIMARY_COLOR);
+
+    // Outer box
+    auto outerBounds = getLocalBounds();
+    PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+
+    // Inner box area — padding matches DualParameterComponent (4 + 4 = 8px per side)
+    auto innerArea = outerBounds.reduced (4);
+    auto innerBoxBounds = innerArea.reduced (4);
+    PaintHelpers::drawInnerBox (g, innerBoxBounds.toFloat());
+
+    // Clip and translate into the inner box for all ADSR drawing
+    g.reduceClipRegion (innerBoxBounds);
+    g.setOrigin (innerBoxBounds.getPosition());
+
+    const float w = static_cast<float> (innerBoxBounds.getWidth());
+    const float h = static_cast<float> (innerBoxBounds.getHeight());
+
     g.setColour (TEXT_COLOR);
 
-    attackX = attackTime / durationWidth * width - xOffset;
+    attackX = attackTime / durationWidth * w - xOffset;
     attackPoint = { attackX, 0 };
 
-    decayX = (attackTime + decayTime) / durationWidth * width - xOffset;
+    decayX = (attackTime + decayTime) / durationWidth * w - xOffset;
     decayPoint = { decayX, sustainLevel };
 
-    releaseX = (attackTime + decayTime + releaseTime) / durationWidth * width - xOffset;
-    releasePoint = { releaseX, (height) };
+    releaseX = (attackTime + decayTime + releaseTime) / durationWidth * w - xOffset;
+    releasePoint = { releaseX, (h) };
 
     attackCurvePoint = { attackX / 2, getCurveY (attackX / 2) };
 
@@ -228,7 +248,7 @@ void ADSRGraph::paint (juce::Graphics& g)
 
     for (float i = 0; i < durationWidth * 3; i += 1.0f)
     {
-        const auto markerPosition = width / durationWidth * (i + 1);
+        const auto markerPosition = w / durationWidth * (i + 1);
         const auto secondNumber = static_cast<int> (i + 1);
         const bool isOdd = (secondNumber % 2 != 0);
         const bool subdivisionsVisible = durationWidth < 6.0f;
@@ -238,7 +258,7 @@ void ADSRGraph::paint (juce::Graphics& g)
             g.setColour (juce::Colours::grey.withAlpha (0.15f));
             juce::Path marker;
             marker.startNewSubPath (markerPosition - xOffset, 0);
-            marker.lineTo (markerPosition - xOffset, height);
+            marker.lineTo (markerPosition - xOffset, h);
             g.strokePath (marker, juce::PathStrokeType (1.0f));
         }
         else
@@ -246,17 +266,17 @@ void ADSRGraph::paint (juce::Graphics& g)
             g.setColour (juce::Colours::grey.withAlpha (0.3f));
             juce::Path marker;
             marker.startNewSubPath (markerPosition - xOffset, 0);
-            marker.lineTo (markerPosition - xOffset, height);
+            marker.lineTo (markerPosition - xOffset, h);
             g.strokePath (marker, juce::PathStrokeType (2.0f));
-            g.drawText (juce::String (secondNumber), markerPosition - (durationWidth / 10) - xOffset, height - 20, 20, 20, juce::Justification::centred);
+            g.drawText (juce::String (secondNumber), markerPosition - (durationWidth / 10) - xOffset, h - 20, 20, 20, juce::Justification::centred);
         }
 
         if (subdivisionsVisible)
         {
             g.setColour (juce::Colours::grey.withAlpha (0.15f));
             juce::Path subMarker;
-            subMarker.startNewSubPath (markerPosition - xOffset - width / durationWidth / 2, 0);
-            subMarker.lineTo (markerPosition - xOffset - width / durationWidth / 2, height);
+            subMarker.startNewSubPath (markerPosition - xOffset - w / durationWidth / 2, 0);
+            subMarker.lineTo (markerPosition - xOffset - w / durationWidth / 2, h);
             g.strokePath (subMarker, juce::PathStrokeType (1.0f));
         }
     }
@@ -326,7 +346,7 @@ void ADSRGraph::showTime()
     if (myADSR != nullptr && *myADSR != nullptr && (*myADSR)->isActive())
     {
         const std::array<float, 2> xy = (*myADSR)->getTimePoint();
-        const float x = xy[0] / durationWidth * static_cast<float> (getWidth()) - xOffset;
+        const float x = xy[0] / durationWidth * width - xOffset;
         timePoint = { x, getCurveY (x) };
         showTimePoint = true;
         repaint();
@@ -345,7 +365,7 @@ void ADSRGraph::onAnimationFrame()
 
 void ADSRGraph::mouseMove (const juce::MouseEvent& event)
 {
-    auto mousePos = juce::Point (event.position.x, event.position.y);
+    auto mousePos = juce::Point (event.position.x - innerBoxOrigin.x, event.position.y - innerBoxOrigin.y);
     constexpr Point pointEnums[] = { Attack, AttackCurve, Decay, DecayCurve, Release, ReleaseCurve };
     Point newHovered = None;
     for (int i = 0; i < static_cast<int> (points.size()); ++i)
@@ -380,7 +400,7 @@ void ADSRGraph::mouseExit (const juce::MouseEvent&)
 
 void ADSRGraph::mouseDown (const juce::MouseEvent& event)
 {
-    clickPoint = { event.position.x, event.position.y };
+    clickPoint = { event.position.x - innerBoxOrigin.x, event.position.y - innerBoxOrigin.y };
     constexpr float clickWidth = 20;
 
     if (clickPoint.getDistanceFrom (attackPoint) < clickWidth)
@@ -446,19 +466,20 @@ void ADSRGraph::beginGesturesForSelectedPoint()
 
 void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
 {
-    const auto width = static_cast<float> (getWidth());
-    const auto height = static_cast<float> (getHeight());
+    // Translate mouse position into inner-box-local coordinates
+    const float mx = event.position.x - innerBoxOrigin.x;
+    const float my = event.position.y - innerBoxOrigin.y;
 
     if (selectedPoint == Attack)
     {
-        const auto attackPosition = juce::jlimit (0.0f, width, event.position.x);
+        const auto attackPosition = juce::jlimit (0.0f, width, mx);
         attackTime = juce::jmax<float> (0.01, attackPosition / width * durationWidth);
         parameters.getParameter (attackId)->setValueNotifyingHost (parameters.getParameterRange (attackId).convertTo0to1 (attackTime));
     }
 
     else if (selectedPoint == AttackCurve)
     {
-        float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - event.position.y / height);
+        float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - my / height);
         float k = CurveUtils::inverseCurveAtHalf (graphValue);
         attackCurve = juce::jlimit (-1.0f, 1.0f, k);
         float normalized = parameters.getParameterRange (attackCurveId).convertTo0to1 (attackCurve);
@@ -467,18 +488,18 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
 
     else if (selectedPoint == Decay)
     {
-        const auto decayPosition = juce::jlimit (attackX, width, event.position.x);
+        const auto decayPosition = juce::jlimit (attackX, width, mx);
         decayTime = juce::jmax<float> (0.01, (decayPosition - attackX) / width * durationWidth);
         parameters.getParameter (decayId)->setValueNotifyingHost (parameters.getParameterRange (decayId).convertTo0to1 (decayTime));
 
-        sustainLevel = juce::jlimit (0.0f, height, event.position.y);
+        sustainLevel = juce::jlimit (0.0f, height, my);
         parameters.getParameter (sustainId)->setValueNotifyingHost (parameters.getParameterRange (sustainId).convertTo0to1 (1 - (sustainLevel / height)));
     }
 
     else if (selectedPoint == DecayCurve)
     {
         float sustain = 1.0f - sustainLevel / height;
-        float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - event.position.y / height);
+        float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - my / height);
         float t = juce::jlimit (0.001f, 0.999f, (1.0f - graphValue) / (1.0f - sustain));
         float k = CurveUtils::inverseCurveAtHalf (t);
         decayCurve = juce::jlimit (-1.0f, 1.0f, k);
@@ -488,7 +509,7 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
 
     else if (selectedPoint == Release)
     {
-        const auto releasePosition = juce::jlimit (decayX, width, event.position.x);
+        const auto releasePosition = juce::jlimit (decayX, width, mx);
         releaseTime = juce::jmax<float> (0.01, (releasePosition - decayX) / width * durationWidth);
         const auto x = parameters.getParameterRange (releaseId).convertTo0to1 (releaseTime);
         parameters.getParameter (releaseId)->setValueNotifyingHost (x);
@@ -497,7 +518,7 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
     else if (selectedPoint == ReleaseCurve)
     {
         float sustain = 1.0f - sustainLevel / height;
-        float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - event.position.y / height);
+        float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - my / height);
         float t = juce::jlimit (0.001f, 0.999f, (sustain - graphValue) / sustain);
         float k = CurveUtils::inverseCurveAtHalf (t);
         releaseCurve = juce::jlimit (-1.0f, 1.0f, k);
@@ -510,7 +531,7 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
 
 void ADSRGraph::mouseWheelMove (const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
 {
-    xOffset = juce::jlimit (0.0f, static_cast<float> (getWidth()) * 2, xOffset - wheel.deltaX * 100);
+    xOffset = juce::jlimit (0.0f, width * 2, xOffset - wheel.deltaX * 100);
 
     repaint();
 }
