@@ -133,9 +133,11 @@ void LFOComponent::onAnimationFrame()
 juce::Rectangle<float> LFOComponent::getGraphBounds() const
 {
     const float controlSpace = hasRateSlider ? kControlColumnWidth : 0.0f;
-    return { kMargin + kShapeStripWidth, kMargin,
-        static_cast<float> (getWidth()) - 2.0f * kMargin - kShapeStripWidth - controlSpace,
-        static_cast<float> (getHeight()) - 2.0f * kMargin };
+    const float left = kTotalPadding + kShapeStripWidth;
+    const float top = kTotalPadding;
+    return { left, top,
+        static_cast<float> (getWidth()) - left - kTotalPadding - controlSpace,
+        static_cast<float> (getHeight()) - 2.0f * kTotalPadding };
 }
 
 float LFOComponent::positionToX (float position) const
@@ -222,11 +224,17 @@ void LFOComponent::paint (juce::Graphics& g)
     if (!lfoData)
         return;
 
-    auto graphBounds = getGraphBounds();
+    // Outer box (matches ADSR styling)
+    g.fillAll (PRIMARY_COLOR);
+    auto outerBounds = getLocalBounds();
+    PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
 
-    // Background
-    g.setColour (SECONDARY_COLOR);
-    g.fillRect (graphBounds);
+    // Inner box for graph visualization
+    auto graphBounds = getGraphBounds();
+    PaintHelpers::drawInnerBox (g, graphBounds);
+
+    // Clip drawing to inner box
+    g.reduceClipRegion (graphBounds.toNearestInt());
 
     // Grid lines
     g.setColour (juce::Colours::grey.withAlpha (0.2f));
@@ -327,7 +335,7 @@ void LFOComponent::resized()
         const int numButtons = 6;
         const float totalHeight = kShapeButtonSize * static_cast<float> (numButtons) + gap * static_cast<float> (numButtons - 1);
         const float startY = graphBounds.getY();
-        const float btnX = kMargin + (kShapeStripWidth - kShapeButtonSize) * 0.5f;
+        const float btnX = kTotalPadding + (kShapeStripWidth - kShapeButtonSize) * 0.5f;
 
         ShapePresetButton* buttons[] = { &sineButton, &triangleButton, &sawButton, &squareButton, &flipHButton, &flipVButton };
         for (int i = 0; i < numButtons; ++i)
@@ -342,9 +350,8 @@ void LFOComponent::resized()
     if (hasRateSlider)
     {
         auto area = getLocalBounds();
+        area = area.reduced (static_cast<int> (kTotalPadding));
         auto controlCol = area.removeFromRight (static_cast<int> (kControlColumnWidth));
-        controlCol.removeFromTop (static_cast<int> (kMargin));
-        controlCol.removeFromBottom (static_cast<int> (kMargin));
 
         int controlHeight = controlCol.getHeight() / 4;
         const int pad = 2;
