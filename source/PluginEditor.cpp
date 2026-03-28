@@ -295,14 +295,14 @@ void PluginEditor::resized()
 
     // Top: LFO/ADSR/KeyVel row with tab strip
     auto row3 = panelArea;
-    auto buttonRow = row3.removeFromBottom (30).reduced (5, 0);
+    auto buttonRow = row3.removeFromBottom (30).reduced (Style::componentGap, 0);
 
     int contentHalf = row3.getWidth() / 2;
     int adsrWidth = row3.getWidth() / 3;
     int kvWidth = row3.getWidth() / 6;
-    lfoComponent.setBounds (row3.removeFromLeft (contentHalf).reduced (5));
-    adsrGraph.setBounds (row3.removeFromLeft (adsrWidth).reduced (5));
-    keyVelComponent.setBounds (row3.reduced (5));
+    lfoComponent.setBounds (row3.removeFromLeft (contentHalf).reduced (Style::componentGap));
+    adsrGraph.setBounds (row3.removeFromLeft (adsrWidth).reduced (Style::componentGap));
+    keyVelComponent.setBounds (row3.reduced (Style::componentGap));
 
     // Tab strip
     int tabWidth = buttonRow.getWidth() / 11;

@@ -89,42 +89,42 @@ void MainTabContent::resized()
     // Row 1 (synth): [Vol/ChMix/Porto grid] [Chorus] [Vibrato] [FilterDisplay = 3 units]
     auto row1 = juce::Rectangle<int> (0, 0, availableWidth, unitSize);
     auto mixCol = row1.removeFromLeft (unitSize);
-    volumeComponent.setBounds (mixCol.removeFromTop (mixCol.getHeight() / 2).reduced (5));
-    chorusMixComponent.setBounds (mixCol.removeFromLeft (mixCol.getWidth() / 2).reduced (5));
-    portamentoComponent.setBounds (mixCol.reduced (5));
-    chorusComponent.setBounds (row1.removeFromLeft (unitSize).reduced (5));
-    vibratoComponent.setBounds (row1.removeFromLeft (unitSize).reduced (5));
-    filterDisplay.setBounds (row1.reduced (5));
+    volumeComponent.setBounds (mixCol.removeFromTop (mixCol.getHeight() / 2).reduced (Style::componentGap));
+    chorusMixComponent.setBounds (mixCol.removeFromLeft (mixCol.getWidth() / 2).reduced (Style::componentGap));
+    portamentoComponent.setBounds (mixCol.reduced (Style::componentGap));
+    chorusComponent.setBounds (row1.removeFromLeft (unitSize).reduced (Style::componentGap));
+    vibratoComponent.setBounds (row1.removeFromLeft (unitSize).reduced (Style::componentGap));
+    filterDisplay.setBounds (row1.reduced (Style::componentGap));
 
     // Row 2 (synth): [SubOsc] [Waveform] [Detune] [Noise] [HPFDisplay = 2 units]
     auto row2 = juce::Rectangle<int> (0, unitSize, availableWidth, unitSize);
-    subOscillatorComponent.setBounds (row2.removeFromLeft (unitSize).reduced (5));
-    waveformComponent.setBounds (row2.removeFromLeft (unitSize).reduced (5));
-    detuneComponent.setBounds (row2.removeFromLeft (unitSize).reduced (5));
-    noiseComponent.setBounds (row2.removeFromLeft (unitSize).reduced (5));
-    hpfDisplay.setBounds (row2.reduced (5));
+    subOscillatorComponent.setBounds (row2.removeFromLeft (unitSize).reduced (Style::componentGap));
+    waveformComponent.setBounds (row2.removeFromLeft (unitSize).reduced (Style::componentGap));
+    detuneComponent.setBounds (row2.removeFromLeft (unitSize).reduced (Style::componentGap));
+    noiseComponent.setBounds (row2.removeFromLeft (unitSize).reduced (Style::componentGap));
+    hpfDisplay.setBounds (row2.reduced (Style::componentGap));
 
     // Row 3 (effects): [Delay] [DelayMod] [Delay 2x2] [Reverb] [ReverbMod] [Reverb 2x2]
     auto row3 = juce::Rectangle<int> (0, unitSize * 2, availableWidth, unitSize);
-    delayComponent.setBounds (row3.removeFromLeft (unitSize).reduced (5));
-    delayModComponent.setBounds (row3.removeFromLeft (unitSize).reduced (5));
+    delayComponent.setBounds (row3.removeFromLeft (unitSize).reduced (Style::componentGap));
+    delayModComponent.setBounds (row3.removeFromLeft (unitSize).reduced (Style::componentGap));
 
     auto delayGrid = row3.removeFromLeft (unitSize);
     auto delayGridTop = delayGrid.removeFromTop (delayGrid.getHeight() / 2);
-    delayRateComponent.setBounds (delayGridTop.removeFromLeft (delayGridTop.getWidth() / 2).reduced (5));
-    delayBpmToggle.setBounds (delayGridTop.reduced (5));
-    delayHighpassComponent.setBounds (delayGrid.removeFromLeft (delayGrid.getWidth() / 2).reduced (5));
-    delayLowpassComponent.setBounds (delayGrid.reduced (5));
+    delayRateComponent.setBounds (delayGridTop.removeFromLeft (delayGridTop.getWidth() / 2).reduced (Style::componentGap));
+    delayBpmToggle.setBounds (delayGridTop.reduced (Style::componentGap));
+    delayHighpassComponent.setBounds (delayGrid.removeFromLeft (delayGrid.getWidth() / 2).reduced (Style::componentGap));
+    delayLowpassComponent.setBounds (delayGrid.reduced (Style::componentGap));
 
-    reverbComponent.setBounds (row3.removeFromLeft (unitSize).reduced (5));
-    reverbModComponent.setBounds (row3.removeFromLeft (unitSize).reduced (5));
+    reverbComponent.setBounds (row3.removeFromLeft (unitSize).reduced (Style::componentGap));
+    reverbModComponent.setBounds (row3.removeFromLeft (unitSize).reduced (Style::componentGap));
 
     auto reverbGrid = row3;
     auto reverbGridTop = reverbGrid.removeFromTop (reverbGrid.getHeight() / 2);
-    reverbSizeComponent.setBounds (reverbGridTop.removeFromLeft (reverbGridTop.getWidth() / 2).reduced (5));
-    reverbPreDelayComponent.setBounds (reverbGridTop.reduced (5));
-    reverbBassMultComponent.setBounds (reverbGrid.removeFromLeft (reverbGrid.getWidth() / 2).reduced (5));
-    reverbDampingComponent.setBounds (reverbGrid.reduced (5));
+    reverbSizeComponent.setBounds (reverbGridTop.removeFromLeft (reverbGridTop.getWidth() / 2).reduced (Style::componentGap));
+    reverbPreDelayComponent.setBounds (reverbGridTop.reduced (Style::componentGap));
+    reverbBassMultComponent.setBounds (reverbGrid.removeFromLeft (reverbGrid.getWidth() / 2).reduced (Style::componentGap));
+    reverbDampingComponent.setBounds (reverbGrid.reduced (Style::componentGap));
 }
 
 // =============================================================================
@@ -146,7 +146,7 @@ void KeyboardTabContent::resized()
 {
     auto area = getLocalBounds();
     area.removeFromTop (30);
-    oscilloscope.setBounds (area.reduced (5));
+    oscilloscope.setBounds (area.reduced (Style::componentGap));
 }
 
 // =============================================================================
@@ -174,7 +174,7 @@ void ModulationTabContent::resized()
 {
     auto area = getLocalBounds();
     area.removeFromTop (30);
-    matrixViewport.setBounds (area.reduced (5));
+    matrixViewport.setBounds (area.reduced (Style::componentGap));
     scrollIndicator.setBounds (matrixViewport.getBounds());
     matrixComponent.setSize (matrixViewport.getWidth(), 43 * 16);
 }

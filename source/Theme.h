@@ -35,8 +35,9 @@ namespace Style
     constexpr float radiusLarge  = 9.0f; // toggles, text parameters
 
     // Component layout
-    constexpr float labelHeight = 20.0f; // space for label above component box
-    constexpr float vizInset    = 20.0f; // inset from box edge to visualization
+    constexpr float labelHeight    = 20.0f; // space for label above component box
+    constexpr float vizInset       = 20.0f; // inset from box edge to visualization
+    constexpr int   componentGap   = 3;     // spacing around components in layout grid
 
     // Common alpha values
     constexpr float alphaBorder   = 0.3f; // standard border opacity

@@ -34,7 +34,7 @@ public:
     void drawTabButton (juce::TabBarButton& button, juce::Graphics& g,
                         bool isMouseOver, bool /*isMouseDown*/) override
     {
-        auto area = button.getActiveArea().toFloat().reduced (5.0f, 4.0f);
+        auto area = button.getActiveArea().toFloat().reduced ((float) Style::componentGap, (float) Style::componentGap);
 
         // Background
         auto bgColour = SECONDARY_COLOR;
