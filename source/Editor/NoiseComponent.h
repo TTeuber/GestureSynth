@@ -4,86 +4,86 @@
 
 #pragma once
 
-#include "Utility/SingleParameterComponent.h"
+#include "Utility/DualParameterComponent.h"
+#include "../Utility/Parameters.h"
 
-class NoiseComponent final : public SingleParameterComponent
+class NoiseComponent final : public DualParameterComponent
 {
 public:
-    explicit NoiseComponent (juce::RangedAudioParameter* noiseParam,
+    NoiseComponent (const juce::AudioProcessorValueTreeState& apvts,
         const UIContext& ctx = {})
-        : SingleParameterComponent (noiseParam, nullptr, ctx)
+        : DualParameterComponent (
+              apvts.getParameter (ParamIDs::noiseLevel),
+              apvts.getParameter (ParamIDs::noiseTone),
+              nullptr,
+              ctx,
+              {},
+              {},
+              "Noise")
     {
     }
 
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
+        drawNoisePath (g, bounds, param1Value, param2Value);
+    }
+
+    void drawVisualizationWithValues (juce::Graphics& g,
+        const juce::Rectangle<int>& bounds, float p1, float p2) const override
+    {
+        drawNoisePath (g, bounds, p1, p2);
+    }
+
+    juce::String getParam1Text() const override
+    {
+        return juce::StringRef ("Level: ") + juce::String (juce::roundToInt (param1Value * 100.0f)) + juce::StringRef ("%");
+    }
+
+    juce::String getParam2Text() const override
+    {
+        return juce::StringRef ("Tone: ") + juce::String (juce::roundToInt (param2Value * 100.0f)) + juce::StringRef ("%");
+    }
+
+private:
+    static void drawNoisePath (juce::Graphics& g, const juce::Rectangle<int>& bounds,
+        float level, float tone)
+    {
+        constexpr float strokeThickness = 1.5f;
+        constexpr int numVertices = 40;
+        constexpr float maxTiltAngle = 15.0f;
+
         const float w = static_cast<float> (bounds.getWidth());
         const float h = static_cast<float> (bounds.getHeight());
-        const float cx = static_cast<float> (bounds.getX()) + w * 0.5f;
-        const float cy = static_cast<float> (bounds.getY()) + h * 0.5f;
-        const float dim = juce::jmin (w, h);
+        const float startX = static_cast<float> (bounds.getX());
+        const float midY = static_cast<float> (bounds.getCentreY());
+        const float centreX = startX + w * 0.5f;
 
-        constexpr int numCircles = 3;
-        constexpr int numVertices = 24;
-        constexpr float jaggedAmount = 0.20f;
+        const float maxAmplitude = h * 0.40f;
+        const float amplitude = maxAmplitude * level;
 
-        // Faint radial guide lines
-        const float outerRadius = dim * 0.40f;
-        g.setOpacity (0.15f);
-        for (int i = 0; i < numVertices / 2; ++i)
+        // Tilt: tone=0 -> clockwise (positive slope), tone=0.5 -> flat, tone=1 -> counter-clockwise
+        const float tiltNorm = (0.5f - tone) * 2.0f; // +1 at tone=0, 0 at tone=0.5, -1 at tone=1
+        const float tiltRadians = tiltNorm * maxTiltAngle * juce::MathConstants<float>::pi / 180.0f;
+        const float tiltSlope = std::tan (tiltRadians);
+
+        juce::Random jaggedRng (42);
+        juce::Path path;
+
+        for (int v = 0; v <= numVertices; ++v)
         {
-            const float angle = juce::MathConstants<float>::twoPi * static_cast<float> (i) / static_cast<float> (numVertices / 2);
-            g.drawLine (cx, cy,
-                cx + std::cos (angle) * outerRadius,
-                cy + std::sin (angle) * outerRadius,
-                1.0f);
+            const float frac = static_cast<float> (v) / static_cast<float> (numVertices);
+            const float x = startX + frac * w;
+            const float noise = jaggedRng.nextFloat() * 2.0f - 1.0f;
+            const float tiltOffset = (x - centreX) * tiltSlope;
+            const float y = midY + tiltOffset - noise * amplitude;
+
+            if (v == 0)
+                path.startNewSubPath (x, y);
+            else
+                path.lineTo (x, y);
         }
 
-        // Faint concentric guide circles
-        for (int c = 0; c < numCircles; ++c)
-        {
-            const float r = dim * (0.15f + 0.125f * static_cast<float> (c));
-            g.drawEllipse (cx - r, cy - r, r * 2.0f, r * 2.0f, 1.0f);
-        }
-        g.setOpacity (1.0f);
-
-        for (int c = 0; c < numCircles; ++c)
-        {
-            // Sequential fade-in matching VolumeComponent arc pattern
-            const float arcStart = static_cast<float> (c) / static_cast<float> (numCircles);
-            const float arcEnd = static_cast<float> (c + 1) / static_cast<float> (numCircles);
-            const float opacity = juce::jlimit (0.0f, 1.0f, (paramValue - arcStart) / (arcEnd - arcStart));
-
-            if (opacity <= 0.0f)
-                continue;
-
-            g.setOpacity (opacity);
-
-            // Deterministic random per circle so shape is stable across repaints
-            juce::Random jaggedRng (42 + c * 1000);
-
-            const float baseRadius = dim * (0.15f + 0.125f * static_cast<float> (c));
-
-            juce::Path circle;
-            for (int v = 0; v < numVertices; ++v)
-            {
-                const float angle = juce::MathConstants<float>::twoPi * static_cast<float> (v) / static_cast<float> (numVertices);
-                const float offset = 1.0f + (jaggedRng.nextFloat() * 2.0f - 1.0f) * jaggedAmount;
-                const float r = baseRadius * offset;
-                const float px = cx + std::cos (angle) * r;
-                const float py = cy + std::sin (angle) * r;
-
-                if (v == 0)
-                    circle.startNewSubPath (px, py);
-                else
-                    circle.lineTo (px, py);
-            }
-            circle.closeSubPath();
-
-            g.strokePath (circle, juce::PathStrokeType (2.0f));
-        }
-
-        g.setOpacity (1.0f);
+        g.strokePath (path, juce::PathStrokeType (strokeThickness));
     }
 };

@@ -106,6 +106,7 @@ public:
     uint64_t getVoiceStartOrder() const { return voiceStartOrder; }
 
     void setNoiseLevel (float level) { noiseLevel = level; }
+    void setNoiseTone (float tone) { noiseTone = tone; }
 
     void setPortamentoTime (float timeMs) { portamentoTimeMs = timeMs; }
 
@@ -182,6 +183,8 @@ private:
 
     float volume = 1.0f;
     float noiseLevel = 0.0f;
+    float noiseTone = 0.5f;
+    float noiseTiltState = 0.0f;
     juce::Random noiseRandom;
     float velocity = 0.0f;
 

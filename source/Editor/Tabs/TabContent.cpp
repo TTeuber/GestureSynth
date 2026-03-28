@@ -14,7 +14,7 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
       chorusComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[12], &p.modDestOutputs[13], ParamIDs::chorusDepth, ParamIDs::chorusRate),
       vibratoComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[10], &p.modDestOutputs[11], ParamIDs::vibratoDepth, ParamIDs::vibratoRate),
       volumeComponent (p.parameters.getParameter (ParamIDs::mainOscLevel), { &p.undoManager, &p.activeGestureCount, modState }, ParamIDs::mainOscLevel),
-      noiseComponent (p.parameters.getParameter (ParamIDs::noiseLevel), { &p.undoManager, &p.activeGestureCount, modState }),
+      noiseComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
       chorusMixComponent (p.parameters.getParameter (ParamIDs::chorusMix), { &p.undoManager, &p.activeGestureCount, modState }),
       portamentoComponent (p.parameters.getParameter (ParamIDs::portamentoTime), { &p.undoManager, &p.activeGestureCount, modState }),
       delayComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
@@ -86,23 +86,22 @@ void MainTabContent::resized()
 
     scrollContent.setSize (availableWidth, totalHeight);
 
-    // Row 1 (synth): [2x2 grid] [Chorus] [Vibrato] [FilterDisplay = 3 units]
+    // Row 1 (synth): [Vol/ChMix/Porto grid] [Chorus] [Vibrato] [FilterDisplay = 3 units]
     auto row1 = juce::Rectangle<int> (0, 0, availableWidth, unitSize);
     auto mixCol = row1.removeFromLeft (unitSize);
-    auto topHalf = mixCol.removeFromTop (mixCol.getHeight() / 2);
-    volumeComponent.setBounds (topHalf.removeFromLeft (topHalf.getWidth() / 2).reduced (5));
-    noiseComponent.setBounds (topHalf.reduced (5));
+    volumeComponent.setBounds (mixCol.removeFromTop (mixCol.getHeight() / 2).reduced (5));
     chorusMixComponent.setBounds (mixCol.removeFromLeft (mixCol.getWidth() / 2).reduced (5));
     portamentoComponent.setBounds (mixCol.reduced (5));
     chorusComponent.setBounds (row1.removeFromLeft (unitSize).reduced (5));
     vibratoComponent.setBounds (row1.removeFromLeft (unitSize).reduced (5));
     filterDisplay.setBounds (row1.reduced (5));
 
-    // Row 2 (synth): [SubOsc] [Waveform] [Detune] [HPFDisplay = 3 units]
+    // Row 2 (synth): [SubOsc] [Waveform] [Detune] [Noise] [HPFDisplay = 2 units]
     auto row2 = juce::Rectangle<int> (0, unitSize, availableWidth, unitSize);
     subOscillatorComponent.setBounds (row2.removeFromLeft (unitSize).reduced (5));
     waveformComponent.setBounds (row2.removeFromLeft (unitSize).reduced (5));
     detuneComponent.setBounds (row2.removeFromLeft (unitSize).reduced (5));
+    noiseComponent.setBounds (row2.removeFromLeft (unitSize).reduced (5));
     hpfDisplay.setBounds (row2.reduced (5));
 
     // Row 3 (effects): [Delay] [DelayMod] [Delay 2x2] [Reverb] [ReverbMod] [Reverb 2x2]

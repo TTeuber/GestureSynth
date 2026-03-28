@@ -121,11 +121,17 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
 
     if (noiseLevel > 0.0f)
     {
+        const float fc = 200.0f * std::pow (40.0f, noiseTone);
+        const float coeff = std::exp (-juce::MathConstants<float>::twoPi * fc / currentSampleRate);
+        const float blend = noiseTone * 2.0f;
+
         for (int sample = 0; sample < numSamples; ++sample)
         {
-            const float noiseSample = noiseRandom.nextFloat() * 2.0f - 1.0f;
-            tempDataL[sample] += noiseSample * noiseLevel;
-            tempDataR[sample] += noiseSample * noiseLevel;
+            const float white = noiseRandom.nextFloat() * 2.0f - 1.0f;
+            noiseTiltState = coeff * noiseTiltState + (1.0f - coeff) * white;
+            const float shaped = blend * white + (1.0f - blend) * noiseTiltState;
+            tempDataL[sample] += shaped * noiseLevel;
+            tempDataR[sample] += shaped * noiseLevel;
         }
     }
 
@@ -360,6 +366,7 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
         lfo.prepare (spec);
     vibrato.prepare (static_cast<float> (sampleRate));
     modMatrix.prepare (spec);
+    noiseTiltState = 0.0f;
     waveformBuffer.reset();
 }
 

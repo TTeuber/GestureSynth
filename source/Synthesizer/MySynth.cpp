@@ -5,6 +5,7 @@ MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, st
     // Cache APVTS atomic pointers (stable for lifetime of APVTS)
     volumeParam          = parameters.getRawParameterValue (ParamIDs::volume);
     noiseLevelParam      = parameters.getRawParameterValue (ParamIDs::noiseLevel);
+    noiseToneParam       = parameters.getRawParameterValue (ParamIDs::noiseTone);
     filterCutoffParam    = parameters.getRawParameterValue (ParamIDs::filterFrequency);
     filterResonanceParam = parameters.getRawParameterValue (ParamIDs::filterResonance);
     portamentoTimeParam  = parameters.getRawParameterValue (ParamIDs::portamentoTime);
@@ -85,6 +86,7 @@ void MySynth::setVoiceCount (int count)
     // Reset previous-value cache so updateParameters() re-applies everything
     prevVolume = -1.0f;
     prevNoiseLevel = -1.0f;
+    prevNoiseTone = -1.0f;
     prevFilterCutoff = -1.0f;
     prevFilterResonance = -1.0f;
     prevPortamentoTime = -1.0f;
@@ -105,6 +107,13 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
     {
         prevNoiseLevel = newNoiseLevel;
         applyToAllVoices ([newNoiseLevel] (MySynthVoice* voice) { voice->setNoiseLevel (newNoiseLevel); });
+    }
+
+    const float newNoiseTone = noiseToneParam->load();
+    if (prevNoiseTone != newNoiseTone)
+    {
+        prevNoiseTone = newNoiseTone;
+        applyToAllVoices ([newNoiseTone] (MySynthVoice* voice) { voice->setNoiseTone (newNoiseTone); });
     }
 
     const float newFilterCutoff = filterCutoffParam->load();
