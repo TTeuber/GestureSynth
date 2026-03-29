@@ -36,7 +36,7 @@ public:
         float trackWidth = bounds.getWidth() * 0.7f;
         auto trackArea = bounds.withSizeKeepingCentre (trackWidth, bounds.getHeight());
 
-        g.setColour (SECONDARY_COLOR);
+        g.setColour (TERTIARY_COLOR);
         g.fillRoundedRectangle (trackArea, Style::radiusMedium);
         g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
         g.drawRoundedRectangle (trackArea, Style::radiusMedium, 1.0f);
@@ -144,7 +144,7 @@ public:
         float trackWidth = bounds.getWidth() * 0.7f;
         auto trackArea = bounds.withSizeKeepingCentre (trackWidth, bounds.getHeight());
 
-        g.setColour (SECONDARY_COLOR);
+        g.setColour (TERTIARY_COLOR);
         g.fillRoundedRectangle (trackArea, Style::radiusMedium);
         g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
         g.drawRoundedRectangle (trackArea, Style::radiusMedium, 1.0f);

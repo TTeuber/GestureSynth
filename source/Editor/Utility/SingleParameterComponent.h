@@ -77,8 +77,8 @@ public:
         // Inner box (extends to bottom)
         PaintHelpers::drawInnerBox (g, innerBoxBounds.toFloat());
 
-        // Calculate visualization bounds inside the inner box
-        const auto vizBounds = innerBoxBounds.reduced (6);
+        // Calculate visualization bounds inside the inner box (no horizontal inset)
+        const auto vizBounds = innerBoxBounds.reduced (0, 6);
 
         // Apply darkening if inactive
         if (!isActive)

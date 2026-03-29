@@ -86,8 +86,8 @@ public:
         // Inner box: darker fill for visualization area
         PaintHelpers::drawInnerBox (g, innerBoxBounds.toFloat());
 
-        // Calculate visualization bounds inside the inner box
-        const auto vizBounds = innerBoxBounds.reduced (static_cast<int> (Style::vizInset));
+        // Calculate visualization bounds inside the inner box (no horizontal inset)
+        const auto vizBounds = innerBoxBounds.reduced (0, static_cast<int> (Style::vizInset));
 
         // Apply darkening if inactive
         if (!isActive)
@@ -100,11 +100,17 @@ public:
             g.setColour (TEXT_COLOR);
         }
 
+        // Clip to inner box so visualizations don't bleed outside
+        g.saveState();
+        g.reduceClipRegion (innerBoxBounds);
+
         // Draw the main visualization
         drawVisualization (g, vizBounds);
 
         // Draw modulation overlay if in mod mode
         drawModulationOverlay (g, vizBounds);
+
+        g.restoreState();
 
         // Draw text indicators
         g.setFont (Style::fontComponent);
@@ -367,7 +373,7 @@ protected:
 
     juce::Colour getDrawColor() const { return isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR; }
 
-    float padding = 0.4f; // Padding for drawing
+    float padding = 0.5f; // Padding for drawing
 
     juce::UndoManager* undoManager = nullptr;
     std::atomic<int>* gestureCount = nullptr;

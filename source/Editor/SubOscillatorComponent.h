@@ -140,7 +140,7 @@ private:
         const float blend = scaled - static_cast<float> (seg);
 
         juce::Path wavePath;
-        wavePath.startNewSubPath (static_cast<float> (bounds.getX()), centerY);
+        // wavePath.startNewSubPath (static_cast<float> (bounds.getX()), centerY);
 
         for (int i = 0; i <= numPoints; ++i)
         {
@@ -151,6 +151,8 @@ private:
 
             const float x = static_cast<float> (bounds.getX()) + t * width;
             const float y = centerY - maxHeight * sample;
+            if (i == 0)
+                wavePath.startNewSubPath (x, y);
             wavePath.lineTo (x, y);
         }
 
