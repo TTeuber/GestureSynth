@@ -115,11 +115,17 @@ public:
 
         g.setOpacity (isActive ? 1.0f : Style::alphaInactive);
 
+        // Clip visualization to inner box
+        g.saveState();
+        g.reduceClipRegion (innerBoxBounds);
+
         // Draw the main visualization (implemented by derived classes)
         drawVisualization (g, vizBounds);
 
         // Draw modulation overlay
         drawModulationOverlay (g, vizBounds);
+
+        g.restoreState();
 
         // Draw the active toggle button in the top-left if we have an active parameter
         if (activeParam != nullptr)
