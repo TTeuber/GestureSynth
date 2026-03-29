@@ -4,12 +4,24 @@
 #include "Editor/Utility/AnimationFrameSource.h"
 #include "Editor/Utility/CustomLookAndFeel.h"
 #include "Editor/Utility/ModulationModeState.h"
+#include "Editor/Utility/PaintHelpers.h"
 #include "PluginProcessor.h"
 #include "Theme.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 
 #define HEIGHT 800
 #define WIDTH 1100
+
+//==============================================================================
+class BoxBackground : public juce::Component
+{
+public:
+    void paint (juce::Graphics& g) override
+    {
+        g.fillAll (PRIMARY_COLOR);
+        PaintHelpers::drawComponentBox (g, getLocalBounds().toFloat());
+    }
+};
 
 //==============================================================================
 class ResizeGrip : public juce::ResizableCornerComponent
@@ -70,6 +82,7 @@ private:
     juce::Component persistentPanel;
 
     // Keyboard row
+    BoxBackground wheelBoxBackground;
     ModWheelComponent modWheel;
     PitchWheelComponent pitchWheel;
     CustomKeyboard keyboard;

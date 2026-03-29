@@ -48,6 +48,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     contentWrapper.addAndMakeVisible (tabbedComponent);
 
     // Persistent panel components
+    persistentPanel.addAndMakeVisible (wheelBoxBackground);
     persistentPanel.addAndMakeVisible (modWheel);
     persistentPanel.addAndMakeVisible (pitchWheel);
     persistentPanel.addAndMakeVisible (keyboard);
@@ -286,18 +287,28 @@ void PluginEditor::resized()
     constexpr int keyboardRowHeight = 160;
     auto keyboardRow = panelArea.removeFromBottom (keyboardRowHeight);
 
-    // MW/AT/EXP tabs stacked vertically to the left of the mod wheel
+    // MW/AT/EXP tabs + wheels box
     constexpr int mwTabColumnWidth = 36;
-    auto mwTabArea = keyboardRow.removeFromLeft (mwTabColumnWidth);
+    int wheelWidth = juce::jmax (36, keyboardRow.getHeight() / 3);
+    int wheelBoxWidth = mwTabColumnWidth + wheelWidth * 2 + 4;
+    auto wheelBoxArea = keyboardRow.removeFromLeft (wheelBoxWidth);
+
+    // Draw box background behind the whole group
+    wheelBoxBackground.setBounds (wheelBoxArea.reduced (Style::componentGap));
+
+    // Inset children by the same padding as ADSR (4 + 4 = 8px per side)
+    auto wheelBoxInner = wheelBoxArea.reduced (8);
+
+    // MW/AT/EXP tabs stacked vertically to the left of the mod wheel
+    auto mwTabArea = wheelBoxInner.removeFromLeft (mwTabColumnWidth - 4);
     int mwTabH = mwTabArea.getHeight() / 3;
     mwTab.setBounds (mwTabArea.removeFromTop (mwTabH).reduced (1, 2));
     atTab.setBounds (mwTabArea.removeFromTop (mwTabH).reduced (1, 2));
     expTab.setBounds (mwTabArea.reduced (1, 2));
 
-    int wheelWidth = juce::jmax (36, keyboardRow.getHeight() / 3);
-    auto wheelsArea = keyboardRow.removeFromLeft (wheelWidth * 2 + 4);
-    modWheel.setBounds (wheelsArea.removeFromLeft (wheelWidth).reduced (2));
-    pitchWheel.setBounds (wheelsArea.removeFromLeft (wheelWidth).reduced (2));
+    auto wheelsArea = wheelBoxInner;
+    modWheel.setBounds (wheelsArea.removeFromLeft (wheelsArea.getWidth() / 2).reduced (2));
+    pitchWheel.setBounds (wheelsArea.reduced (2));
 
     keyboard.setBounds (keyboardRow.reduced (2));
 
