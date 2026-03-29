@@ -31,9 +31,11 @@
 #include "../NoiseComponent.h"
 #include "../PortamentoComponent.h"
 #include "../Utility/CustomToggleComponent.h"
+#include "../Utility/DelaySyncToggleComponent.h"
 #include "../Utility/ModulationModeState.h"
 #include "../Utility/SingleParameterComponent.h"
 #include "../VolumeComponent.h"
+#include "../OscLevelComponent.h"
 
 // =============================================================================
 // ModSourceTab: a tab button for LFO/ENV with crosshair icon
@@ -696,6 +698,7 @@ private:
     ChorusComponent chorusComponent;
     VibratoComponent vibratoComponent;
     VolumeComponent volumeComponent;
+    OscLevelComponent oscLevelComponent;
     NoiseComponent noiseComponent;
     ChorusMixComponent chorusMixComponent;
     PortamentoComponent portamentoComponent;
@@ -704,7 +707,7 @@ private:
     DelayComponent delayComponent;
     DelayModComponent delayModComponent;
     DelayRateComponent delayRateComponent;
-    CustomToggleComponent delayBpmToggle;
+    DelaySyncToggleComponent delaySyncToggle;
     DelayHighpassComponent delayHighpassComponent;
     DelayLowpassComponent delayLowpassComponent;
 

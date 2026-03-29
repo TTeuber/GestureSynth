@@ -346,11 +346,13 @@ public:
 
     void mouseEnter (const juce::MouseEvent&) override
     {
+        setMouseCursor (juce::MouseCursor::CrosshairCursor);
         hoverAnimator.setHovered (true);
     }
 
     void mouseExit (const juce::MouseEvent&) override
     {
+        setMouseCursor (juce::MouseCursor::NormalCursor);
         hoverAnimator.setHovered (false);
     }
 

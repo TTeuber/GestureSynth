@@ -13,7 +13,8 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
       detuneComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[6], &p.modDestOutputs[7], ParamIDs::oscDetune, ParamIDs::oscWidth),
       chorusComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[12], &p.modDestOutputs[13], ParamIDs::chorusDepth, ParamIDs::chorusRate),
       vibratoComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[10], &p.modDestOutputs[11], ParamIDs::vibratoDepth, ParamIDs::vibratoRate),
-      volumeComponent (p.parameters.getParameter (ParamIDs::mainOscLevel), { &p.undoManager, &p.activeGestureCount, modState }, ParamIDs::mainOscLevel),
+      volumeComponent (p.parameters.getParameter (ParamIDs::volume), { &p.undoManager, &p.activeGestureCount, modState }, ParamIDs::volume),
+      oscLevelComponent (p.parameters.getParameter (ParamIDs::mainOscLevel), nullptr, { &p.undoManager, &p.activeGestureCount, modState }, ParamIDs::mainOscLevel),
       noiseComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[ModDest::noiseLevel], &p.modDestOutputs[ModDest::noiseTone], ParamIDs::noiseLevel, ParamIDs::noiseTone),
       chorusMixComponent (p.parameters.getParameter (ParamIDs::chorusMix), { &p.undoManager, &p.activeGestureCount, modState }),
       portamentoComponent (p.parameters.getParameter (ParamIDs::portamentoTime), { &p.undoManager, &p.activeGestureCount, modState }),
@@ -23,7 +24,7 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
           dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync)),
           dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::delayNoteDivision)),
           { &p.undoManager, &p.activeGestureCount, modState }),
-      delayBpmToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync)), "BPM"),
+      delaySyncToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync))),
       delayHighpassComponent (p.parameters.getParameter (ParamIDs::delayHighpass), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
       delayLowpassComponent (p.parameters.getParameter (ParamIDs::delayLowpass), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
       reverbComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
@@ -42,6 +43,7 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
     scrollContent.addAndMakeVisible (chorusComponent);
     scrollContent.addAndMakeVisible (vibratoComponent);
     scrollContent.addAndMakeVisible (volumeComponent);
+    scrollContent.addAndMakeVisible (oscLevelComponent);
     scrollContent.addAndMakeVisible (noiseComponent);
     scrollContent.addAndMakeVisible (chorusMixComponent);
     scrollContent.addAndMakeVisible (portamentoComponent);
@@ -50,7 +52,7 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
     scrollContent.addAndMakeVisible (delayComponent);
     scrollContent.addAndMakeVisible (delayModComponent);
     scrollContent.addAndMakeVisible (delayRateComponent);
-    scrollContent.addAndMakeVisible (delayBpmToggle);
+    scrollContent.addAndMakeVisible (delaySyncToggle);
     scrollContent.addAndMakeVisible (delayHighpassComponent);
     scrollContent.addAndMakeVisible (delayLowpassComponent);
     scrollContent.addAndMakeVisible (reverbComponent);
@@ -88,19 +90,21 @@ void MainTabContent::resized()
 
     // Row 1 (synth): [Vol/ChMix/Porto grid] [Chorus] [Vibrato] [FilterDisplay = 3 units]
     auto row1 = juce::Rectangle<int> (0, 0, availableWidth, unitSize);
-    auto mixCol = row1.removeFromLeft (unitSize);
-    volumeComponent.setBounds (mixCol.removeFromTop (mixCol.getHeight() / 2).reduced (Style::componentGap));
-    chorusMixComponent.setBounds (mixCol.removeFromLeft (mixCol.getWidth() / 2).reduced (Style::componentGap));
-    portamentoComponent.setBounds (mixCol.reduced (Style::componentGap));
+    auto mixGrid = row1.removeFromLeft (unitSize);
+    auto mixGridTop = mixGrid.removeFromTop (mixGrid.getHeight() / 2);
+    volumeComponent.setBounds (mixGridTop.removeFromLeft (mixGridTop.getWidth() / 2).reduced (Style::componentGap));
+    chorusMixComponent.setBounds (mixGridTop.reduced (Style::componentGap));
+    oscLevelComponent.setBounds (mixGrid.removeFromLeft (mixGrid.getWidth() / 2).reduced (Style::componentGap));
+    portamentoComponent.setBounds (mixGrid.reduced (Style::componentGap));
     chorusComponent.setBounds (row1.removeFromLeft (unitSize).reduced (Style::componentGap));
     vibratoComponent.setBounds (row1.removeFromLeft (unitSize).reduced (Style::componentGap));
     filterDisplay.setBounds (row1.reduced (Style::componentGap));
 
     // Row 2 (synth): [SubOsc] [Waveform] [Detune] [Noise] [HPFDisplay = 2 units]
     auto row2 = juce::Rectangle<int> (0, unitSize, availableWidth, unitSize);
-    subOscillatorComponent.setBounds (row2.removeFromLeft (unitSize).reduced (Style::componentGap));
     waveformComponent.setBounds (row2.removeFromLeft (unitSize).reduced (Style::componentGap));
     detuneComponent.setBounds (row2.removeFromLeft (unitSize).reduced (Style::componentGap));
+    subOscillatorComponent.setBounds (row2.removeFromLeft (unitSize).reduced (Style::componentGap));
     noiseComponent.setBounds (row2.removeFromLeft (unitSize).reduced (Style::componentGap));
     hpfDisplay.setBounds (row2.reduced (Style::componentGap));
 
@@ -112,7 +116,7 @@ void MainTabContent::resized()
     auto delayGrid = row3.removeFromLeft (unitSize);
     auto delayGridTop = delayGrid.removeFromTop (delayGrid.getHeight() / 2);
     delayRateComponent.setBounds (delayGridTop.removeFromLeft (delayGridTop.getWidth() / 2).reduced (Style::componentGap));
-    delayBpmToggle.setBounds (delayGridTop.reduced (Style::componentGap));
+    delaySyncToggle.setBounds (delayGridTop.reduced (Style::componentGap));
     delayHighpassComponent.setBounds (delayGrid.removeFromLeft (delayGrid.getWidth() / 2).reduced (Style::componentGap));
     delayLowpassComponent.setBounds (delayGrid.reduced (Style::componentGap));
 

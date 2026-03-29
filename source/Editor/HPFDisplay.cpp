@@ -208,11 +208,13 @@ void HPFDisplay::mouseUp (const juce::MouseEvent& e)
 
 void HPFDisplay::mouseEnter (const juce::MouseEvent&)
 {
+    setMouseCursor (juce::MouseCursor::CrosshairCursor);
     hoverAnimator.setHovered (true);
 }
 
 void HPFDisplay::mouseExit (const juce::MouseEvent&)
 {
+    setMouseCursor (juce::MouseCursor::NormalCursor);
     hoverAnimator.setHovered (false);
 }
 

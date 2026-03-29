@@ -318,11 +318,13 @@ void FilterDisplay::mouseUp (const juce::MouseEvent& e)
 
 void FilterDisplay::mouseEnter (const juce::MouseEvent&)
 {
+    setMouseCursor (juce::MouseCursor::CrosshairCursor);
     hoverAnimator.setHovered (true);
 }
 
 void FilterDisplay::mouseExit (const juce::MouseEvent&)
 {
+    setMouseCursor (juce::MouseCursor::NormalCursor);
     hoverAnimator.setHovered (false);
 }
 
