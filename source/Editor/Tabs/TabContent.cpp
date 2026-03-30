@@ -80,6 +80,10 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
         ConnectorPainting::drawVerticalConnector (g,
             oscLevelComponent.getBounds(),
             waveformComponent.getBounds());
+
+        ConnectorPainting::drawHorizontalConnectorSimple (g,
+            waveformComponent.getBounds(),
+            detuneComponent.getBounds());
     };
 }
 

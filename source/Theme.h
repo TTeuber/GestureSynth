@@ -9,7 +9,7 @@
 #define PRIMARY_COLOR juce::Colour::fromRGB (15, 20, 20)
 #define SECONDARY_COLOR juce::Colour::fromRGB (35, 40, 40)
 #define TERTIARY_COLOR juce::Colour::fromRGB (2, 7, 7)
-#define BORDER_COLOR juce::Colour::fromRGB (205, 255, 255)
+#define BORDER_COLOR juce::Colour::fromRGB (20, 25, 25)
 #define TEXT_COLOR juce::Colour::fromRGB (190, 200, 200)
 #define TEXT_INACTIVE_COLOR juce::Colour::fromRGB (110, 110, 110)
 #define MOD_COLOR juce::Colours::cyan

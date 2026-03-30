@@ -150,4 +150,52 @@ namespace ConnectorPainting
         g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
         g.drawRoundedRectangle (pillX, pillY, pillW, pillH, pillRadius, borderWidth);
     }
+
+    // Draws a horizontal connector between two equal-height components
+    // with top and bottom borders and two stacked pill holes.
+    inline void drawHorizontalConnectorSimple (juce::Graphics& g,
+                                                juce::Rectangle<int> source,
+                                                juce::Rectangle<int> target)
+    {
+        constexpr float radius = Style::radiusMedium;
+        constexpr float borderAlpha = Style::alphaBorder;
+        constexpr float borderWidth = 1.0f;
+        constexpr int gap = Style::componentGap * 2;
+        // Block connector
+        const int blockX = source.getRight() - static_cast<int> (radius);
+        const int blockY = source.getY();
+        const int blockW = (target.getX() - source.getRight()) + static_cast<int> (radius) * 2;
+        const int blockH = source.getHeight();
+
+        g.setColour (SECONDARY_COLOR);
+        g.fillRect (blockX, blockY, blockW, blockH);
+
+        // Top border
+        g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+        g.fillRect (static_cast<float> (source.getRight() - radius),
+                    static_cast<float> (blockY),
+                    static_cast<float> (target.getX() - source.getRight()) + radius * 2.0f,
+                    borderWidth);
+
+        // Bottom border
+        g.fillRect (static_cast<float> (source.getRight() - radius),
+                    static_cast<float> (source.getBottom()) - borderWidth,
+                    static_cast<float> (target.getX() - source.getRight()) + radius * 2.0f,
+                    borderWidth);
+
+        // Pill hole aligned with inner box of DualParameterComponent
+        // Inner box: outerBounds.reduced(4), minus top/bottom labels (20px each), reduced(4)
+        constexpr int innerBoxInset = 4 + static_cast<int> (Style::labelHeight) + 4; // 28px
+        const float pillX = static_cast<float> (source.getRight());
+        const float pillY = static_cast<float> (source.getY() + innerBoxInset);
+        const float pillW = static_cast<float> (gap);
+        const float pillH = static_cast<float> (source.getHeight() - innerBoxInset * 2);
+        const float pillRadius = pillW / 2.0f;
+
+        g.setColour (PRIMARY_COLOR);
+        g.fillRoundedRectangle (pillX, pillY, pillW, pillH, pillRadius);
+
+        g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+        g.drawRoundedRectangle (pillX, pillY, pillW, pillH, pillRadius, borderWidth);
+    }
 }
