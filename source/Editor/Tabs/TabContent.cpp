@@ -76,6 +76,10 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
         ConnectorPainting::drawHorizontalConnector (g,
             chorusMixComponent.getBounds(),
             chorusComponent.getBounds());
+
+        ConnectorPainting::drawVerticalConnector (g,
+            oscLevelComponent.getBounds(),
+            waveformComponent.getBounds());
     };
 }
 
