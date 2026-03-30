@@ -1,5 +1,6 @@
 #include "TabContent.h"
 #include "../../Utility/Parameters.h"
+#include "../Utility/ConnectorPainting.h"
 
 // =============================================================================
 // MainTabContent
@@ -69,6 +70,13 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
 
     scrollIndicator.setViewport (&viewport);
     addAndMakeVisible (scrollIndicator);
+
+    scrollContent.onPaintOverChildren = [this] (juce::Graphics& g)
+    {
+        ConnectorPainting::drawHorizontalConnector (g,
+            chorusMixComponent.getBounds(),
+            chorusComponent.getBounds());
+    };
 }
 
 void MainTabContent::paint (juce::Graphics& g)

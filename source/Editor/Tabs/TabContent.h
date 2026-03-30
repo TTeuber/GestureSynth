@@ -686,7 +686,17 @@ public:
 
 private:
     NotifyingViewport viewport;
-    juce::Component scrollContent;
+
+    struct ScrollCanvas : public juce::Component
+    {
+        std::function<void (juce::Graphics&)> onPaintOverChildren;
+        void paintOverChildren (juce::Graphics& g) override
+        {
+            if (onPaintOverChildren)
+                onPaintOverChildren (g);
+        }
+    };
+    ScrollCanvas scrollContent;
     ScrollIndicator scrollIndicator;
 
     // Synth components

@@ -60,7 +60,7 @@ public:
     void paint (juce::Graphics& g) override
     {
         const int labelH = static_cast<int> (Style::labelHeight);
-        constexpr int outerPad = 2; // tighter padding for small components
+        constexpr int outerPad = 4; // tighter padding for small components
 
         // Fill with parent background
         g.fillAll (PRIMARY_COLOR);

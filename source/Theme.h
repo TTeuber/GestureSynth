@@ -9,10 +9,11 @@
 #define PRIMARY_COLOR juce::Colour::fromRGB (15, 20, 20)
 #define SECONDARY_COLOR juce::Colour::fromRGB (35, 40, 40)
 #define TERTIARY_COLOR juce::Colour::fromRGB (2, 7, 7)
-#define BORDER_COLOR juce::Colour::fromRGB (0, 5, 5)
+#define BORDER_COLOR juce::Colour::fromRGB (205, 255, 255)
 #define TEXT_COLOR juce::Colour::fromRGB (190, 200, 200)
 #define TEXT_INACTIVE_COLOR juce::Colour::fromRGB (110, 110, 110)
 #define MOD_COLOR juce::Colours::cyan
+#define DEBUG_COLOR juce::Colours::red.withAlpha (0.5f)
 
 #define ENV_COLOR juce::Colours::lightgreen
 #define LFO_COLOR juce::Colours::gold
@@ -40,7 +41,7 @@ namespace Style
     constexpr int   componentGap   = 3;     // spacing around components in layout grid
 
     // Common alpha values
-    constexpr float alphaBorder   = 0.3f; // standard border opacity
+    constexpr float alphaBorder   = 1.0f; // standard border opacity
     constexpr float alphaInactive = 0.5f; // inactive component opacity
     constexpr float alphaMod      = 0.7f; // modulation overlay
     constexpr float alphaModGhost = 0.2f; // bipolar ghost
