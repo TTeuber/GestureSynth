@@ -58,6 +58,7 @@ public:
         else
         {
             PaintHelpers::drawComponentBox (g, bounds, Style::radiusLarge, 1.0f);
+            g.setColour (TEXT_COLOR);
         }
 
         g.setFont (Style::fontBody);
