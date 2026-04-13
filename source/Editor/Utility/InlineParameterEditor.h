@@ -85,7 +85,7 @@ inline float parseNormalizedValue (juce::RangedAudioParameter* param,
 }
 }
 
-class InlineParameterEditor
+class InlineParameterEditor : private juce::MouseListener
 {
 public:
     using CommitCallback = std::function<void (const juce::String&)>;
@@ -109,6 +109,11 @@ public:
         editor.setVisible (false);
     }
 
+    ~InlineParameterEditor() override
+    {
+        removeGlobalMouseListener();
+    }
+
     void beginEdit (juce::Rectangle<int> bounds,
         juce::String initialValue,
         CommitCallback onCommit,
@@ -125,6 +130,7 @@ public:
         editor.toFront (false);
         editor.grabKeyboardFocus();
         editor.selectAll();
+        addGlobalMouseListener();
     }
 
     void cancel()
@@ -154,6 +160,23 @@ public:
     }
 
 private:
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        if (! isEditing() || hidingEditor)
+            return;
+
+        auto* originalComponent = e.originalComponent;
+        if (originalComponent == &editor || editor.isParentOf (originalComponent))
+            return;
+
+        consumeNextMouseDown = (e.eventComponent == &owner || owner.isParentOf (e.eventComponent));
+
+        if (textChanged && editor.getText() != initialText)
+            commit();
+        else
+            cancel();
+    }
+
     void commit()
     {
         if (! isEditing())
@@ -194,10 +217,29 @@ private:
 
     void clearCallbacks()
     {
+        removeGlobalMouseListener();
         commitCallback = {};
         cancelCallback = {};
         initialText.clear();
         textChanged = false;
+    }
+
+    void addGlobalMouseListener()
+    {
+        if (globalMouseListenerRegistered)
+            return;
+
+        juce::Desktop::getInstance().addGlobalMouseListener (this);
+        globalMouseListenerRegistered = true;
+    }
+
+    void removeGlobalMouseListener()
+    {
+        if (! globalMouseListenerRegistered)
+            return;
+
+        juce::Desktop::getInstance().removeGlobalMouseListener (this);
+        globalMouseListenerRegistered = false;
     }
 
     juce::Component& owner;
@@ -208,4 +250,5 @@ private:
     bool textChanged = false;
     bool hidingEditor = false;
     bool consumeNextMouseDown = false;
+    bool globalMouseListenerRegistered = false;
 };
