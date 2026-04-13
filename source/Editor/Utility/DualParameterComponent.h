@@ -11,6 +11,7 @@
 #include "ModulationModeState.h"
 #include "ModulationContextMenu.h"
 #include "HoverAnimator.h"
+#include "InlineParameterEditor.h"
 #include "PaintHelpers.h"
 #include "UIContext.h"
 
@@ -71,17 +72,13 @@ public:
         // Fill with parent background color
         g.fillAll (PRIMARY_COLOR);
 
-        const int labelH = static_cast<int> (Style::labelHeight);
-
         // Outer box: bordered container with SECONDARY_COLOR background
         auto outerBounds = getLocalBounds();
         PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
 
-        // Layout inside the outer box: top label, inner box, bottom label
-        auto innerArea = outerBounds.reduced (4); // padding inside outer box
-        auto topLabelArea = innerArea.removeFromTop (labelH);
-        auto bottomLabelArea = innerArea.removeFromBottom (labelH);
-        auto innerBoxBounds = innerArea.reduced (4);
+        auto topLabelArea = getTopLabelBounds();
+        auto bottomLabelArea = getBottomLabelBounds();
+        auto innerBoxBounds = getInnerBoxBounds();
 
         // Inner box: darker fill for visualization area
         PaintHelpers::drawInnerBox (g, innerBoxBounds.toFloat());
@@ -156,6 +153,12 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
+        if (inlineEditor.consumePendingMouseDown())
+            return;
+
+        if (inlineEditor.isEditing() || e.getNumberOfClicks() > 1)
+            return;
+
         // Modulation context menu on right-click in mod mode
         if (e.mods.isRightButtonDown()
             && modModeState != nullptr && modModeState->isModulationMode()
@@ -234,8 +237,29 @@ public:
         param2Engaged = false;
     }
 
+    void mouseDoubleClick (const juce::MouseEvent& e) override
+    {
+        if (!isActive)
+            return;
+
+        if (modModeState != nullptr && modModeState->isModulationMode())
+            return;
+
+        if (getTopLabelBounds().contains (e.getPosition()))
+        {
+            beginInlineEdit (param2, getParam2EditableText(), getTopLabelBounds());
+            return;
+        }
+
+        if (getBottomLabelBounds().contains (e.getPosition()))
+            beginInlineEdit (param1, getParam1EditableText(), getBottomLabelBounds());
+    }
+
     void mouseDrag (const juce::MouseEvent& e) override
     {
+        if (inlineEditor.isEditing())
+            return;
+
         if (isModDragging && modModeState != nullptr)
         {
             const auto& sourceID = modDragSourceID;
@@ -327,6 +351,9 @@ public:
 
     void mouseUp (const juce::MouseEvent&) override
     {
+        if (inlineEditor.isEditing())
+            return;
+
         if (isModDragging)
         {
             if (gestureCount != nullptr)
@@ -365,6 +392,7 @@ protected:
     // Label and hover animation
     juce::String componentLabel;
     HoverAnimator hoverAnimator { *this };
+    InlineParameterEditor inlineEditor { *this };
 
     // Active state
     bool isActive = true;
@@ -407,6 +435,26 @@ protected:
         return formatParameterText (param2, param2Value, "{name}: {value}%");
     }
 
+    virtual juce::String getParam1EditableText() const
+    {
+        return InlineParameterEditUtils::extractEditableText (getParam1Text());
+    }
+
+    virtual juce::String getParam2EditableText() const
+    {
+        return InlineParameterEditUtils::extractEditableText (getParam2Text());
+    }
+
+    virtual float parseParam1EditedText (const juce::String& text) const
+    {
+        return InlineParameterEditUtils::parseNormalizedValue (param1, text, getParam1Text());
+    }
+
+    virtual float parseParam2EditedText (const juce::String& text) const
+    {
+        return InlineParameterEditUtils::parseNormalizedValue (param2, text, getParam2Text());
+    }
+
     // Helper method to format parameter text using templates
     juce::String formatParameterText (juce::RangedAudioParameter* param,
         float normValue,
@@ -430,7 +478,63 @@ protected:
         return result;
     }
 
+    juce::Rectangle<int> getTopLabelBounds() const
+    {
+        auto innerArea = getLocalBounds().reduced (kOuterPad);
+        return innerArea.removeFromTop (static_cast<int> (Style::labelHeight));
+    }
+
+    juce::Rectangle<int> getBottomLabelBounds() const
+    {
+        auto innerArea = getLocalBounds().reduced (kOuterPad);
+        innerArea.removeFromTop (static_cast<int> (Style::labelHeight));
+        return innerArea.removeFromBottom (static_cast<int> (Style::labelHeight));
+    }
+
+    juce::Rectangle<int> getInnerBoxBounds() const
+    {
+        auto innerArea = getLocalBounds().reduced (kOuterPad);
+        innerArea.removeFromTop (static_cast<int> (Style::labelHeight));
+        innerArea.removeFromBottom (static_cast<int> (Style::labelHeight));
+        return innerArea.reduced (kOuterPad);
+    }
+
+    void beginInlineEdit (juce::RangedAudioParameter* targetParam,
+        const juce::String& initialText,
+        juce::Rectangle<int> bounds)
+    {
+        if (initialText.isEmpty())
+            return;
+
+        inlineEditor.beginEdit (bounds.reduced (2), initialText,
+            [this, targetParam] (const juce::String& text)
+            {
+                commitTextToParameter (targetParam, text);
+            });
+    }
+
+    void commitTextToParameter (juce::RangedAudioParameter* targetParam, const juce::String& text)
+    {
+        if (targetParam == nullptr)
+            return;
+
+        if (undoManager != nullptr)
+            undoManager->beginNewTransaction();
+
+        targetParam->beginChangeGesture();
+        if (gestureCount != nullptr)
+            ++(*gestureCount);
+        auto normalizedValue = targetParam == param1 ? parseParam1EditedText (text)
+                                                     : parseParam2EditedText (text);
+        targetParam->setValueNotifyingHost (normalizedValue);
+        targetParam->endChangeGesture();
+        if (gestureCount != nullptr)
+            --(*gestureCount);
+    }
+
 private:
+    static constexpr int kOuterPad = 4;
+
     void parameterValueChanged (int parameterIndex, float newValue) override
     {
         if (parameterIndex == param1->getParameterIndex())

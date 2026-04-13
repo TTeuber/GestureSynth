@@ -58,7 +58,7 @@ void FilterDisplay::paint (juce::Graphics& g)
     // Layout: top label, inner box, bottom label
     auto innerArea = outerBounds.reduced (4);
     auto topLabelArea = innerArea.removeFromTop (labelH);
-    auto bottomLabelArea = innerArea.removeFromBottom (labelH);
+    innerArea.removeFromBottom (labelH);
     auto innerBoxBounds = innerArea.reduced (4);
 
     // Inner box
@@ -75,22 +75,7 @@ void FilterDisplay::paint (juce::Graphics& g)
 
     // Draw parameter values with fading opacity
     if (hoverAnimator.getAlpha() > 0.01f)
-    {
-        g.setOpacity (hoverAnimator.getAlpha());
-        g.setColour ((filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR).withAlpha (hoverAnimator.getAlpha()));
-        g.setFont (Style::fontComponent);
-
-        // Frequency text in top label area
-        juce::String freqText;
-        if (cutoffFrequency < 1000.0f)
-            freqText = juce::String (static_cast<int> (cutoffFrequency)) + " Hz";
-        else
-            freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
-        g.drawText ("Frequency: " + freqText, topLabelArea, juce::Justification::centred, true);
-
-        // Resonance text in bottom label area
-        g.drawText ("Resonance: " + juce::String (resonance, 2), bottomLabelArea, juce::Justification::centred, true);
-    }
+        drawParameterValues (g);
 
     g.setOpacity (1.0f);
 
@@ -115,6 +100,12 @@ void FilterDisplay::resized()
 
 void FilterDisplay::mouseDown (const juce::MouseEvent& e)
 {
+    if (inlineEditor.consumePendingMouseDown())
+        return;
+
+    if (inlineEditor.isEditing() || e.getNumberOfClicks() > 1)
+        return;
+
     // Modulation context menu on right-click in mod mode
     if (e.mods.isRightButtonDown()
         && modModeState != nullptr && modModeState->isModulationMode()
@@ -206,8 +197,30 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
         resonanceEngaged = false;
     }
 }
+
+void FilterDisplay::mouseDoubleClick (const juce::MouseEvent& e)
+{
+    if (!filterEnabled)
+        return;
+
+    if (modModeState != nullptr && modModeState->isModulationMode())
+        return;
+
+    if (getFrequencyLabelBounds().contains (e.getPosition()))
+    {
+        beginParameterEdit (cutoffParam, getFrequencyLabelBounds(), getCutoffEditText());
+        return;
+    }
+
+    if (getResonanceLabelBounds().contains (e.getPosition()))
+        beginParameterEdit (resonanceParam, getResonanceLabelBounds(), getResonanceEditText());
+}
+
 void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
 {
+    if (inlineEditor.isEditing())
+        return;
+
     if (isModDragging && modModeState != nullptr)
     {
         auto sourceID = modModeState->getTargetSourceID();
@@ -297,6 +310,9 @@ void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
 void FilterDisplay::mouseUp (const juce::MouseEvent& e)
 {
     juce::ignoreUnused (e);
+    if (inlineEditor.isEditing())
+        return;
+
     if (isModDragging)
     {
         if (gestureCount != nullptr)
@@ -451,6 +467,7 @@ double FilterDisplay::computeFirstOrderStage (const double freq, const double cu
 
 void FilterDisplay::drawParameterValues (juce::Graphics& g) const
 {
+    g.setOpacity (hoverAnimator.getAlpha());
     g.setColour ((filterEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR).withAlpha (hoverAnimator.getAlpha()));
     g.setFont (Style::fontComponent);
 
@@ -462,11 +479,72 @@ void FilterDisplay::drawParameterValues (juce::Graphics& g) const
         freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
 
     // Draw frequency text
-    g.drawText ("Frequency: " + freqText, 5, getHeight() - 25, getWidth() / 2 - 10, 20, juce::Justification::bottomLeft, true);
+    g.drawText ("Frequency: " + freqText, getFrequencyLabelBounds(), juce::Justification::bottomLeft, true);
 
     // Draw resonance text
-    g.drawText ("Resonance: " + juce::String (resonance, 2), getWidth() / 2 + 5, 5, getWidth() / 2 - 10, 20, juce::Justification::topRight, true);
+    g.drawText ("Resonance: " + juce::String (resonance, 2), getResonanceLabelBounds(), juce::Justification::topRight, true);
+}
 
+juce::Rectangle<int> FilterDisplay::getFrequencyLabelBounds() const
+{
+    return { 5, getHeight() - 25, getWidth() / 2 - 10, 20 };
+}
+
+juce::Rectangle<int> FilterDisplay::getResonanceLabelBounds() const
+{
+    return { getWidth() / 2 + 5, 5, getWidth() / 2 - 10, 20 };
+}
+
+juce::String FilterDisplay::getCutoffEditText() const
+{
+    juce::String freqText;
+    if (cutoffFrequency < 1000.0f)
+        freqText = juce::String (static_cast<int> (cutoffFrequency)) + " Hz";
+    else
+        freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
+
+    return InlineParameterEditUtils::extractEditableText ("Frequency: " + freqText);
+}
+
+juce::String FilterDisplay::getResonanceEditText() const
+{
+    return InlineParameterEditUtils::extractEditableText ("Resonance: " + juce::String (resonance, 2));
+}
+
+void FilterDisplay::beginParameterEdit (juce::RangedAudioParameter* targetParam,
+    juce::Rectangle<int> bounds,
+    const juce::String& initialText)
+{
+    if (targetParam == nullptr)
+        return;
+
+    if (initialText.isEmpty())
+        return;
+
+    inlineEditor.beginEdit (bounds.reduced (2), initialText,
+        [this, targetParam] (const juce::String& text)
+        {
+            commitParameterText (targetParam, text);
+        });
+}
+
+void FilterDisplay::commitParameterText (juce::RangedAudioParameter* targetParam, const juce::String& text)
+{
+    if (targetParam == nullptr)
+        return;
+
+    if (undoManager != nullptr)
+        undoManager->beginNewTransaction();
+
+    targetParam->beginChangeGesture();
+    if (gestureCount != nullptr)
+        ++(*gestureCount);
+    auto displayText = targetParam == cutoffParam ? juce::String ("Frequency: ") + getCutoffEditText()
+                                                  : juce::String ("Resonance: ") + getResonanceEditText();
+    targetParam->setValueNotifyingHost (InlineParameterEditUtils::parseNormalizedValue (targetParam, text, displayText));
+    targetParam->endChangeGesture();
+    if (gestureCount != nullptr)
+        --(*gestureCount);
 }
 
 void FilterDisplay::onAnimationFrame()

@@ -85,6 +85,11 @@ protected:
         return juce::String (names[seg]) + " " + juce::String (pctA) + "/" + juce::String (pctB) + " " + names[seg + 1];
     }
 
+    juce::String getParam2EditableText() const override
+    {
+        return {};
+    }
+
 private:
     std::atomic<float>* modSubOscOutput = nullptr;
     std::atomic<float>* modSubOscWaveOutput = nullptr;

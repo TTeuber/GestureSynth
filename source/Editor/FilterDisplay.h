@@ -9,6 +9,7 @@
 #include "Utility/ModulationModeState.h"
 #include "Utility/ModulationContextMenu.h"
 #include "Utility/HoverAnimator.h"
+#include "Utility/InlineParameterEditor.h"
 #include "Utility/PaintHelpers.h"
 #include "Utility/UIContext.h"
 
@@ -32,6 +33,8 @@ public:
     void resized() override;
 
     void mouseDown (const juce::MouseEvent& e) override;
+
+    void mouseDoubleClick (const juce::MouseEvent& e) override;
 
     void mouseDrag (const juce::MouseEvent& e) override;
 
@@ -94,6 +97,14 @@ private:
     static double computeFirstOrderStage (const double freq, const double cutoffFreq);
 
     void drawParameterValues (juce::Graphics& g) const;
+    juce::Rectangle<int> getFrequencyLabelBounds() const;
+    juce::Rectangle<int> getResonanceLabelBounds() const;
+    juce::String getCutoffEditText() const;
+    juce::String getResonanceEditText() const;
+    void beginParameterEdit (juce::RangedAudioParameter* targetParam,
+        juce::Rectangle<int> bounds,
+        const juce::String& initialText);
+    void commitParameterText (juce::RangedAudioParameter* targetParam, const juce::String& text);
 
     juce::UndoManager* undoManager = nullptr;
     std::atomic<int>* gestureCount = nullptr;
@@ -131,6 +142,7 @@ private:
     bool modResonanceEngaged = false;
     int modCutoffRefX = 0;
     int modResonanceRefY = 0;
+    InlineParameterEditor inlineEditor { *this };
 
     static constexpr int kPrimaryThreshold = 4;
     static constexpr int kSecondaryThreshold = 12;

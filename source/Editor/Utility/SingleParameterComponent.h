@@ -11,6 +11,7 @@
 #include "ModulationModeState.h"
 #include "ModulationContextMenu.h"
 #include "HoverAnimator.h"
+#include "InlineParameterEditor.h"
 #include "PaintHelpers.h"
 #include "UIContext.h"
 
@@ -59,9 +60,6 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        const int labelH = static_cast<int> (Style::labelHeight);
-        constexpr int outerPad = 4; // tighter padding for small components
-
         // Fill with parent background
         g.fillAll (PRIMARY_COLOR);
 
@@ -69,10 +67,8 @@ public:
         auto outerBounds = getLocalBounds();
         PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
 
-        // Layout: top label, inner box extends to bottom
-        auto innerArea = outerBounds.reduced (outerPad);
-        auto topLabelArea = innerArea.removeFromTop (labelH);
-        auto innerBoxBounds = innerArea.reduced (outerPad);
+        auto topLabelArea = getTopLabelBounds();
+        auto innerBoxBounds = getInnerBoxBounds();
 
         // Inner box (extends to bottom)
         PaintHelpers::drawInnerBox (g, innerBoxBounds.toFloat());
@@ -130,10 +126,7 @@ public:
         // Draw the active toggle button in the top-left if we have an active parameter
         if (activeParam != nullptr)
         {
-            constexpr int toggleSize = 12;
-            const int toggleX = outerPad + 2;
-            const int toggleY = outerPad + (labelH - toggleSize) / 2;
-            const juce::Rectangle toggleRect (toggleX, toggleY, toggleSize, toggleSize);
+            const auto toggleRect = getToggleBounds();
 
             g.setOpacity (1.0f);
             g.setColour (TERTIARY_COLOR);
@@ -167,6 +160,12 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
+        if (inlineEditor.consumePendingMouseDown())
+            return;
+
+        if (inlineEditor.isEditing() || e.getNumberOfClicks() > 1)
+            return;
+
         // Modulation context menu on right-click in mod mode
         if (e.mods.isRightButtonDown()
             && modModeState != nullptr && modModeState->isModulationMode()
@@ -184,7 +183,7 @@ public:
         // Check if clicking the toggle button
         if (activeParam != nullptr)
         {
-            const juce::Rectangle toggleRect (10, 10, 12, 12);
+            const auto toggleRect = getToggleBounds();
             if (toggleRect.contains (e.getPosition()) || e.mods.isRightButtonDown())
             {
                 if (undoManager != nullptr)
@@ -238,8 +237,34 @@ public:
         isDragging = true;
     }
 
+    void mouseDoubleClick (const juce::MouseEvent& e) override
+    {
+        if (!isActive)
+            return;
+
+        if (modModeState != nullptr && modModeState->isModulationMode())
+            return;
+
+        if (! getLabelEditBounds().contains (e.getPosition()) || getToggleBounds().contains (e.getPosition()))
+            return;
+
+        auto initialText = getEditableParameterText();
+        if (initialText.isEmpty())
+            return;
+
+        inlineEditor.beginEdit (getLabelEditBounds().reduced (2),
+            initialText,
+            [this] (const juce::String& text)
+            {
+                commitTextToParameter (param, text);
+            });
+    }
+
     void mouseDrag (const juce::MouseEvent& e) override
     {
+        if (inlineEditor.isEditing())
+            return;
+
         if (isModDragging && modModeState != nullptr)
         {
             auto sourceID = modModeState->getTargetSourceID();
@@ -268,6 +293,9 @@ public:
 
     void mouseUp (const juce::MouseEvent&) override
     {
+        if (inlineEditor.isEditing())
+            return;
+
         if (isModDragging)
         {
             if (gestureCount != nullptr)
@@ -294,6 +322,7 @@ protected:
 
     // Hover animation
     HoverAnimator hoverAnimator { *this };
+    InlineParameterEditor inlineEditor { *this };
 
     // Current parameter value
     float paramValue = 0.0f;
@@ -323,6 +352,16 @@ protected:
     virtual juce::String getParameterText() const
     {
         return formatParameterText (param, paramValue, "{value} {unit}");
+    }
+
+    virtual juce::String getEditableParameterText() const
+    {
+        return InlineParameterEditUtils::extractEditableText (getParameterText());
+    }
+
+    virtual float parseEditedParameterText (juce::RangedAudioParameter* targetParam, const juce::String& text) const
+    {
+        return InlineParameterEditUtils::parseNormalizedValue (targetParam, text, getParameterText());
     }
 
     // Helper method to format parameter text using templates
@@ -366,7 +405,54 @@ protected:
         return result;
     }
 
+    juce::Rectangle<int> getTopLabelBounds() const
+    {
+        auto innerArea = getLocalBounds().reduced (kOuterPad);
+        return innerArea.removeFromTop (static_cast<int> (Style::labelHeight));
+    }
+
+    juce::Rectangle<int> getInnerBoxBounds() const
+    {
+        auto innerArea = getLocalBounds().reduced (kOuterPad);
+        innerArea.removeFromTop (static_cast<int> (Style::labelHeight));
+        return innerArea.reduced (kOuterPad);
+    }
+
+    juce::Rectangle<int> getToggleBounds() const
+    {
+        if (activeParam == nullptr)
+            return {};
+
+        constexpr int toggleSize = 12;
+        const int toggleY = kOuterPad + (static_cast<int> (Style::labelHeight) - toggleSize) / 2;
+        return { kOuterPad + 2, toggleY, toggleSize, toggleSize };
+    }
+
+    juce::Rectangle<int> getLabelEditBounds() const
+    {
+        return getTopLabelBounds();
+    }
+
+    void commitTextToParameter (juce::RangedAudioParameter* targetParam, const juce::String& text)
+    {
+        if (targetParam == nullptr)
+            return;
+
+        if (undoManager != nullptr)
+            undoManager->beginNewTransaction();
+
+        targetParam->beginChangeGesture();
+        if (gestureCount != nullptr)
+            ++(*gestureCount);
+        targetParam->setValueNotifyingHost (parseEditedParameterText (targetParam, text));
+        targetParam->endChangeGesture();
+        if (gestureCount != nullptr)
+            --(*gestureCount);
+    }
+
 private:
+    static constexpr int kOuterPad = 4;
+
     void parameterValueChanged (int parameterIndex, float newValue) override
     {
         if (parameterIndex == param->getParameterIndex())

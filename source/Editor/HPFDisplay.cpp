@@ -49,7 +49,7 @@ void HPFDisplay::paint (juce::Graphics& g)
     // Layout: top label, inner box, bottom label
     auto innerArea = outerBounds.reduced (4);
     auto topLabelArea = innerArea.removeFromTop (labelH);
-    auto bottomLabelArea = innerArea.removeFromBottom (labelH);
+    innerArea.removeFromBottom (labelH);
     auto innerBoxBounds = innerArea.reduced (4);
 
     // Inner box
@@ -66,18 +66,7 @@ void HPFDisplay::paint (juce::Graphics& g)
 
     // Draw parameter values with fading opacity
     if (hoverAnimator.getAlpha() > 0.01f)
-    {
-        g.setOpacity (hoverAnimator.getAlpha());
-        g.setColour ((hpfEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR).withAlpha (hoverAnimator.getAlpha()));
-        g.setFont (Style::fontComponent);
-
-        juce::String freqText;
-        if (cutoffFrequency < 1000.0f)
-            freqText = juce::String (static_cast<int> (cutoffFrequency)) + " Hz";
-        else
-            freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
-        g.drawText ("HPF: " + freqText, topLabelArea, juce::Justification::centred, true);
-    }
+        drawParameterValues (g);
 
     g.setOpacity (1.0f);
 
@@ -97,6 +86,12 @@ void HPFDisplay::resized()
 
 void HPFDisplay::mouseDown (const juce::MouseEvent& e)
 {
+    if (inlineEditor.consumePendingMouseDown())
+        return;
+
+    if (inlineEditor.isEditing() || e.getNumberOfClicks() > 1)
+        return;
+
     // Modulation context menu on right-click in mod mode
     if (e.mods.isRightButtonDown()
         && modModeState != nullptr && modModeState->isModulationMode()
@@ -161,8 +156,23 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
     }
 }
 
+void HPFDisplay::mouseDoubleClick (const juce::MouseEvent& e)
+{
+    if (!hpfEnabled)
+        return;
+
+    if (modModeState != nullptr && modModeState->isModulationMode())
+        return;
+
+    if (getValueLabelBounds().contains (e.getPosition()))
+        beginCutoffEdit();
+}
+
 void HPFDisplay::mouseDrag (const juce::MouseEvent& e)
 {
+    if (inlineEditor.isEditing())
+        return;
+
     if (isModDragging && modModeState != nullptr)
     {
         auto sourceID = modModeState->getTargetSourceID();
@@ -189,6 +199,9 @@ void HPFDisplay::mouseDrag (const juce::MouseEvent& e)
 void HPFDisplay::mouseUp (const juce::MouseEvent& e)
 {
     juce::ignoreUnused (e);
+    if (inlineEditor.isEditing())
+        return;
+
     if (isModDragging)
     {
         if (gestureCount != nullptr)
@@ -305,6 +318,7 @@ double HPFDisplay::computeHPGainDb (double freq, double cutoffFreqHz)
 
 void HPFDisplay::drawParameterValues (juce::Graphics& g) const
 {
+    g.setOpacity (hoverAnimator.getAlpha());
     g.setColour ((hpfEnabled ? TEXT_COLOR : TEXT_INACTIVE_COLOR).withAlpha (hoverAnimator.getAlpha()));
     g.setFont (Style::fontComponent);
 
@@ -314,7 +328,53 @@ void HPFDisplay::drawParameterValues (juce::Graphics& g) const
     else
         freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
 
-    g.drawText ("HPF: " + freqText, 5, getHeight() - 25, getWidth() - 10, 20, juce::Justification::bottomLeft, true);
+    g.drawText ("HPF: " + freqText, getValueLabelBounds(), juce::Justification::centred, true);
+}
+
+juce::Rectangle<int> HPFDisplay::getValueLabelBounds() const
+{
+    auto innerArea = getLocalBounds().reduced (4);
+    return innerArea.removeFromTop (static_cast<int> (Style::labelHeight));
+}
+
+juce::String HPFDisplay::getCutoffEditText() const
+{
+    juce::String freqText;
+    if (cutoffFrequency < 1000.0f)
+        freqText = juce::String (static_cast<int> (cutoffFrequency)) + " Hz";
+    else
+        freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
+
+    return InlineParameterEditUtils::extractEditableText ("HPF: " + freqText);
+}
+
+void HPFDisplay::beginCutoffEdit()
+{
+    if (cutoffParam == nullptr)
+        return;
+
+    inlineEditor.beginEdit (getValueLabelBounds().reduced (2), getCutoffEditText(),
+        [this] (const juce::String& text)
+        {
+            commitCutoffText (text);
+        });
+}
+
+void HPFDisplay::commitCutoffText (const juce::String& text)
+{
+    if (cutoffParam == nullptr)
+        return;
+
+    if (undoManager != nullptr)
+        undoManager->beginNewTransaction();
+
+    cutoffParam->beginChangeGesture();
+    if (gestureCount != nullptr)
+        ++(*gestureCount);
+    cutoffParam->setValueNotifyingHost (InlineParameterEditUtils::parseNormalizedValue (cutoffParam, text, "HPF: " + getCutoffEditText()));
+    cutoffParam->endChangeGesture();
+    if (gestureCount != nullptr)
+        --(*gestureCount);
 }
 
 void HPFDisplay::drawHPFCurveAt (juce::Graphics& g, float cutoffFreqHz,

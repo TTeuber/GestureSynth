@@ -8,6 +8,7 @@
 #include "Utility/ModulationModeState.h"
 #include "Utility/ModulationContextMenu.h"
 #include "Utility/HoverAnimator.h"
+#include "Utility/InlineParameterEditor.h"
 #include "Utility/PaintHelpers.h"
 #include "Utility/UIContext.h"
 
@@ -29,6 +30,8 @@ public:
     void resized() override;
 
     void mouseDown (const juce::MouseEvent& e) override;
+
+    void mouseDoubleClick (const juce::MouseEvent& e) override;
 
     void mouseDrag (const juce::MouseEvent& e) override;
 
@@ -83,6 +86,10 @@ private:
     static double computeHPGainDb (double freq, double cutoffFreqHz);
 
     void drawParameterValues (juce::Graphics& g) const;
+    juce::Rectangle<int> getValueLabelBounds() const;
+    juce::String getCutoffEditText() const;
+    void beginCutoffEdit();
+    void commitCutoffText (const juce::String& text);
 
     juce::UndoManager* undoManager = nullptr;
     std::atomic<int>* gestureCount = nullptr;
@@ -92,6 +99,7 @@ private:
     bool isModDragging = false;
     float modDragInitialDepth = 0.0f;
     int modDragStartX = 0;
+    InlineParameterEditor inlineEditor { *this };
 
     void drawModModeOverlay (juce::Graphics& g) const;
 

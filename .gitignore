@@ -30,6 +30,9 @@ cmake-build-relwithdebinfo
 build
 packaging/Output/*
 
+.air/
+.cache/
+
 TODO.md
 FIXES.md
 docs/*.md
