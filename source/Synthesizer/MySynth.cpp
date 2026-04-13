@@ -292,6 +292,13 @@ void MySynth::noteOff (int midiChannel, int midiNoteNumber, float velocity, bool
 {
     const juce::ScopedLock sl (lock);
 
+    if (monoMode && sustainPedalDown)
+    {
+        if (std::find (sustainedNotes.begin(), sustainedNotes.end(), midiNoteNumber) == sustainedNotes.end())
+            sustainedNotes.push_back (midiNoteNumber);
+        return;
+    }
+
     auto it = std::find (heldNotes.begin(), heldNotes.end(), midiNoteNumber);
     if (it != heldNotes.end())
         heldNotes.erase (it);
@@ -328,4 +335,38 @@ void MySynth::noteOff (int midiChannel, int midiNoteNumber, float velocity, bool
         // Poly mode — unchanged
         Synthesiser::noteOff (midiChannel, midiNoteNumber, velocity, allowTailOff);
     }
+}
+
+void MySynth::handleSustainPedal (int midiChannel, bool isDown)
+{
+    // Let the base class do per-voice sustain bookkeeping (poly mode handled here).
+    Synthesiser::handleSustainPedal (midiChannel, isDown);
+
+    const juce::ScopedLock sl (lock);
+    sustainPedalDown = isDown;
+
+    if (! isDown && monoMode)
+    {
+        // Pedal released: process any mono note-offs that were deferred.
+        auto deferred = std::move (sustainedNotes);
+        sustainedNotes.clear();
+        for (int note : deferred)
+            noteOff (midiChannel, note, 0.0f, true);
+    }
+    else if (! isDown)
+    {
+        sustainedNotes.clear();
+    }
+}
+
+void MySynth::allNotesOff (int midiChannel, bool allowTailOff)
+{
+    Synthesiser::allNotesOff (midiChannel, allowTailOff);
+
+    const juce::ScopedLock sl (lock);
+    heldNotes.clear();
+    sustainedNotes.clear();
+    sustainPedalDown = false;
+    lastMidiNote = -1;
+    lastNoteFrequency = 0.0f;
 }

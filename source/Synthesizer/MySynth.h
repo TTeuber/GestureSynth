@@ -18,6 +18,8 @@ public:
 
     void noteOn (int midiChannel, int midiNoteNumber, float velocity) override;
     void noteOff (int midiChannel, int midiNoteNumber, float velocity, bool allowTailOff) override;
+    void handleSustainPedal (int midiChannel, bool isDown) override;
+    void allNotesOff (int midiChannel, bool allowTailOff) override;
 
     void updateParameters (const TempoInfo& tempoInfo);
     void setVoiceCount (int count);
@@ -96,6 +98,8 @@ private:
     int lastMidiNote = -1;
     float lastNoteFrequency = 0.0f;
     std::vector<int> heldNotes;
+    std::vector<int> sustainedNotes; // notes whose mono noteOff was deferred by CC64
+    bool sustainPedalDown = false;
     MySynthVoice* monoVoice = nullptr;
     bool monoMode = false;
     bool legatoMode = false;

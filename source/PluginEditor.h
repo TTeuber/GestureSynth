@@ -44,6 +44,20 @@ public:
 };
 
 //==============================================================================
+class RedBorderButton final : public juce::TextButton
+{
+public:
+    using juce::TextButton::TextButton;
+
+    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
+    {
+        juce::TextButton::paintButton (g, shouldDrawButtonAsHighlighted, shouldDrawButtonAsDown);
+        g.setColour (juce::Colour (0xffd03030));
+        g.drawRoundedRectangle (getLocalBounds().toFloat().reduced (0.75f), 6.0f, 1.5f);
+    }
+};
+
+//==============================================================================
 class PluginEditor final : public juce::AudioProcessorEditor,
                            public juce::MidiKeyboardStateListener,
                            public ModulationModeState::Listener,
@@ -96,6 +110,7 @@ private:
     juce::TextButton prevPresetButton { "<" };
     juce::TextButton presetButton { "Presets" };
     juce::TextButton nextPresetButton { ">" };
+    RedBorderButton panicButton { "Panic" };
 
     void loadPresetByFile (const juce::File& file);
     void navigatePreset (int direction);

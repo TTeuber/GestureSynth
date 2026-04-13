@@ -90,6 +90,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     contentWrapper.addAndMakeVisible (nextPresetButton);
     nextPresetButton.setAlwaysOnTop (true);
 
+    panicButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
+    panicButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
+    panicButton.setTooltip ("Silence all voices and reset MIDI state");
+    panicButton.onClick = [this] { processorRef.getSynth().allNotesOff (0, false); };
+    persistentPanel.addAndMakeVisible (panicButton);
+
     persistentPanel.addAndMakeVisible (keyVelComponent);
     persistentPanel.addAndMakeVisible (lfoComponent);
     persistentPanel.addAndMakeVisible (adsrGraph);
@@ -282,6 +288,9 @@ void PluginEditor::resized()
     voiceCountControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
     volumeControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
     portamentoBottomControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
+
+    constexpr int panicButtonWidth = 80;
+    panicButton.setBounds (controlRow.removeFromRight (panicButtonWidth).reduced (2, 2));
 
     // Keyboard row
     constexpr int keyboardRowHeight = 160;
