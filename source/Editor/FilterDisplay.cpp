@@ -103,41 +103,14 @@ void FilterDisplay::mouseDown (const juce::MouseEvent& e)
     if (inlineEditor.consumePendingMouseDown())
         return;
 
-    if (inlineEditor.isEditing() || e.getNumberOfClicks() > 1)
+    if (inlineEditor.isEditing())
         return;
 
-    // Modulation context menu on right-click in mod mode
-    if (e.mods.isRightButtonDown()
-        && modModeState != nullptr && modModeState->isModulationMode()
-        && filterEnabled)
-    {
-        auto sourceID = modModeState->getTargetSourceID();
-        std::vector<ModulationContextMenu::ParamInfo> entries;
-        if (modModeState->findSlotIndex (sourceID, ParamIDs::filterFrequency) >= 0)
-            entries.push_back ({ cutoffParam->getName (15), sourceID, ParamIDs::filterFrequency });
-        if (modModeState->findSlotIndex (sourceID, ParamIDs::filterResonance) >= 0)
-            entries.push_back ({ resonanceParam->getName (15), sourceID, ParamIDs::filterResonance });
-        if (!entries.empty())
-        {
-            showModulationContextMenu (this, modModeState, std::move (entries), e.getScreenPosition());
-            return;
-        }
-    }
+    if (e.mods.isPopupMenu())
+        return;
 
-    if (e.mods.isRightButtonDown())
-    {
-        auto* filterOnParam = apvts.getParameter (ParamIDs::filterOn);
-        if (filterOnParam != nullptr)
-        {
-            if (undoManager != nullptr)
-                undoManager->beginNewTransaction();
-            filterOnParam->beginChangeGesture();
-            filterOnParam->setValueNotifyingHost (!filterEnabled);
-            filterOnParam->endChangeGesture();
-
-            repaint();
-        }
-    }
+    if (e.getNumberOfClicks() > 1)
+        return;
 
     // Modulation mode handling
     if (modModeState != nullptr && modModeState->isModulationMode())
@@ -309,9 +282,38 @@ void FilterDisplay::mouseDrag (const juce::MouseEvent& e)
 }
 void FilterDisplay::mouseUp (const juce::MouseEvent& e)
 {
-    juce::ignoreUnused (e);
     if (inlineEditor.isEditing())
         return;
+
+    if (e.mods.isPopupMenu() && e.mouseWasClicked() && getLocalBounds().contains (e.getPosition()))
+    {
+        if (modModeState != nullptr && modModeState->isModulationMode() && filterEnabled)
+        {
+            auto sourceID = modModeState->getTargetSourceID();
+            std::vector<ModulationContextMenu::ParamInfo> entries;
+            if (modModeState->findSlotIndex (sourceID, ParamIDs::filterFrequency) >= 0)
+                entries.push_back ({ cutoffParam->getName (15), sourceID, ParamIDs::filterFrequency });
+            if (modModeState->findSlotIndex (sourceID, ParamIDs::filterResonance) >= 0)
+                entries.push_back ({ resonanceParam->getName (15), sourceID, ParamIDs::filterResonance });
+            if (!entries.empty())
+            {
+                showModulationContextMenu (this, modModeState, std::move (entries), e.getScreenPosition());
+                return;
+            }
+        }
+
+        auto* filterOnParam = apvts.getParameter (ParamIDs::filterOn);
+        if (filterOnParam != nullptr)
+        {
+            if (undoManager != nullptr)
+                undoManager->beginNewTransaction();
+            filterOnParam->beginChangeGesture();
+            filterOnParam->setValueNotifyingHost (!filterEnabled);
+            filterOnParam->endChangeGesture();
+            repaint();
+            return;
+        }
+    }
 
     if (isModDragging)
     {

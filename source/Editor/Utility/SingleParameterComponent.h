@@ -163,37 +163,14 @@ public:
         if (inlineEditor.consumePendingMouseDown())
             return;
 
-        if (inlineEditor.isEditing() || e.getNumberOfClicks() > 1)
+        if (inlineEditor.isEditing())
             return;
 
-        // Modulation context menu on right-click in mod mode
-        if (e.mods.isRightButtonDown()
-            && modModeState != nullptr && modModeState->isModulationMode()
-            && paramDestID.isNotEmpty() && isActive)
-        {
-            auto sourceID = modModeState->getTargetSourceID();
-            if (modModeState->findSlotIndex (sourceID, paramDestID) >= 0)
-            {
-                showModulationContextMenu (this, modModeState,
-                    { { param->getName (15), sourceID, paramDestID } }, e.getScreenPosition());
-            }
+        if (e.mods.isPopupMenu())
             return;
-        }
 
-        // Check if clicking the toggle button
-        if (activeParam != nullptr)
-        {
-            const auto toggleRect = getToggleBounds();
-            if (toggleRect.contains (e.getPosition()) || e.mods.isRightButtonDown())
-            {
-                if (undoManager != nullptr)
-                    undoManager->beginNewTransaction();
-                activeParam->beginChangeGesture();
-                activeParam->setValueNotifyingHost (isActive ? 0.0f : 1.0f);
-                activeParam->endChangeGesture();
-                return;
-            }
-        }
+        if (e.getNumberOfClicks() > 1)
+            return;
 
         // Modulation mode handling
         if (modModeState != nullptr && modModeState->isModulationMode())
@@ -291,10 +268,39 @@ public:
         param->setValueNotifyingHost (newParamValue);
     }
 
-    void mouseUp (const juce::MouseEvent&) override
+    void mouseUp (const juce::MouseEvent& e) override
     {
         if (inlineEditor.isEditing())
             return;
+
+        if (e.mods.isPopupMenu() && e.mouseWasClicked() && getLocalBounds().contains (e.getPosition()))
+        {
+            if (modModeState != nullptr && modModeState->isModulationMode()
+                && paramDestID.isNotEmpty() && isActive)
+            {
+                auto sourceID = modModeState->getTargetSourceID();
+                if (modModeState->findSlotIndex (sourceID, paramDestID) >= 0)
+                {
+                    showModulationContextMenu (this, modModeState,
+                        { { param->getName (15), sourceID, paramDestID } }, e.getScreenPosition());
+                    return;
+                }
+            }
+
+            if (activeParam != nullptr)
+            {
+                const auto toggleRect = getToggleBounds();
+                if (toggleRect.contains (e.getPosition()) || e.mods.isPopupMenu())
+                {
+                    if (undoManager != nullptr)
+                        undoManager->beginNewTransaction();
+                    activeParam->beginChangeGesture();
+                    activeParam->setValueNotifyingHost (isActive ? 0.0f : 1.0f);
+                    activeParam->endChangeGesture();
+                    return;
+                }
+        }
+        }
 
         if (isModDragging)
         {

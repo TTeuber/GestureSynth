@@ -89,37 +89,14 @@ void HPFDisplay::mouseDown (const juce::MouseEvent& e)
     if (inlineEditor.consumePendingMouseDown())
         return;
 
-    if (inlineEditor.isEditing() || e.getNumberOfClicks() > 1)
+    if (inlineEditor.isEditing())
         return;
 
-    // Modulation context menu on right-click in mod mode
-    if (e.mods.isRightButtonDown()
-        && modModeState != nullptr && modModeState->isModulationMode()
-        && hpfEnabled)
-    {
-        auto sourceID = modModeState->getTargetSourceID();
-        if (modModeState->findSlotIndex (sourceID, ParamIDs::hpfFrequency) >= 0)
-        {
-            showModulationContextMenu (this, modModeState,
-                { { cutoffParam->getName (15), sourceID, ParamIDs::hpfFrequency } },
-                e.getScreenPosition());
-            return;
-        }
-    }
+    if (e.mods.isPopupMenu())
+        return;
 
-    if (e.mods.isRightButtonDown())
-    {
-        auto* hpfOnParam = apvts.getParameter (ParamIDs::hpfOn);
-        if (hpfOnParam != nullptr)
-        {
-            if (undoManager != nullptr)
-                undoManager->beginNewTransaction();
-            hpfOnParam->beginChangeGesture();
-            hpfOnParam->setValueNotifyingHost (!hpfEnabled);
-            hpfOnParam->endChangeGesture();
-            repaint();
-        }
-    }
+    if (e.getNumberOfClicks() > 1)
+        return;
 
     // Modulation mode handling
     if (modModeState != nullptr && modModeState->isModulationMode())
@@ -198,9 +175,35 @@ void HPFDisplay::mouseDrag (const juce::MouseEvent& e)
 
 void HPFDisplay::mouseUp (const juce::MouseEvent& e)
 {
-    juce::ignoreUnused (e);
     if (inlineEditor.isEditing())
         return;
+
+    if (e.mods.isPopupMenu() && e.mouseWasClicked() && getLocalBounds().contains (e.getPosition()))
+    {
+        if (modModeState != nullptr && modModeState->isModulationMode() && hpfEnabled)
+        {
+            auto sourceID = modModeState->getTargetSourceID();
+            if (modModeState->findSlotIndex (sourceID, ParamIDs::hpfFrequency) >= 0)
+            {
+                showModulationContextMenu (this, modModeState,
+                    { { cutoffParam->getName (15), sourceID, ParamIDs::hpfFrequency } },
+                    e.getScreenPosition());
+                return;
+            }
+        }
+
+        auto* hpfOnParam = apvts.getParameter (ParamIDs::hpfOn);
+        if (hpfOnParam != nullptr)
+        {
+            if (undoManager != nullptr)
+                undoManager->beginNewTransaction();
+            hpfOnParam->beginChangeGesture();
+            hpfOnParam->setValueNotifyingHost (!hpfEnabled);
+            hpfOnParam->endChangeGesture();
+            repaint();
+            return;
+        }
+    }
 
     if (isModDragging)
     {

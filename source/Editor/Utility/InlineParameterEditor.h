@@ -92,6 +92,7 @@ public:
     using CancelCallback = std::function<void()>;
 
     explicit InlineParameterEditor (juce::Component& owner)
+        : owner (owner)
     {
         editor.setColour (juce::TextEditor::backgroundColourId, SECONDARY_COLOR);
         editor.setColour (juce::TextEditor::textColourId, TEXT_COLOR);
@@ -104,8 +105,8 @@ public:
         editor.onEscapeKey = [this] { cancel(); };
         editor.onFocusLost = [this] { commitOnFocusLost(); };
         editor.onTextChange = [this] { textChanged = true; };
+        owner.addChildComponent (editor);
         editor.setVisible (false);
-        owner.addAndMakeVisible (editor);
     }
 
     void beginEdit (juce::Rectangle<int> bounds,
@@ -176,14 +177,17 @@ private:
         if (! isEditing() || hidingEditor)
             return;
 
+        const auto shouldConsumeDismissClick = owner.isMouseOver (true)
+            && juce::ModifierKeys::currentModifiers.isAnyMouseButtonDown();
+
         if (textChanged && editor.getText() != initialText)
         {
-            consumeNextMouseDown = true;
+            consumeNextMouseDown = shouldConsumeDismissClick;
             commit();
         }
         else
         {
-            consumeNextMouseDown = true;
+            consumeNextMouseDown = shouldConsumeDismissClick;
             cancel();
         }
     }
@@ -196,6 +200,7 @@ private:
         textChanged = false;
     }
 
+    juce::Component& owner;
     juce::TextEditor editor;
     CommitCallback commitCallback;
     CancelCallback cancelCallback;

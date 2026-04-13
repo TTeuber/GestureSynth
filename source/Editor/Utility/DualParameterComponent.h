@@ -156,39 +156,14 @@ public:
         if (inlineEditor.consumePendingMouseDown())
             return;
 
-        if (inlineEditor.isEditing() || e.getNumberOfClicks() > 1)
+        if (inlineEditor.isEditing())
             return;
 
-        // Modulation context menu on right-click in mod mode
-        if (e.mods.isRightButtonDown()
-            && modModeState != nullptr && modModeState->isModulationMode()
-            && isActive)
-        {
-            auto sourceID = modModeState->getTargetSourceID();
-            std::vector<ModulationContextMenu::ParamInfo> entries;
-
-            if (param1DestID.isNotEmpty() && modModeState->findSlotIndex (sourceID, param1DestID) >= 0)
-                entries.push_back ({ param1->getName (15), sourceID, param1DestID });
-            if (param2DestID.isNotEmpty() && modModeState->findSlotIndex (sourceID, param2DestID) >= 0)
-                entries.push_back ({ param2->getName (15), sourceID, param2DestID });
-
-            if (!entries.empty())
-            {
-                showModulationContextMenu (this, modModeState, std::move (entries), e.getScreenPosition());
-                return;
-            }
-        }
-
-        // Toggle active state on right-click
-        if (activeParam != nullptr && e.mods.isRightButtonDown())
-        {
-            if (undoManager != nullptr)
-                undoManager->beginNewTransaction();
-            activeParam->beginChangeGesture();
-            activeParam->setValueNotifyingHost (isActive ? 0.0f : 1.0f);
-            activeParam->endChangeGesture();
+        if (e.mods.isPopupMenu())
             return;
-        }
+
+        if (e.getNumberOfClicks() > 1)
+            return;
 
         // Modulation mode handling
         if (modModeState != nullptr && modModeState->isModulationMode() && !e.mods.isShiftDown())
@@ -349,10 +324,40 @@ public:
         }
     }
 
-    void mouseUp (const juce::MouseEvent&) override
+    void mouseUp (const juce::MouseEvent& e) override
     {
         if (inlineEditor.isEditing())
             return;
+
+        if (e.mods.isPopupMenu() && e.mouseWasClicked() && getLocalBounds().contains (e.getPosition()))
+        {
+            if (modModeState != nullptr && modModeState->isModulationMode() && isActive)
+            {
+                auto sourceID = modModeState->getTargetSourceID();
+                std::vector<ModulationContextMenu::ParamInfo> entries;
+
+                if (param1DestID.isNotEmpty() && modModeState->findSlotIndex (sourceID, param1DestID) >= 0)
+                    entries.push_back ({ param1->getName (15), sourceID, param1DestID });
+                if (param2DestID.isNotEmpty() && modModeState->findSlotIndex (sourceID, param2DestID) >= 0)
+                    entries.push_back ({ param2->getName (15), sourceID, param2DestID });
+
+                if (!entries.empty())
+                {
+                    showModulationContextMenu (this, modModeState, std::move (entries), e.getScreenPosition());
+                    return;
+                }
+            }
+
+            if (activeParam != nullptr)
+            {
+                if (undoManager != nullptr)
+                    undoManager->beginNewTransaction();
+                activeParam->beginChangeGesture();
+                activeParam->setValueNotifyingHost (isActive ? 0.0f : 1.0f);
+                activeParam->endChangeGesture();
+                return;
+            }
+        }
 
         if (isModDragging)
         {
