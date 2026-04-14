@@ -148,7 +148,8 @@ public:
 
     void mouseEnter (const juce::MouseEvent&) override
     {
-        setMouseCursor (juce::MouseCursor::UpDownResizeCursor);
+        if (! inlineEditor.isEditing())
+            setMouseCursor (juce::MouseCursor::UpDownResizeCursor);
         hoverAnimator.setHovered (true);
     }
 
@@ -160,9 +161,6 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
-        if (inlineEditor.consumePendingMouseDown())
-            return;
-
         if (inlineEditor.isEditing())
             return;
 
@@ -201,17 +199,13 @@ public:
         if (!isActive)
             return;
 
-        // Store initial mouse position and parameter value for drag
+        // Store initial mouse position and parameter value for drag.
+        // Defer beginChangeGesture until the user actually drags, so a
+        // double-click doesn't leave an empty undo transaction behind.
         mouseDownY = e.y;
         initialParamValue = paramValue;
-
-        if (undoManager != nullptr)
-            undoManager->beginNewTransaction();
-        param->beginChangeGesture();
-        if (gestureCount != nullptr)
-            ++(*gestureCount);
-
         isDragging = true;
+        dragGestureStarted = false;
     }
 
     void mouseDoubleClick (const juce::MouseEvent& e) override
@@ -229,6 +223,7 @@ public:
         if (initialText.isEmpty())
             return;
 
+        setMouseCursor (juce::MouseCursor::NormalCursor);
         inlineEditor.beginEdit (getLabelEditBounds().reduced (2),
             initialText,
             [this] (const juce::String& text)
@@ -256,6 +251,16 @@ public:
 
         if (!isDragging || !isActive)
             return;
+
+        if (! dragGestureStarted)
+        {
+            if (undoManager != nullptr)
+                undoManager->beginNewTransaction();
+            param->beginChangeGesture();
+            if (gestureCount != nullptr)
+                ++(*gestureCount);
+            dragGestureStarted = true;
+        }
 
         const auto bounds = getLocalBounds().withTrimmedTop (static_cast<int> (Style::labelHeight) + 4);
 
@@ -299,7 +304,7 @@ public:
                     activeParam->endChangeGesture();
                     return;
                 }
-        }
+            }
         }
 
         if (isModDragging)
@@ -311,11 +316,15 @@ public:
         }
         if (isDragging)
         {
-            param->endChangeGesture();
-            if (gestureCount != nullptr)
-                --(*gestureCount);
+            if (dragGestureStarted)
+            {
+                param->endChangeGesture();
+                if (gestureCount != nullptr)
+                    --(*gestureCount);
+            }
         }
         isDragging = false;
+        dragGestureStarted = false;
     }
 
 protected:
@@ -507,6 +516,7 @@ private:
 
     // Mouse drag tracking
     bool isDragging = false;
+    bool dragGestureStarted = false;
     bool isModDragging = false;
     int mouseDownY = 0;
     float initialParamValue = 0.0f;

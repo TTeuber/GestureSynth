@@ -87,6 +87,7 @@ private:
 
     void drawParameterValues (juce::Graphics& g) const;
     juce::Rectangle<int> getValueLabelBounds() const;
+    juce::String getCutoffDisplayText() const;
     juce::String getCutoffEditText() const;
     void beginCutoffEdit();
     void commitCutoffText (const juce::String& text);

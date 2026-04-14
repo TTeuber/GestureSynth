@@ -100,9 +100,6 @@ void FilterDisplay::resized()
 
 void FilterDisplay::mouseDown (const juce::MouseEvent& e)
 {
-    if (inlineEditor.consumePendingMouseDown())
-        return;
-
     if (inlineEditor.isEditing())
         return;
 
@@ -497,7 +494,7 @@ juce::Rectangle<int> FilterDisplay::getResonanceLabelBounds() const
     return { getWidth() / 2 + 5, 5, getWidth() / 2 - 10, 20 };
 }
 
-juce::String FilterDisplay::getCutoffEditText() const
+juce::String FilterDisplay::getCutoffDisplayText() const
 {
     juce::String freqText;
     if (cutoffFrequency < 1000.0f)
@@ -505,12 +502,22 @@ juce::String FilterDisplay::getCutoffEditText() const
     else
         freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
 
-    return InlineParameterEditUtils::extractEditableText ("Frequency: " + freqText);
+    return "Frequency: " + freqText;
+}
+
+juce::String FilterDisplay::getResonanceDisplayText() const
+{
+    return "Resonance: " + juce::String (resonance, 2);
+}
+
+juce::String FilterDisplay::getCutoffEditText() const
+{
+    return InlineParameterEditUtils::extractEditableText (getCutoffDisplayText());
 }
 
 juce::String FilterDisplay::getResonanceEditText() const
 {
-    return InlineParameterEditUtils::extractEditableText ("Resonance: " + juce::String (resonance, 2));
+    return InlineParameterEditUtils::extractEditableText (getResonanceDisplayText());
 }
 
 void FilterDisplay::beginParameterEdit (juce::RangedAudioParameter* targetParam,
@@ -541,8 +548,7 @@ void FilterDisplay::commitParameterText (juce::RangedAudioParameter* targetParam
     targetParam->beginChangeGesture();
     if (gestureCount != nullptr)
         ++(*gestureCount);
-    auto displayText = targetParam == cutoffParam ? juce::String ("Frequency: ") + getCutoffEditText()
-                                                  : juce::String ("Resonance: ") + getResonanceEditText();
+    auto displayText = targetParam == cutoffParam ? getCutoffDisplayText() : getResonanceDisplayText();
     targetParam->setValueNotifyingHost (InlineParameterEditUtils::parseNormalizedValue (targetParam, text, displayText));
     targetParam->endChangeGesture();
     if (gestureCount != nullptr)

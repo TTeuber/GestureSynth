@@ -120,6 +120,18 @@ protected:
         return formatParameterText (param2, param2Value, juce::StringRef ("Chrs Rate: ") + juce::String (param2Value, param2Value == 1 ? 0 : 2) + juce::StringRef ("Hz"));
     }
 
+    // The display shows the normalized value directly as "Hz", so parse the
+    // typed number straight into normalized [0,1] — bypassing the param's skewed
+    // convertTo0to1 that would otherwise re-map it.
+    float parseParam2EditedText (const juce::String& text) const override
+    {
+        auto [numericText, suffix] = InlineParameterEditUtils::splitNumericAndSuffix (
+            InlineParameterEditUtils::extractEditableText (text));
+        if (numericText.isEmpty())
+            return juce::jlimit (0.0f, 1.0f, param2->getValueForText (text));
+        return juce::jlimit (0.0f, 1.0f, numericText.getFloatValue());
+    }
+
 private:
     static void drawSineWave (const juce::Graphics& g,
         const juce::Rectangle<int>& bounds,

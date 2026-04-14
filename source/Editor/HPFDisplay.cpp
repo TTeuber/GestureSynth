@@ -86,9 +86,6 @@ void HPFDisplay::resized()
 
 void HPFDisplay::mouseDown (const juce::MouseEvent& e)
 {
-    if (inlineEditor.consumePendingMouseDown())
-        return;
-
     if (inlineEditor.isEditing())
         return;
 
@@ -340,7 +337,7 @@ juce::Rectangle<int> HPFDisplay::getValueLabelBounds() const
     return innerArea.removeFromTop (static_cast<int> (Style::labelHeight));
 }
 
-juce::String HPFDisplay::getCutoffEditText() const
+juce::String HPFDisplay::getCutoffDisplayText() const
 {
     juce::String freqText;
     if (cutoffFrequency < 1000.0f)
@@ -348,7 +345,12 @@ juce::String HPFDisplay::getCutoffEditText() const
     else
         freqText = juce::String (cutoffFrequency / 1000.0f, 1) + " kHz";
 
-    return InlineParameterEditUtils::extractEditableText ("HPF: " + freqText);
+    return "HPF: " + freqText;
+}
+
+juce::String HPFDisplay::getCutoffEditText() const
+{
+    return InlineParameterEditUtils::extractEditableText (getCutoffDisplayText());
 }
 
 void HPFDisplay::beginCutoffEdit()
@@ -374,7 +376,7 @@ void HPFDisplay::commitCutoffText (const juce::String& text)
     cutoffParam->beginChangeGesture();
     if (gestureCount != nullptr)
         ++(*gestureCount);
-    cutoffParam->setValueNotifyingHost (InlineParameterEditUtils::parseNormalizedValue (cutoffParam, text, "HPF: " + getCutoffEditText()));
+    cutoffParam->setValueNotifyingHost (InlineParameterEditUtils::parseNormalizedValue (cutoffParam, text, getCutoffDisplayText()));
     cutoffParam->endChangeGesture();
     if (gestureCount != nullptr)
         --(*gestureCount);

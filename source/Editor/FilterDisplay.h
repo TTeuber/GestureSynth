@@ -99,6 +99,8 @@ private:
     void drawParameterValues (juce::Graphics& g) const;
     juce::Rectangle<int> getFrequencyLabelBounds() const;
     juce::Rectangle<int> getResonanceLabelBounds() const;
+    juce::String getCutoffDisplayText() const;
+    juce::String getResonanceDisplayText() const;
     juce::String getCutoffEditText() const;
     juce::String getResonanceEditText() const;
     void beginParameterEdit (juce::RangedAudioParameter* targetParam,

@@ -16,7 +16,7 @@ namespace InlineParameterEditUtils
 inline juce::String extractEditableText (const juce::String& displayText)
 {
     auto trimmed = displayText.trim();
-    auto colonIndex = trimmed.indexOfChar (':');
+    auto colonIndex = trimmed.lastIndexOfChar (':');
 
     if (colonIndex >= 0)
     {
@@ -66,19 +66,23 @@ inline float parseNormalizedValue (juce::RangedAudioParameter* param,
     if (numericText.isEmpty())
         return juce::jlimit (0.0f, 1.0f, param->getValueForText (valueText));
 
-    auto effectiveSuffix = suffix.isNotEmpty() ? suffix : referenceSuffix;
     auto numericValue = numericText.getFloatValue();
     auto normalizedRange = param->getNormalisableRange();
-    auto lowerSuffix = effectiveSuffix.toLowerCase().removeCharacters (" ");
+    auto lowerSuffix = suffix.toLowerCase().removeCharacters (" ");
+    auto lowerReferenceSuffix = referenceSuffix.toLowerCase().removeCharacters (" ");
 
-    if (lowerSuffix.containsChar ('%'))
+    // When the user omits the suffix, inherit it from the reference display —
+    // a bare number typed into a field showing "ms" should be interpreted as ms.
+    auto effectiveSuffix = lowerSuffix.isEmpty() ? lowerReferenceSuffix : lowerSuffix;
+
+    if (effectiveSuffix.containsChar ('%'))
         return juce::jlimit (0.0f, 1.0f, numericValue / 100.0f);
 
-    if (lowerSuffix == "cents" || lowerSuffix == "cent")
+    if (effectiveSuffix == "cents" || effectiveSuffix == "cent")
         numericValue /= 100.0f;
-    else if (lowerSuffix == "khz")
+    else if (effectiveSuffix == "khz")
         numericValue *= 1000.0f;
-    else if (lowerSuffix == "ms" && normalizedRange.end <= 1.0f)
+    else if (effectiveSuffix == "ms" && normalizedRange.end <= 1.0f)
         numericValue /= 1000.0f;
 
     return juce::jlimit (0.0f, 1.0f, param->convertTo0to1 (numericValue));
@@ -119,7 +123,6 @@ public:
         CommitCallback onCommit,
         CancelCallback onCancel = {})
     {
-        consumeNextMouseDown = false;
         commitCallback = std::move (onCommit);
         cancelCallback = std::move (onCancel);
         initialText = std::move (initialValue);
@@ -154,11 +157,6 @@ public:
         return editor.isVisible();
     }
 
-    bool consumePendingMouseDown()
-    {
-        return std::exchange (consumeNextMouseDown, false);
-    }
-
 private:
     void mouseDown (const juce::MouseEvent& e) override
     {
@@ -169,8 +167,10 @@ private:
         if (originalComponent == &editor || editor.isParentOf (originalComponent))
             return;
 
-        consumeNextMouseDown = (e.eventComponent == &owner || owner.isParentOf (e.eventComponent));
-
+        // Owner's own mouseDown fires before this global listener (see
+        // Component::internalMouseDown), and its isEditing() check already
+        // swallows the click — so we just commit/cancel here and do not need
+        // to flag any follow-up mouseDown for consumption.
         if (textChanged && editor.getText() != initialText)
             commit();
         else
@@ -200,19 +200,10 @@ private:
         if (! isEditing() || hidingEditor)
             return;
 
-        const auto shouldConsumeDismissClick = owner.isMouseOver (true)
-            && juce::ModifierKeys::currentModifiers.isAnyMouseButtonDown();
-
         if (textChanged && editor.getText() != initialText)
-        {
-            consumeNextMouseDown = shouldConsumeDismissClick;
             commit();
-        }
         else
-        {
-            consumeNextMouseDown = shouldConsumeDismissClick;
             cancel();
-        }
     }
 
     void clearCallbacks()
@@ -249,6 +240,5 @@ private:
     juce::String initialText;
     bool textChanged = false;
     bool hidingEditor = false;
-    bool consumeNextMouseDown = false;
     bool globalMouseListenerRegistered = false;
 };

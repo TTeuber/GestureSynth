@@ -153,9 +153,6 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
-        if (inlineEditor.consumePendingMouseDown())
-            return;
-
         if (inlineEditor.isEditing())
             return;
 
@@ -194,20 +191,16 @@ public:
         if (!isActive)
             return;
 
-        // Store initial mouse position and parameter values for drag
+        // Store initial mouse position and parameter values for drag.
+        // Defer beginChangeGesture until the user actually drags, so a
+        // double-click doesn't leave an empty undo transaction behind.
         mouseDownX = e.x;
         mouseDownY = e.y;
         initialParam1Value = param1Value;
         initialParam2Value = param2Value;
 
-        if (undoManager != nullptr)
-            undoManager->beginNewTransaction();
-        param1->beginChangeGesture();
-        param2->beginChangeGesture();
-        if (gestureCount != nullptr)
-            ++(*gestureCount);
-
         isDragging = true;
+        dragGestureStarted = false;
         param1Engaged = false;
         param2Engaged = false;
     }
@@ -312,6 +305,17 @@ public:
             initialParam2Value = param2Value;
         }
 
+        if ((param1Engaged || param2Engaged) && ! dragGestureStarted)
+        {
+            if (undoManager != nullptr)
+                undoManager->beginNewTransaction();
+            param1->beginChangeGesture();
+            param2->beginChangeGesture();
+            if (gestureCount != nullptr)
+                ++(*gestureCount);
+            dragGestureStarted = true;
+        }
+
         if (param1Engaged)
         {
             const float verticalDelta = (param1RefY - e.y) / (bounds.getHeight() - padding);
@@ -368,17 +372,22 @@ public:
         }
         if (isDragging)
         {
-            param1->endChangeGesture();
-            param2->endChangeGesture();
-            if (gestureCount != nullptr)
-                --(*gestureCount);
+            if (dragGestureStarted)
+            {
+                param1->endChangeGesture();
+                param2->endChangeGesture();
+                if (gestureCount != nullptr)
+                    --(*gestureCount);
+            }
         }
         isDragging = false;
+        dragGestureStarted = false;
     }
 
     void mouseEnter (const juce::MouseEvent&) override
     {
-        setMouseCursor (juce::MouseCursor::CrosshairCursor);
+        if (! inlineEditor.isEditing())
+            setMouseCursor (juce::MouseCursor::CrosshairCursor);
         hoverAnimator.setHovered (true);
     }
 
@@ -511,6 +520,7 @@ protected:
         if (initialText.isEmpty())
             return;
 
+        setMouseCursor (juce::MouseCursor::NormalCursor);
         inlineEditor.beginEdit (bounds.reduced (2), initialText,
             [this, targetParam] (const juce::String& text)
             {
@@ -593,6 +603,7 @@ private:
 
     // Mouse drag tracking
     bool isDragging = false;
+    bool dragGestureStarted = false;
     bool isModDragging = false;
     juce::String modDragSourceID;
     int mouseDownX = 0;
