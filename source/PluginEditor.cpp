@@ -42,7 +42,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     // Style the tab bar
     tabbedComponent.setLookAndFeel (&customLookAndFeel);
-    tabbedComponent.setTabBarDepth (30);
+    tabbedComponent.setTabBarDepth (38);
     tabbedComponent.setOutline (0);
 
     contentWrapper.addAndMakeVisible (tabbedComponent);
@@ -57,13 +57,13 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     persistentPanel.addAndMakeVisible (volumeControl);
     persistentPanel.addAndMakeVisible (portamentoBottomControl);
 
-    prevPresetButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
+    prevPresetButton.setColour (juce::TextButton::buttonColourId, TERTIARY_COLOR);
     prevPresetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
     prevPresetButton.onClick = [this] { navigatePreset (-1); };
     contentWrapper.addAndMakeVisible (prevPresetButton);
     prevPresetButton.setAlwaysOnTop (true);
 
-    presetButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
+    presetButton.setColour (juce::TextButton::buttonColourId, TERTIARY_COLOR);
     presetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
     presetButton.onClick = [this]
     {
@@ -84,11 +84,15 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     contentWrapper.addAndMakeVisible (presetButton);
     presetButton.setAlwaysOnTop (true);
 
-    nextPresetButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
+    nextPresetButton.setColour (juce::TextButton::buttonColourId, TERTIARY_COLOR);
     nextPresetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
     nextPresetButton.onClick = [this] { navigatePreset (1); };
     contentWrapper.addAndMakeVisible (nextPresetButton);
     nextPresetButton.setAlwaysOnTop (true);
+
+    menuButton.onClick = [] { /* TODO: menu items */ };
+    contentWrapper.addAndMakeVisible (menuButton);
+    menuButton.setAlwaysOnTop (true);
 
     panicButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
     panicButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
@@ -384,8 +388,8 @@ void PluginEditor::resized()
     auto tabBarBounds = tabBar.getBounds();
     // Preset navigation group: same width as one tab column (1/6)
     int presetGroupWidth = WIDTH / 6;
-    int presetGroupY = tabBarBounds.getY() + 2;
-    int presetGroupH = tabBarBounds.getHeight() - 4;
+    int presetGroupY = tabBarBounds.getY() + 8;
+    int presetGroupH = tabBarBounds.getHeight() - 16;
     int arrowWidth = presetGroupH;
     int nameWidth = presetGroupWidth - 2 * arrowWidth;
 
@@ -393,6 +397,7 @@ void PluginEditor::resized()
     presetButton.setBounds (tabBarRight + arrowWidth, presetGroupY, nameWidth, presetGroupH);
     nextPresetButton.setBounds (tabBarRight + arrowWidth + nameWidth, presetGroupY, arrowWidth, presetGroupH);
 
+    menuButton.setBounds (WIDTH - presetGroupH - 8 - Style::componentGap, presetGroupY, presetGroupH, presetGroupH);
 
     // Resize grip at physical bottom-right corner (not inside contentWrapper)
     resizeGrip->setBounds (getWidth() - 16, getHeight() - 16, 16, 16);

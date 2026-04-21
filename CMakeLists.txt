@@ -146,7 +146,7 @@ target_compile_definitions(SharedCode
     PRODUCT_NAME_WITHOUT_VERSION="Demosynth"
 
     # Developer preset save UI
-    $<$<BOOL:${SYNTHDEMO_DEV_MODE}>:SYNTHDEMO_DEV_MODE=1>
+    $<$<BOOL:${SYNTHDEMO_DEV_MODE}>:SYNTHDEMO_DEV_MODE=0>
 )
 
 # Link to any other modules you added (with juce_add_module) here!

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../Theme.h"
+#include "PaintHelpers.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 class CustomLookAndFeel : public juce::LookAndFeel_V4
@@ -21,9 +22,10 @@ public:
         setColour (juce::PopupMenu::highlightedTextColourId, TEXT_COLOR);
     }
 
-    void drawTabbedButtonBarBackground (juce::TabbedButtonBar&, juce::Graphics&) override
+    void drawTabbedButtonBarBackground (juce::TabbedButtonBar& bar, juce::Graphics& g) override
     {
-        // No-op — parent component already paints PRIMARY_COLOR
+        auto bounds = bar.getLocalBounds().toFloat().reduced ((float) Style::componentGap);
+        PaintHelpers::drawComponentBox (g, bounds);
     }
 
     void drawTabAreaBehindFrontButton (juce::TabbedButtonBar&, juce::Graphics&, int, int) override
@@ -34,10 +36,10 @@ public:
     void drawTabButton (juce::TabBarButton& button, juce::Graphics& g,
                         bool isMouseOver, bool /*isMouseDown*/) override
     {
-        auto area = button.getActiveArea().toFloat().reduced ((float) Style::componentGap, (float) Style::componentGap);
+        auto area = button.getActiveArea().toFloat().reduced (8.0f, 8.0f);
 
         // Background
-        auto bgColour = SECONDARY_COLOR;
+        auto bgColour = TERTIARY_COLOR;
         if (isMouseOver && ! button.isFrontTab())
             bgColour = bgColour.brighter (0.06f);
         g.setColour (bgColour);
@@ -46,7 +48,7 @@ public:
         // Selected border
         if (button.isFrontTab())
         {
-            g.setColour (TEXT_COLOR);
+            g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder / 2.0f));
             g.drawRoundedRectangle (area.reduced (0.5f), Style::radiusSmall, 1.5f);
         }
 

@@ -58,6 +58,35 @@ public:
 };
 
 //==============================================================================
+class HamburgerButton final : public juce::TextButton
+{
+public:
+    using juce::TextButton::TextButton;
+
+    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool /*shouldDrawButtonAsDown*/) override
+    {
+        auto bounds = getLocalBounds().toFloat().reduced (0.5f);
+        auto bg = TERTIARY_COLOR;
+        if (shouldDrawButtonAsHighlighted)
+            bg = bg.brighter (0.08f);
+        g.setColour (bg);
+        g.fillRoundedRectangle (bounds, Style::radiusSmall);
+
+        auto inner = bounds.reduced (bounds.getWidth() * 0.28f, bounds.getHeight() * 0.30f);
+        g.setColour (TEXT_COLOR);
+        float cx1 = inner.getX();
+        float cx2 = inner.getRight();
+        float thickness = juce::jmax (1.0f, inner.getHeight() * 0.12f);
+        for (int i = 0; i < 3; ++i)
+        {
+            float t = (float) i / 2.0f;
+            float y = inner.getY() + t * inner.getHeight();
+            g.drawLine (cx1, y, cx2, y, thickness);
+        }
+    }
+};
+
+//==============================================================================
 class PluginEditor final : public juce::AudioProcessorEditor,
                            public juce::MidiKeyboardStateListener,
                            public ModulationModeState::Listener,
@@ -110,6 +139,7 @@ private:
     juce::TextButton prevPresetButton { "<" };
     juce::TextButton presetButton { "Presets" };
     juce::TextButton nextPresetButton { ">" };
+    HamburgerButton menuButton;
     RedBorderButton panicButton { "Panic" };
 
     void loadPresetByFile (const juce::File& file);
