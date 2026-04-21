@@ -73,17 +73,45 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
 
     scrollContent.onPaintOverChildren = [this] (juce::Graphics& g)
     {
-        ConnectorPainting::drawHorizontalConnector (g,
+        ConnectorPainting::chorusComponentConnector (g,
             chorusMixComponent.getBounds(),
             chorusComponent.getBounds());
 
-        ConnectorPainting::drawVerticalConnector (g,
+        ConnectorPainting::oscComponentConnector (g,
             oscLevelComponent.getBounds(),
             waveformComponent.getBounds());
 
         ConnectorPainting::drawHorizontalConnectorSimple (g,
             waveformComponent.getBounds(),
             detuneComponent.getBounds());
+
+        ConnectorPainting::drawHorizontalConnectorSimple (g,
+            delayComponent.getBounds(),
+            delayModComponent.getBounds());
+
+        ConnectorPainting::drawHorizontalConnectorSimple (g,
+            delayModComponent.getBounds(),
+            delayRateComponent.getBounds());
+
+        ConnectorPainting::drawGridConnector (g,
+            delayRateComponent.getBounds(),
+            delaySyncToggle.getBounds(),
+            delayHighpassComponent.getBounds(),
+            delayLowpassComponent.getBounds());
+
+        ConnectorPainting::drawHorizontalConnectorSimple (g,
+            reverbComponent.getBounds(),
+            reverbModComponent.getBounds());
+
+        ConnectorPainting::drawHorizontalConnectorSimple (g,
+            reverbModComponent.getBounds(),
+            reverbSizeComponent.getBounds());
+
+        ConnectorPainting::drawGridConnector (g,
+            reverbSizeComponent.getBounds(),
+            reverbPreDelayComponent.getBounds(),
+            reverbBassMultComponent.getBounds(),
+            reverbDampingComponent.getBounds());
     };
 }
 

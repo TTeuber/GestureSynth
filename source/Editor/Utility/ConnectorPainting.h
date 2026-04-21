@@ -8,7 +8,7 @@ namespace ConnectorPainting
     // Draws a horizontal connector bridging a smaller source component (on the left)
     // to a taller target component (on the right), with a fillet at the height mismatch
     // and a pill-shaped hole through the bridge.
-    inline void drawHorizontalConnector (juce::Graphics& g,
+    inline void chorusComponentConnector (juce::Graphics& g,
                                           juce::Rectangle<int> source,
                                           juce::Rectangle<int> target)
     {
@@ -81,7 +81,7 @@ namespace ConnectorPainting
     // Draws a vertical connector bridging a narrower source component (above)
     // to a wider target component (below), with a fillet at the width mismatch
     // (top-right corner, curving up and to the right).
-    inline void drawVerticalConnector (juce::Graphics& g,
+    inline void oscComponentConnector (juce::Graphics& g,
                                         juce::Rectangle<int> source,
                                         juce::Rectangle<int> target)
     {
@@ -197,5 +197,92 @@ namespace ConnectorPainting
 
         g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
         g.drawRoundedRectangle (pillX, pillY, pillW, pillH, pillRadius, borderWidth);
+    }
+
+    // Draws a "window mullion" connector across a 2x2 grid of equal-size components:
+    // four bridges (two horizontal across rows, two vertical down columns) each with
+    // its own pill hole. No corner fillets — the bridges occupy disjoint regions.
+    inline void drawGridConnector (juce::Graphics& g,
+                                   juce::Rectangle<int> topLeft,
+                                   juce::Rectangle<int> topRight,
+                                   juce::Rectangle<int> bottomLeft,
+                                   juce::Rectangle<int> bottomRight)
+    {
+        constexpr float radius = Style::radiusMedium;
+        constexpr float borderAlpha = Style::alphaBorder;
+        constexpr float borderWidth = 1.0f;
+        constexpr int gap = Style::componentGap * 2;
+        constexpr int pillPadding = 10;
+
+        auto drawHorizontalBridge = [&] (juce::Rectangle<int> left, juce::Rectangle<int> right)
+        {
+            const int blockX = left.getRight() - static_cast<int> (radius);
+            const int blockY = left.getY();
+            const int blockW = (right.getX() - left.getRight()) + static_cast<int> (radius) * 2;
+            const int blockH = left.getHeight();
+
+            g.setColour (SECONDARY_COLOR);
+            g.fillRect (blockX, blockY, blockW, blockH);
+
+            g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+            g.fillRect (static_cast<float> (blockX),
+                        static_cast<float> (blockY),
+                        static_cast<float> (blockW),
+                        borderWidth);
+            g.fillRect (static_cast<float> (blockX),
+                        static_cast<float> (left.getBottom()) - borderWidth,
+                        static_cast<float> (blockW),
+                        borderWidth);
+
+            const float pillX = static_cast<float> (left.getRight());
+            const float pillY = static_cast<float> (left.getY() + pillPadding);
+            const float pillW = static_cast<float> (gap);
+            const float pillH = static_cast<float> (left.getHeight() - pillPadding * 2);
+            const float pillRadius = pillW / 2.0f;
+
+            g.setColour (PRIMARY_COLOR);
+            g.fillRoundedRectangle (pillX, pillY, pillW, pillH, pillRadius);
+
+            g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+            g.drawRoundedRectangle (pillX, pillY, pillW, pillH, pillRadius, borderWidth);
+        };
+
+        auto drawVerticalBridge = [&] (juce::Rectangle<int> top, juce::Rectangle<int> bottom)
+        {
+            const int blockX = top.getX();
+            const int blockY = top.getBottom() - static_cast<int> (radius);
+            const int blockW = top.getWidth();
+            const int blockH = (bottom.getY() - top.getBottom()) + static_cast<int> (radius) * 2;
+
+            g.setColour (SECONDARY_COLOR);
+            g.fillRect (blockX, blockY, blockW, blockH);
+
+            g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+            g.fillRect (static_cast<float> (blockX),
+                        static_cast<float> (blockY),
+                        borderWidth,
+                        static_cast<float> (blockH));
+            g.fillRect (static_cast<float> (top.getRight()) - borderWidth,
+                        static_cast<float> (blockY),
+                        borderWidth,
+                        static_cast<float> (blockH));
+
+            const float pillX = static_cast<float> (top.getX() + pillPadding);
+            const float pillY = static_cast<float> (top.getBottom());
+            const float pillW = static_cast<float> (top.getWidth() - pillPadding * 2);
+            const float pillH = static_cast<float> (gap);
+            const float pillRadius = pillH / 2.0f;
+
+            g.setColour (PRIMARY_COLOR);
+            g.fillRoundedRectangle (pillX, pillY, pillW, pillH, pillRadius);
+
+            g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+            g.drawRoundedRectangle (pillX, pillY, pillW, pillH, pillRadius, borderWidth);
+        };
+
+        drawHorizontalBridge (topLeft, topRight);
+        drawHorizontalBridge (bottomLeft, bottomRight);
+        drawVerticalBridge (topLeft, bottomLeft);
+        drawVerticalBridge (topRight, bottomRight);
     }
 }
