@@ -284,5 +284,26 @@ namespace ConnectorPainting
         drawHorizontalBridge (bottomLeft, bottomRight);
         drawVerticalBridge (topLeft, bottomLeft);
         drawVerticalBridge (topRight, bottomRight);
+
+        // Center junction: fill the square where the four bridges meet, with a
+        // circular hole whose radius matches the pill ends.
+        const int centerX = topLeft.getRight();
+        const int centerY = topLeft.getBottom();
+        const int centerW = topRight.getX() - topLeft.getRight();
+        const int centerH = bottomLeft.getY() - topLeft.getBottom();
+
+        g.setColour (SECONDARY_COLOR);
+        g.fillRect (centerX, centerY, centerW, centerH);
+
+        const float circleRadius = static_cast<float> (gap) / 2.0f;
+        const float circleX = static_cast<float> (centerX) + static_cast<float> (centerW) / 2.0f - circleRadius;
+        const float circleY = static_cast<float> (centerY) + static_cast<float> (centerH) / 2.0f - circleRadius;
+        const float circleDiameter = circleRadius * 2.0f;
+
+        g.setColour (PRIMARY_COLOR);
+        g.fillEllipse (circleX, circleY, circleDiameter, circleDiameter);
+
+        g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+        g.drawEllipse (circleX, circleY, circleDiameter, circleDiameter, borderWidth);
     }
 }
