@@ -38,12 +38,10 @@ public:
 
         g.setColour (TERTIARY_COLOR);
         g.fillRoundedRectangle (trackArea, Style::radiusMedium);
-        g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
-        g.drawRoundedRectangle (trackArea, Style::radiusMedium, 1.0f);
 
         // Thumb
         float thumbHeight = trackArea.getHeight() * 0.15f;
-        float thumbInset = 2.0f;
+        float thumbInset = 1.0f;
         float thumbY = trackArea.getY() + (1.0f - currentValue) * (trackArea.getHeight() - thumbHeight);
         auto thumbArea = juce::Rectangle<float> (
             trackArea.getX() + thumbInset,
@@ -146,19 +144,17 @@ public:
 
         g.setColour (TERTIARY_COLOR);
         g.fillRoundedRectangle (trackArea, Style::radiusMedium);
-        g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
-        g.drawRoundedRectangle (trackArea, Style::radiusMedium, 1.0f);
 
         // Center line
         float centerY = trackArea.getCentreY();
-        g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
+        g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder / 2.0f));
         g.drawLine (trackArea.getX() + 2, centerY, trackArea.getRight() - 2, centerY, 1.0f);
 
         // Thumb — map 0-16383 to position (0=bottom, 16383=top, 8192=center)
         float normalised = static_cast<float> (currentPitchValue) / 16383.0f;
         float thumbHeight = trackArea.getHeight() * 0.15f;
         float thumbY = trackArea.getY() + (1.0f - normalised) * (trackArea.getHeight() - thumbHeight);
-        float thumbInset = 2.0f;
+        float thumbInset = 1.0f;
         auto thumbArea = juce::Rectangle<float> (
             trackArea.getX() + thumbInset,
             thumbY,
