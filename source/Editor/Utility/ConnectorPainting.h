@@ -357,17 +357,12 @@ namespace ConnectorPainting
                           static_cast<float> (gap),
                           static_cast<float> (mod.getHeight() - innerBoxInset * 2));
 
-        // grid top-left <-> top-right (vertical pill between columns, top row)
+        // grid left column <-> right column (single tall vertical pill spanning
+        // both rows, matching the innerBoxInset used by big<->mod / mod<->grid)
         drawVerticalPill (static_cast<float> (gridTL.getRight()),
-                          static_cast<float> (gridTL.getY() + gridPillPadding),
+                          static_cast<float> (gridTL.getY() + innerBoxInset),
                           static_cast<float> (gap),
-                          static_cast<float> (gridTL.getHeight() - gridPillPadding * 2));
-
-        // grid bottom-left <-> bottom-right (vertical pill between columns, bottom row)
-        drawVerticalPill (static_cast<float> (gridBL.getRight()),
-                          static_cast<float> (gridBL.getY() + gridPillPadding),
-                          static_cast<float> (gap),
-                          static_cast<float> (gridBL.getHeight() - gridPillPadding * 2));
+                          static_cast<float> ((gridBL.getBottom() - gridTL.getY()) - innerBoxInset * 2));
 
         // grid top-left <-> bottom-left (horizontal pill between rows, left column)
         drawHorizontalPill (static_cast<float> (gridTL.getX() + gridPillPadding),
