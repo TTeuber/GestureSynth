@@ -20,6 +20,19 @@ class SingleParameterComponent : public juce::Component,
                                  private juce::AudioProcessorParameter::Listener
 {
 public:
+    enum class LabelPosition { Top, Bottom };
+
+    void setLabelPosition (LabelPosition p)
+    {
+        if (labelPosition != p)
+        {
+            labelPosition = p;
+            repaint();
+        }
+    }
+
+    LabelPosition getLabelPosition() const { return labelPosition; }
+
     explicit SingleParameterComponent (juce::RangedAudioParameter* param,
         juce::AudioParameterBool* activeParam = nullptr,
         const UIContext& ctx = {},
@@ -67,7 +80,7 @@ public:
         auto outerBounds = getLocalBounds();
         PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
 
-        auto topLabelArea = getTopLabelBounds();
+        auto labelArea = getLabelBounds();
         auto innerBoxBounds = getInnerBoxBounds();
 
         // Inner box (extends to bottom)
@@ -94,7 +107,7 @@ public:
         {
             g.setOpacity (isActive ? (1.0f - hoverAnimator.getAlpha()) : Style::alphaInactive * (1.0f - hoverAnimator.getAlpha()));
             g.drawText (param->getName (15),
-                topLabelArea,
+                labelArea,
                 juce::Justification::centred,
                 true);
         }
@@ -104,7 +117,7 @@ public:
         {
             g.setOpacity (isActive ? hoverAnimator.getAlpha() : Style::alphaInactive * hoverAnimator.getAlpha());
             g.drawText (getParameterText(),
-                topLabelArea,
+                labelArea,
                 juce::Justification::centred,
                 true);
         }
@@ -240,7 +253,7 @@ public:
         if (isModDragging && modModeState != nullptr)
         {
             auto sourceID = modModeState->getTargetSourceID();
-            const auto bounds = getLocalBounds().withTrimmedTop (static_cast<int> (Style::labelHeight) + 4);
+            const auto bounds = getInnerBoxBounds();
 
             float verticalDelta = (mouseDownY - e.y) / (bounds.getHeight() - padding) / 2.0f;
             float newDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialDepth + verticalDelta);
@@ -335,6 +348,9 @@ protected:
     // Active state
     bool isActive = true;
 
+    // Label position (top or bottom of component)
+    LabelPosition labelPosition = LabelPosition::Top;
+
     // Hover animation
     HoverAnimator hoverAnimator { *this };
     InlineParameterEditor inlineEditor { *this };
@@ -420,16 +436,23 @@ protected:
         return result;
     }
 
-    juce::Rectangle<int> getTopLabelBounds() const
+    juce::Rectangle<int> getLabelBounds() const
     {
         auto innerArea = getLocalBounds().reduced (kOuterPad);
-        return innerArea.removeFromTop (static_cast<int> (Style::labelHeight));
+        const int lh = static_cast<int> (Style::labelHeight);
+        return labelPosition == LabelPosition::Top
+             ? innerArea.removeFromTop (lh)
+             : innerArea.removeFromBottom (lh);
     }
 
     juce::Rectangle<int> getInnerBoxBounds() const
     {
         auto innerArea = getLocalBounds().reduced (kOuterPad);
-        innerArea.removeFromTop (static_cast<int> (Style::labelHeight));
+        const int lh = static_cast<int> (Style::labelHeight);
+        if (labelPosition == LabelPosition::Top)
+            innerArea.removeFromTop (lh);
+        else
+            innerArea.removeFromBottom (lh);
         return innerArea.reduced (kOuterPad);
     }
 
@@ -439,13 +462,14 @@ protected:
             return {};
 
         constexpr int toggleSize = 12;
-        const int toggleY = kOuterPad + (static_cast<int> (Style::labelHeight) - toggleSize) / 2;
-        return { kOuterPad + 2, toggleY, toggleSize, toggleSize };
+        const auto labelArea = getLabelBounds();
+        const int toggleY = labelArea.getY() + (labelArea.getHeight() - toggleSize) / 2;
+        return { labelArea.getX() + 2, toggleY, toggleSize, toggleSize };
     }
 
     juce::Rectangle<int> getLabelEditBounds() const
     {
-        return getTopLabelBounds();
+        return getLabelBounds();
     }
 
     void commitTextToParameter (juce::RangedAudioParameter* targetParam, const juce::String& text)

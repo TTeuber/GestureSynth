@@ -140,6 +140,8 @@ void MainTabContent::resized()
     chorusMixComponent.setBounds (mixGridTop.reduced (Style::componentGap));
     oscLevelComponent.setBounds (mixGrid.removeFromLeft (mixGrid.getWidth() / 2).reduced (Style::componentGap));
     portamentoComponent.setBounds (mixGrid.reduced (Style::componentGap));
+    oscLevelComponent.setLabelPosition (SingleParameterComponent::LabelPosition::Bottom);
+    portamentoComponent.setLabelPosition (SingleParameterComponent::LabelPosition::Bottom);
     chorusComponent.setBounds (row1.removeFromLeft (unitSize).reduced (Style::componentGap));
     vibratoComponent.setBounds (row1.removeFromLeft (unitSize).reduced (Style::componentGap));
     filterDisplay.setBounds (row1.reduced (Style::componentGap));
@@ -163,6 +165,8 @@ void MainTabContent::resized()
     delaySyncToggle.setBounds (delayGridTop.reduced (Style::componentGap));
     delayHighpassComponent.setBounds (delayGrid.removeFromLeft (delayGrid.getWidth() / 2).reduced (Style::componentGap));
     delayLowpassComponent.setBounds (delayGrid.reduced (Style::componentGap));
+    delayHighpassComponent.setLabelPosition (SingleParameterComponent::LabelPosition::Bottom);
+    delayLowpassComponent.setLabelPosition (SingleParameterComponent::LabelPosition::Bottom);
 
     reverbComponent.setBounds (row3.removeFromLeft (unitSize).reduced (Style::componentGap));
     reverbModComponent.setBounds (row3.removeFromLeft (unitSize).reduced (Style::componentGap));
@@ -173,6 +177,8 @@ void MainTabContent::resized()
     reverbPreDelayComponent.setBounds (reverbGridTop.reduced (Style::componentGap));
     reverbBassMultComponent.setBounds (reverbGrid.removeFromLeft (reverbGrid.getWidth() / 2).reduced (Style::componentGap));
     reverbDampingComponent.setBounds (reverbGrid.reduced (Style::componentGap));
+    reverbBassMultComponent.setLabelPosition (SingleParameterComponent::LabelPosition::Bottom);
+    reverbDampingComponent.setLabelPosition (SingleParameterComponent::LabelPosition::Bottom);
 }
 
 // =============================================================================

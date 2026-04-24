@@ -214,25 +214,32 @@ namespace ConnectorPainting
         constexpr int gap = Style::componentGap * 2;
         constexpr int pillPadding = 10;
 
-        auto drawHorizontalBridge = [&] (juce::Rectangle<int> left, juce::Rectangle<int> right)
+        auto drawHorizontalBridge = [&] (juce::Rectangle<int> left, juce::Rectangle<int> right, bool isTop)
         {
+            const int blockH = left.getHeight() / 2;
             const int blockX = left.getRight() - static_cast<int> (radius);
-            const int blockY = left.getY();
+            int blockY = left.getY();
+            if (!isTop) blockY += blockH;
             const int blockW = (right.getX() - left.getRight()) + static_cast<int> (radius) * 2;
-            const int blockH = left.getHeight();
 
             g.setColour (SECONDARY_COLOR);
             g.fillRect (blockX, blockY, blockW, blockH);
 
             g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
-            g.fillRect (static_cast<float> (blockX),
-                        static_cast<float> (blockY),
-                        static_cast<float> (blockW),
-                        borderWidth);
-            g.fillRect (static_cast<float> (blockX),
-                        static_cast<float> (left.getBottom()) - borderWidth,
-                        static_cast<float> (blockW),
-                        borderWidth);
+            if (isTop)
+            {
+                g.fillRect (static_cast<float> (blockX),
+                            static_cast<float> (blockY),
+                            static_cast<float> (blockW),
+                            borderWidth);
+            }
+            else
+            {
+                g.fillRect (static_cast<float> (blockX),
+                            static_cast<float> (left.getBottom()) - borderWidth,
+                            static_cast<float> (blockW),
+                            borderWidth);
+            }
 
             const float pillX = static_cast<float> (left.getRight());
             const float pillY = static_cast<float> (left.getY() + pillPadding);
@@ -247,25 +254,26 @@ namespace ConnectorPainting
             g.drawRoundedRectangle (pillX, pillY, pillW, pillH, pillRadius, borderWidth);
         };
 
-        auto drawVerticalBridge = [&] (juce::Rectangle<int> top, juce::Rectangle<int> bottom)
+        auto drawVerticalBridge = [&] (juce::Rectangle<int> top, juce::Rectangle<int> bottom, bool isLeft)
         {
-            const int blockX = top.getX();
+            const int blockW = top.getWidth() / 2;
+            int blockX = isLeft ? top.getX() + 1 : top.getX();
+            if (!isLeft) blockX += blockW;
             const int blockY = top.getBottom() - static_cast<int> (radius);
-            const int blockW = top.getWidth();
             const int blockH = (bottom.getY() - top.getBottom()) + static_cast<int> (radius) * 2;
 
             g.setColour (SECONDARY_COLOR);
             g.fillRect (blockX, blockY, blockW, blockH);
 
-            g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
-            g.fillRect (static_cast<float> (blockX),
-                        static_cast<float> (blockY),
-                        borderWidth,
-                        static_cast<float> (blockH));
-            g.fillRect (static_cast<float> (top.getRight()) - borderWidth,
-                        static_cast<float> (blockY),
-                        borderWidth,
-                        static_cast<float> (blockH));
+            // g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+            // g.fillRect (static_cast<float> (blockX),
+            //             static_cast<float> (blockY),
+            //             borderWidth,
+            //             static_cast<float> (blockH));
+            // g.fillRect (static_cast<float> (top.getRight()) - borderWidth,
+            //             static_cast<float> (blockY),
+            //             borderWidth,
+            //             static_cast<float> (blockH));
 
             const float pillX = static_cast<float> (top.getX() + pillPadding);
             const float pillY = static_cast<float> (top.getBottom());
@@ -280,30 +288,9 @@ namespace ConnectorPainting
             g.drawRoundedRectangle (pillX, pillY, pillW, pillH, pillRadius, borderWidth);
         };
 
-        drawHorizontalBridge (topLeft, topRight);
-        drawHorizontalBridge (bottomLeft, bottomRight);
-        drawVerticalBridge (topLeft, bottomLeft);
-        drawVerticalBridge (topRight, bottomRight);
-
-        // Center junction: fill the square where the four bridges meet, with a
-        // circular hole whose radius matches the pill ends.
-        const int centerX = topLeft.getRight();
-        const int centerY = topLeft.getBottom();
-        const int centerW = topRight.getX() - topLeft.getRight();
-        const int centerH = bottomLeft.getY() - topLeft.getBottom();
-
-        g.setColour (SECONDARY_COLOR);
-        g.fillRect (centerX, centerY, centerW, centerH);
-
-        const float circleRadius = static_cast<float> (gap) / 2.0f;
-        const float circleX = static_cast<float> (centerX) + static_cast<float> (centerW) / 2.0f - circleRadius;
-        const float circleY = static_cast<float> (centerY) + static_cast<float> (centerH) / 2.0f - circleRadius;
-        const float circleDiameter = circleRadius * 2.0f;
-
-        g.setColour (PRIMARY_COLOR);
-        g.fillEllipse (circleX, circleY, circleDiameter, circleDiameter);
-
-        g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
-        g.drawEllipse (circleX, circleY, circleDiameter, circleDiameter, borderWidth);
+        drawHorizontalBridge (topLeft, topRight, true);
+        drawHorizontalBridge (bottomLeft, bottomRight, false);
+        drawVerticalBridge (topLeft, bottomLeft, true);
+        drawVerticalBridge (topRight, bottomRight, false);
     }
 }
