@@ -24,17 +24,30 @@ public:
             param->removeListener (this);
     }
 
+    void setDrawOuterBox (bool shouldDraw)
+    {
+        if (drawOuterBox != shouldDraw)
+        {
+            drawOuterBox = shouldDraw;
+            repaint();
+        }
+    }
+
     void paint (juce::Graphics& g) override
     {
         const int labelH = static_cast<int> (Style::labelHeight);
         constexpr int outerPad = 4;
 
-        // Fill with parent background
-        g.fillAll (PRIMARY_COLOR);
-
-        // Outer box
         auto outerBounds = getLocalBounds();
-        PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+
+        if (drawOuterBox)
+        {
+            // Fill with parent background
+            g.fillAll (PRIMARY_COLOR);
+
+            // Outer box
+            PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+        }
 
         // Layout: top label, inner box extends to bottom
         auto innerArea = outerBounds.reduced (outerPad);
@@ -197,6 +210,7 @@ private:
 
     juce::AudioParameterBool* param = nullptr;
     bool syncActive = false;
+    bool drawOuterBox = true;
     HoverAnimator hoverAnimator { *this };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DelaySyncToggleComponent)

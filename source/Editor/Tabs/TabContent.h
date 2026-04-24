@@ -689,7 +689,13 @@ private:
 
     struct ScrollCanvas : public juce::Component
     {
+        std::function<void (juce::Graphics&)> onPaint;
         std::function<void (juce::Graphics&)> onPaintOverChildren;
+        void paint (juce::Graphics& g) override
+        {
+            if (onPaint)
+                onPaint (g);
+        }
         void paintOverChildren (juce::Graphics& g) override
         {
             if (onPaintOverChildren)

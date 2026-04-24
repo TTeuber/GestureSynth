@@ -293,4 +293,92 @@ namespace ConnectorPainting
         drawVerticalBridge (topLeft, bottomLeft, true);
         drawVerticalBridge (topRight, bottomRight, false);
     }
+
+    // Draws a unified background shell for a delay or reverb effect chain:
+    // one continuous SECONDARY rounded rectangle with a 1px BORDER stroke
+    // spanning all six sub-components, plus six pill-shaped holes at the
+    // gaps where connectors used to live. Chain layout:
+    //     [  big  ][  mod  ][gridTL|gridTR]
+    //                       [gridBL|gridBR]
+    inline void drawEffectChainShell (juce::Graphics& g,
+                                      juce::Rectangle<int> big,
+                                      juce::Rectangle<int> mod,
+                                      juce::Rectangle<int> gridTL,
+                                      juce::Rectangle<int> gridTR,
+                                      juce::Rectangle<int> gridBL,
+                                      juce::Rectangle<int> gridBR)
+    {
+        constexpr float cornerRadius = Style::radiusMedium;
+        constexpr float borderAlpha = Style::alphaBorder;
+        constexpr float borderWidth = 1.0f;
+        constexpr int gap = Style::componentGap * 2;
+        constexpr int innerBoxInset = 4 + static_cast<int> (Style::labelHeight) + 4; // 28px, matches DualParameterComponent inner box
+        constexpr int gridPillPadding = 10;
+
+        // 1. Unified container: SECONDARY fill + 1px BORDER stroke
+        auto shellBounds = big.getUnion (mod)
+                              .getUnion (gridTL).getUnion (gridTR)
+                              .getUnion (gridBL).getUnion (gridBR)
+                              .toFloat();
+
+        g.setColour (SECONDARY_COLOR);
+        g.fillRoundedRectangle (shellBounds, cornerRadius);
+        g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+        g.drawRoundedRectangle (shellBounds.reduced (0.5f), cornerRadius, borderWidth);
+
+        // 2. Pill holes punched through the shell. PRIMARY fill + BORDER stroke.
+        auto drawVerticalPill = [&] (float x, float y, float w, float h)
+        {
+            const float r = w * 0.5f;
+            g.setColour (PRIMARY_COLOR);
+            g.fillRoundedRectangle (x, y, w, h, r);
+            g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+            g.drawRoundedRectangle (x, y, w, h, r, borderWidth);
+        };
+
+        auto drawHorizontalPill = [&] (float x, float y, float w, float h)
+        {
+            const float r = h * 0.5f;
+            g.setColour (PRIMARY_COLOR);
+            g.fillRoundedRectangle (x, y, w, h, r);
+            g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
+            g.drawRoundedRectangle (x, y, w, h, r, borderWidth);
+        };
+
+        // big <-> mod (tall vertical pill, aligned with big's inner box)
+        drawVerticalPill (static_cast<float> (big.getRight()),
+                          static_cast<float> (big.getY() + innerBoxInset),
+                          static_cast<float> (gap),
+                          static_cast<float> (big.getHeight() - innerBoxInset * 2));
+
+        // mod <-> grid (tall vertical pill, aligned with mod's inner box)
+        drawVerticalPill (static_cast<float> (mod.getRight()),
+                          static_cast<float> (mod.getY() + innerBoxInset),
+                          static_cast<float> (gap),
+                          static_cast<float> (mod.getHeight() - innerBoxInset * 2));
+
+        // grid top-left <-> top-right (vertical pill between columns, top row)
+        drawVerticalPill (static_cast<float> (gridTL.getRight()),
+                          static_cast<float> (gridTL.getY() + gridPillPadding),
+                          static_cast<float> (gap),
+                          static_cast<float> (gridTL.getHeight() - gridPillPadding * 2));
+
+        // grid bottom-left <-> bottom-right (vertical pill between columns, bottom row)
+        drawVerticalPill (static_cast<float> (gridBL.getRight()),
+                          static_cast<float> (gridBL.getY() + gridPillPadding),
+                          static_cast<float> (gap),
+                          static_cast<float> (gridBL.getHeight() - gridPillPadding * 2));
+
+        // grid top-left <-> bottom-left (horizontal pill between rows, left column)
+        drawHorizontalPill (static_cast<float> (gridTL.getX() + gridPillPadding),
+                            static_cast<float> (gridTL.getBottom()),
+                            static_cast<float> (gridTL.getWidth() - gridPillPadding * 2),
+                            static_cast<float> (gap));
+
+        // grid top-right <-> bottom-right (horizontal pill between rows, right column)
+        drawHorizontalPill (static_cast<float> (gridTR.getX() + gridPillPadding),
+                            static_cast<float> (gridTR.getBottom()),
+                            static_cast<float> (gridTR.getWidth() - gridPillPadding * 2),
+                            static_cast<float> (gap));
+    }
 }

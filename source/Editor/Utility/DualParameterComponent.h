@@ -67,14 +67,27 @@ public:
             activeParam->removeListener (this);
     }
 
+    void setDrawOuterBox (bool shouldDraw)
+    {
+        if (drawOuterBox != shouldDraw)
+        {
+            drawOuterBox = shouldDraw;
+            repaint();
+        }
+    }
+
     void paint (juce::Graphics& g) override
     {
-        // Fill with parent background color
-        g.fillAll (PRIMARY_COLOR);
-
-        // Outer box: bordered container with SECONDARY_COLOR background
         auto outerBounds = getLocalBounds();
-        PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+
+        if (drawOuterBox)
+        {
+            // Fill with parent background color
+            g.fillAll (PRIMARY_COLOR);
+
+            // Outer box: bordered container with SECONDARY_COLOR background
+            PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+        }
 
         auto topLabelArea = getTopLabelBounds();
         auto bottomLabelArea = getBottomLabelBounds();
@@ -549,6 +562,8 @@ protected:
 
 private:
     static constexpr int kOuterPad = 4;
+
+    bool drawOuterBox = true;
 
     void parameterValueChanged (int parameterIndex, float newValue) override
     {

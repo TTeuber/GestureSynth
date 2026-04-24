@@ -33,6 +33,15 @@ public:
 
     LabelPosition getLabelPosition() const { return labelPosition; }
 
+    void setDrawOuterBox (bool shouldDraw)
+    {
+        if (drawOuterBox != shouldDraw)
+        {
+            drawOuterBox = shouldDraw;
+            repaint();
+        }
+    }
+
     explicit SingleParameterComponent (juce::RangedAudioParameter* param,
         juce::AudioParameterBool* activeParam = nullptr,
         const UIContext& ctx = {},
@@ -73,12 +82,16 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        // Fill with parent background
-        g.fillAll (PRIMARY_COLOR);
-
-        // Outer box
         auto outerBounds = getLocalBounds();
-        PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+
+        if (drawOuterBox)
+        {
+            // Fill with parent background
+            g.fillAll (PRIMARY_COLOR);
+
+            // Outer box
+            PaintHelpers::drawComponentBox (g, outerBounds.toFloat());
+        }
 
         auto labelArea = getLabelBounds();
         auto innerBoxBounds = getInnerBoxBounds();
@@ -491,6 +504,8 @@ protected:
 
 private:
     static constexpr int kOuterPad = 4;
+
+    bool drawOuterBox = true;
 
     void parameterValueChanged (int parameterIndex, float newValue) override
     {
