@@ -9,9 +9,10 @@
 class ChorusMixComponent final : public SingleParameterComponent
 {
 public:
-    explicit ChorusMixComponent (juce::RangedAudioParameter* chorusMixParam,
+    ChorusMixComponent (juce::RangedAudioParameter* chorusMixParam,
+        juce::AudioParameterBool* activeParam = nullptr,
         const UIContext& ctx = {})
-        : SingleParameterComponent (chorusMixParam, nullptr, ctx)
+        : SingleParameterComponent (chorusMixParam, activeParam, ctx)
     {
     }
 
@@ -25,12 +26,14 @@ protected:
         const float wetRadius = dryRadius * 0.6f;
         const float offset = wetRadius * 0.6f;
 
+        const float activeAlpha = isActive ? 1.0f : Style::alphaInactive;
+
         // Single circle (dry signal) — fades out as mix increases
-        g.setOpacity (1.0f - paramValue);
+        g.setOpacity ((1.0f - paramValue) * activeAlpha);
         g.drawEllipse (cx - dryRadius, cy - dryRadius, dryRadius * 2.0f, dryRadius * 2.0f, 2.0f);
 
         // Three intersecting circles (wet/chorus signal) — fades in as mix increases
-        g.setOpacity (paramValue);
+        g.setOpacity (paramValue * activeAlpha);
         constexpr float angles[] = {
             -juce::MathConstants<float>::halfPi,                          // 90° (top)
             -juce::MathConstants<float>::halfPi + juce::MathConstants<float>::twoPi / 3.0f,  // 210°

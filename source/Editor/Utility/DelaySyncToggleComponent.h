@@ -10,18 +10,27 @@ class DelaySyncToggleComponent final : public juce::Component,
                                         private juce::AudioProcessorParameter::Listener
 {
 public:
-    explicit DelaySyncToggleComponent (juce::AudioParameterBool* param)
-        : param (param)
+    DelaySyncToggleComponent (juce::AudioParameterBool* param,
+        juce::AudioParameterBool* activeParam = nullptr)
+        : param (param), activeParam (activeParam)
     {
         jassert (param != nullptr);
         param->addListener (this);
         syncActive = param->get();
+
+        if (activeParam != nullptr)
+        {
+            activeParam->addListener (this);
+            isActive = activeParam->get();
+        }
     }
 
     ~DelaySyncToggleComponent() override
     {
         if (param != nullptr)
             param->removeListener (this);
+        if (activeParam != nullptr)
+            activeParam->removeListener (this);
     }
 
     void setDrawOuterBox (bool shouldDraw)
@@ -60,24 +69,26 @@ public:
         // Visualization bounds
         const auto vizBounds = innerBoxBounds.reduced (0, 6);
 
-        g.setColour (TEXT_COLOR);
+        g.setColour (isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
         g.setFont (Style::fontComponent);
+
+        const float activeAlpha = isActive ? 1.0f : Style::alphaInactive;
 
         // Draw label "Sync" (fades out on hover)
         if (hoverAnimator.getAlpha() < 0.99f)
         {
-            g.setOpacity (1.0f - hoverAnimator.getAlpha());
+            g.setOpacity ((1.0f - hoverAnimator.getAlpha()) * activeAlpha);
             g.drawText ("Sync", topLabelArea, juce::Justification::centred, true);
         }
 
         // Draw value "Free" or "BPM" (fades in on hover)
         if (hoverAnimator.getAlpha() > 0.01f)
         {
-            g.setOpacity (hoverAnimator.getAlpha());
+            g.setOpacity (hoverAnimator.getAlpha() * activeAlpha);
             g.drawText (syncActive ? "BPM" : "Free", topLabelArea, juce::Justification::centred, true);
         }
 
-        g.setOpacity (1.0f);
+        g.setOpacity (activeAlpha);
 
         // Clip visualization to inner box
         g.saveState();
@@ -111,7 +122,21 @@ public:
 
     void mouseUp (const juce::MouseEvent& e) override
     {
-        if (param != nullptr && getLocalBounds().contains (e.x, e.y))
+        if (! getLocalBounds().contains (e.x, e.y))
+            return;
+
+        if (e.mods.isPopupMenu())
+        {
+            if (activeParam != nullptr)
+            {
+                activeParam->beginChangeGesture();
+                activeParam->setValueNotifyingHost (isActive ? 0.0f : 1.0f);
+                activeParam->endChangeGesture();
+            }
+            return;
+        }
+
+        if (param != nullptr && isActive)
         {
             param->beginChangeGesture();
             param->setValueNotifyingHost (syncActive ? 0.0f : 1.0f);
@@ -120,9 +145,12 @@ public:
     }
 
 private:
-    void parameterValueChanged (int, float) override
+    void parameterValueChanged (int parameterIndex, float) override
     {
-        syncActive = param->get();
+        if (param != nullptr && parameterIndex == param->getParameterIndex())
+            syncActive = param->get();
+        else if (activeParam != nullptr && parameterIndex == activeParam->getParameterIndex())
+            isActive = activeParam->get();
         juce::MessageManager::callAsync ([this] { repaint(); });
     }
 
@@ -134,7 +162,7 @@ private:
         const float cy = bounds.getCentreY();
         const float radius = juce::jmin (bounds.getWidth(), bounds.getHeight()) * 0.35f;
 
-        g.setColour (TEXT_COLOR);
+        g.setColour (isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
 
         // Circle outline
         g.drawEllipse (cx - radius, cy - radius, radius * 2.0f, radius * 2.0f, 1.5f);
@@ -180,7 +208,7 @@ private:
         const float leftNoteY = cy + totalH * 0.5f;         // left notehead (lower)
         const float rightNoteY = leftNoteY - noteOffset;     // right notehead (higher)
 
-        g.setColour (TEXT_COLOR);
+        g.setColour (isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
 
         // Left note
         const float lx = cx - spacing;
@@ -209,7 +237,9 @@ private:
     }
 
     juce::AudioParameterBool* param = nullptr;
+    juce::AudioParameterBool* activeParam = nullptr;
     bool syncActive = false;
+    bool isActive = true;
     bool drawOuterBox = true;
     HoverAnimator hoverAnimator { *this };
 

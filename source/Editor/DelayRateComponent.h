@@ -14,8 +14,9 @@ public:
     DelayRateComponent (juce::RangedAudioParameter* timeParam,
                         juce::AudioParameterBool* tempoSyncParam,
                         juce::AudioParameterChoice* noteDivParam,
+                        juce::AudioParameterBool* activeParam = nullptr,
                         const UIContext& ctx = {})
-        : SingleParameterComponent (timeParam, nullptr, ctx),
+        : SingleParameterComponent (timeParam, activeParam, ctx),
           tempoSyncParam (tempoSyncParam),
           noteDivParam (noteDivParam),
           extraListener (*this)
@@ -36,7 +37,7 @@ public:
 
     void mouseDown (const juce::MouseEvent& e) override
     {
-        if (isSyncMode())
+        if (isSyncMode() && !e.mods.isPopupMenu() && isActive)
         {
             divDragStartY = e.y;
             divDragStartIndex = noteDivParam->getIndex();

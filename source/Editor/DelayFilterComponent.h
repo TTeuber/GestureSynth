@@ -42,7 +42,7 @@ protected:
                 path.lineTo (static_cast<float> (xPx), yPx);
         }
 
-        g.setColour (TEXT_COLOR);
+        g.setColour (isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
         g.strokePath (path, juce::PathStrokeType (2.0f));
     }
 
@@ -115,7 +115,7 @@ protected:
                 path.lineTo (static_cast<float> (xPx), yPx);
         }
 
-        g.setColour (TEXT_COLOR);
+        g.setColour (isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
         g.strokePath (path, juce::PathStrokeType (2.0f));
     }
 

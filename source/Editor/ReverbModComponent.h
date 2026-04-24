@@ -17,7 +17,7 @@ public:
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::reverbModDepth),
               apvts.getParameter (ParamIDs::reverbModRate),
-              nullptr,
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::reverbOn)),
               ctx,
               param1DestID,
               param2DestID,

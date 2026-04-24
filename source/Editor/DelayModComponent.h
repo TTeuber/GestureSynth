@@ -17,7 +17,7 @@ public:
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::delayModDepth),
               apvts.getParameter (ParamIDs::delayModRate),
-              nullptr,
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::delayOn)),
               ctx,
               param1DestID,
               param2DestID,

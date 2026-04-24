@@ -42,6 +42,15 @@ public:
         }
     }
 
+    void setShowToggleButton (bool shouldShow)
+    {
+        if (showToggleButton != shouldShow)
+        {
+            showToggleButton = shouldShow;
+            repaint();
+        }
+    }
+
     explicit SingleParameterComponent (juce::RangedAudioParameter* param,
         juce::AudioParameterBool* activeParam = nullptr,
         const UIContext& ctx = {},
@@ -150,7 +159,7 @@ public:
         g.restoreState();
 
         // Draw the active toggle button in the top-left if we have an active parameter
-        if (activeParam != nullptr)
+        if (activeParam != nullptr && showToggleButton)
         {
             const auto toggleRect = getToggleBounds();
 
@@ -506,6 +515,7 @@ private:
     static constexpr int kOuterPad = 4;
 
     bool drawOuterBox = true;
+    bool showToggleButton = true;
 
     void parameterValueChanged (int parameterIndex, float newValue) override
     {

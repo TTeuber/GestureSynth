@@ -15,25 +15,43 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
       chorusComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[12], &p.modDestOutputs[13], ParamIDs::chorusDepth, ParamIDs::chorusRate),
       vibratoComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[10], &p.modDestOutputs[11], ParamIDs::vibratoDepth, ParamIDs::vibratoRate),
       volumeComponent (p.parameters.getParameter (ParamIDs::volume), { &p.undoManager, &p.activeGestureCount, modState }, ParamIDs::volume),
-      oscLevelComponent (p.parameters.getParameter (ParamIDs::mainOscLevel), nullptr, { &p.undoManager, &p.activeGestureCount, modState }, ParamIDs::mainOscLevel),
+      oscLevelComponent (p.parameters.getParameter (ParamIDs::mainOscLevel),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::oscOn)),
+          { &p.undoManager, &p.activeGestureCount, modState }, ParamIDs::mainOscLevel),
       noiseComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }, &p.modDestOutputs[ModDest::noiseLevel], &p.modDestOutputs[ModDest::noiseTone], ParamIDs::noiseLevel, ParamIDs::noiseTone),
-      chorusMixComponent (p.parameters.getParameter (ParamIDs::chorusMix), { &p.undoManager, &p.activeGestureCount, modState }),
+      chorusMixComponent (p.parameters.getParameter (ParamIDs::chorusMix),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::chorusOn)),
+          { &p.undoManager, &p.activeGestureCount, modState }),
       portamentoComponent (p.parameters.getParameter (ParamIDs::portamentoTime), { &p.undoManager, &p.activeGestureCount, modState }),
       delayComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
       delayModComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
       delayRateComponent (p.parameters.getParameter (ParamIDs::delayTime),
           dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync)),
           dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::delayNoteDivision)),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayOn)),
           { &p.undoManager, &p.activeGestureCount, modState }),
-      delaySyncToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync))),
-      delayHighpassComponent (p.parameters.getParameter (ParamIDs::delayHighpass), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
-      delayLowpassComponent (p.parameters.getParameter (ParamIDs::delayLowpass), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
+      delaySyncToggle (dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayTempoSync)),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayOn))),
+      delayHighpassComponent (p.parameters.getParameter (ParamIDs::delayHighpass),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayOn)),
+          { &p.undoManager, &p.activeGestureCount, modState }),
+      delayLowpassComponent (p.parameters.getParameter (ParamIDs::delayLowpass),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::delayOn)),
+          { &p.undoManager, &p.activeGestureCount, modState }),
       reverbComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
       reverbModComponent (p.parameters, { &p.undoManager, &p.activeGestureCount, modState, animSource }),
-      reverbSizeComponent (p.parameters.getParameter (ParamIDs::reverbSize), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
-      reverbPreDelayComponent (p.parameters.getParameter (ParamIDs::reverbPreDelay), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
-      reverbBassMultComponent (p.parameters.getParameter (ParamIDs::reverbBassMult), nullptr, { &p.undoManager, &p.activeGestureCount, modState }),
-      reverbDampingComponent (p.parameters.getParameter (ParamIDs::reverbDamping), nullptr, { &p.undoManager, &p.activeGestureCount, modState })
+      reverbSizeComponent (p.parameters.getParameter (ParamIDs::reverbSize),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::reverbOn)),
+          { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbPreDelayComponent (p.parameters.getParameter (ParamIDs::reverbPreDelay),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::reverbOn)),
+          { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbBassMultComponent (p.parameters.getParameter (ParamIDs::reverbBassMult),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::reverbOn)),
+          { &p.undoManager, &p.activeGestureCount, modState }),
+      reverbDampingComponent (p.parameters.getParameter (ParamIDs::reverbDamping),
+          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::reverbOn)),
+          { &p.undoManager, &p.activeGestureCount, modState })
 {
     // Synth components
     scrollContent.addAndMakeVisible (waveformComponent);
@@ -85,6 +103,18 @@ MainTabContent::MainTabContent (PluginProcessor& p, ModulationModeState* modStat
     reverbPreDelayComponent.setDrawOuterBox (false);
     reverbBassMultComponent.setDrawOuterBox (false);
     reverbDampingComponent.setDrawOuterBox (false);
+
+    // Hide the toggle button on sub-components — the on/off state is shared via
+    // right-click on any delay/reverb component.
+    delayRateComponent.setShowToggleButton (false);
+    delayHighpassComponent.setShowToggleButton (false);
+    delayLowpassComponent.setShowToggleButton (false);
+    reverbSizeComponent.setShowToggleButton (false);
+    reverbPreDelayComponent.setShowToggleButton (false);
+    reverbBassMultComponent.setShowToggleButton (false);
+    reverbDampingComponent.setShowToggleButton (false);
+    oscLevelComponent.setShowToggleButton (false);
+    chorusMixComponent.setShowToggleButton (false);
 
     scrollContent.onPaint = [this] (juce::Graphics& g)
     {
