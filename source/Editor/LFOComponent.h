@@ -116,9 +116,9 @@ private:
         {
             const auto fullBounds = getLocalBounds().toFloat();
 
-            PaintHelpers::drawHoverBox (g, fullBounds, isMouseOver());
-            g.setColour (TEXT_COLOR.withAlpha (Style::alphaBorder));
-            g.drawRoundedRectangle (fullBounds.reduced (0.5f), Style::radiusMedium, 1.0f);
+            const auto bg = isMouseOver() ? TERTIARY_COLOR.brighter (0.15f) : TERTIARY_COLOR;
+            g.setColour (bg);
+            g.fillRoundedRectangle (fullBounds, Style::radiusMedium);
 
             const auto bounds = fullBounds.reduced (5.0f);
             juce::Path icon;

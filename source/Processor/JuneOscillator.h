@@ -19,11 +19,9 @@ public:
     {
         oscillatorEnabled = *p.getRawParameterValue (ParamIDs::oscOn) > 0.5f;
         subOscillatorEnabled = *p.getRawParameterValue (ParamIDs::subOn) > 0.5f;
-        detuneEnabled = *p.getRawParameterValue (ParamIDs::detuneOn) > 0.5f;
 
         parameters.addParameterListener (ParamIDs::oscOn, this);
         parameters.addParameterListener (ParamIDs::subOn, this);
-        parameters.addParameterListener (ParamIDs::detuneOn, this);
 
         reset();
     }
@@ -31,7 +29,6 @@ public:
     {
         parameters.removeParameterListener (ParamIDs::oscOn, this);
         parameters.removeParameterListener (ParamIDs::subOn, this);
-        parameters.removeParameterListener (ParamIDs::detuneOn, this);
     }
 
     void parameterChanged (const juce::String& parameterID, float newValue) override
@@ -43,10 +40,6 @@ public:
         else if (parameterID == ParamIDs::subOn)
         {
             subOscillatorEnabled = newValue > 0.5f;
-        }
-        else if (parameterID == ParamIDs::detuneOn)
-        {
-            detuneEnabled = newValue > 0.5f;
         }
     }
 
@@ -330,7 +323,7 @@ private:
     float detuneAmount = 0.25f;
     bool oscillatorEnabled = false;
     bool subOscillatorEnabled = false;
-    bool detuneEnabled = false;
+    static constexpr bool detuneEnabled = true;
     // size_t numSamples = 512;
     juce::dsp::Oversampling<float> oversampling = juce::dsp::Oversampling<float> (
         2,     // numChannels (stereo)

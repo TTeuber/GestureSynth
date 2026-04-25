@@ -44,13 +44,16 @@ LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorV
         addAndMakeVisible (*rateComponent);
 
         bpmToggle = std::make_unique<CustomToggleComponent> (tempoSyncParam, "BPM");
+        bpmToggle->setAccentColor (LFO_COLOR);
         addAndMakeVisible (*bpmToggle);
 
         hostToggle = std::make_unique<CustomToggleComponent> (beatSyncParam, "Host");
+        hostToggle->setAccentColor (LFO_COLOR);
         hostToggle->setOpacityCallback ([tempoSyncParam]() { return tempoSyncParam->get(); });
         addAndMakeVisible (*hostToggle);
 
         monoToggle = std::make_unique<CustomToggleComponent> (monoParam, "Mono");
+        monoToggle->setAccentColor (LFO_COLOR);
         addAndMakeVisible (*monoToggle);
     }
 
@@ -132,7 +135,7 @@ void LFOComponent::onAnimationFrame()
 
 juce::Rectangle<float> LFOComponent::getGraphBounds() const
 {
-    const float controlSpace = hasRateSlider ? kControlColumnWidth : 0.0f;
+    const float controlSpace = hasRateSlider ? (kControlColumnWidth + kTotalPadding) : 0.0f;
     const float left = kTotalPadding + kShapeStripWidth;
     const float top = kTotalPadding;
     return { left, top,
@@ -335,7 +338,7 @@ void LFOComponent::resized()
         const int numButtons = 6;
         const float totalHeight = kShapeButtonSize * static_cast<float> (numButtons) + gap * static_cast<float> (numButtons - 1);
         const float startY = graphBounds.getY();
-        const float btnX = kTotalPadding + (kShapeStripWidth - kShapeButtonSize) * 0.5f;
+        const float btnX = kTotalPadding;
 
         ShapePresetButton* buttons[] = { &sineButton, &triangleButton, &sawButton, &squareButton, &flipHButton, &flipVButton };
         for (int i = 0; i < numButtons; ++i)

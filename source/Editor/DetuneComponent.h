@@ -24,7 +24,7 @@ public:
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::oscDetune),
               apvts.getParameter (ParamIDs::oscWidth),
-              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::detuneOn)),
+              dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::oscOn)),
               ctx,
               param1DestID,
               param2DestID,

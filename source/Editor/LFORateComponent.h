@@ -91,6 +91,22 @@ public:
         TextParameterComponent::mouseUp (e);
     }
 
+    void paint (juce::Graphics& g) override
+    {
+        auto bounds = getLocalBounds().toFloat();
+
+        g.setColour (TERTIARY_COLOR);
+        g.fillRoundedRectangle (bounds, Style::radiusLarge);
+
+        g.setColour (TEXT_COLOR.withAlpha (0.6f));
+        g.setFont (Style::fontCaption);
+        g.drawText ("Rate", bounds.reduced (4.0f, 2.0f),
+            juce::Justification::centredTop, true);
+
+        auto valueArea = bounds.reduced (4.0f).withTrimmedTop (14.0f);
+        drawValueText (g, valueArea);
+    }
+
 protected:
     void drawValueText (juce::Graphics& g, juce::Rectangle<float> area) const override
     {

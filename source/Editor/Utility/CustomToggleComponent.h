@@ -42,6 +42,13 @@ public:
         repaint();
     }
 
+    void setAccentColor (juce::Colour color)
+    {
+        accentColor = color;
+        useAccent = true;
+        repaint();
+    }
+
     void paint (juce::Graphics& g) override
     {
         const float opacity = (opacityCallback && !opacityCallback()) ? 0.35f : 1.0f;
@@ -49,7 +56,23 @@ public:
 
         auto bounds = getLocalBounds().toFloat();
 
-        if (active)
+        if (useAccent)
+        {
+            if (active)
+            {
+                g.setColour (TERTIARY_COLOR.interpolatedWith (accentColor, 0.15f));
+                g.fillRoundedRectangle (bounds, Style::radiusLarge);
+                g.setColour (accentColor.withAlpha (0.4f));
+                g.drawRoundedRectangle (bounds.reduced (0.5f), Style::radiusLarge, 1.5f);
+            }
+            else
+            {
+                g.setColour (TERTIARY_COLOR);
+                g.fillRoundedRectangle (bounds, Style::radiusLarge);
+            }
+            g.setColour (TEXT_COLOR);
+        }
+        else if (active)
         {
             g.setColour (TEXT_COLOR);
             g.fillRoundedRectangle (bounds, Style::radiusLarge);
@@ -88,6 +111,8 @@ private:
     juce::String label;
     bool active = false;
     std::function<bool()> opacityCallback;
+    juce::Colour accentColor;
+    bool useAccent = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CustomToggleComponent)
 };
