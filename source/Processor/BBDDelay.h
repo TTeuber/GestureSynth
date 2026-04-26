@@ -68,6 +68,23 @@ public:
         hostTempoAvailable = available;
     }
 
+    void reset()
+    {
+        for (int ch = 0; ch < 2; ++ch)
+        {
+            delayLines[ch].reset();
+            lpFilters[ch].reset();
+            hpFilters[ch].reset();
+            dcBlockFilters[ch].reset();
+            for (int i = 0; i < 4; ++i)
+                diffusers[ch][i].reset();
+        }
+        smoothedDelaySamples = 0.0f;
+        smoothedFeedback = AtomicHelpers::paramLoad (feedback);
+        lfoPhaseL = 0.0f;
+        lfoPhaseR = static_cast<float> (M_PI) * 0.5f;
+    }
+
     void prepare (const juce::dsp::ProcessSpec& spec)
     {
         sampleRate = spec.sampleRate;
@@ -311,6 +328,12 @@ private:
             buffer[static_cast<size_t> (writePos)] = temp;
             writePos = (writePos + 1) % bufferSize;
             return output;
+        }
+
+        void reset()
+        {
+            std::fill (buffer.begin(), buffer.end(), 0.0f);
+            writePos = 0;
         }
 
         std::vector<float> buffer;

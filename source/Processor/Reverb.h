@@ -128,6 +128,30 @@ public:
         dcBlockR.setCutoffFrequency (10.0f);
     }
 
+    void reset()
+    {
+        preDelay.reset();
+        for (int i = 0; i < 4; ++i)
+            inputDiffusers[i].reset();
+        inputDiffDamper.reset();
+        for (int i = 0; i < 16; ++i)
+        {
+            fdnLines[i].reset();
+            dampingFilters[i].reset();
+            crossoverLowState[i] = 0.0f;
+            lfoPhase[i] = static_cast<float> (i) * 0.6180339887f * 2.0f * static_cast<float> (M_PI);
+            while (lfoPhase[i] >= 2.0f * static_cast<float> (M_PI))
+                lfoPhase[i] -= 2.0f * static_cast<float> (M_PI);
+        }
+        for (int i = 0; i < 2; ++i)
+        {
+            outputDiffusersL[i].reset();
+            outputDiffusersR[i].reset();
+        }
+        dcBlockL.reset();
+        dcBlockR.reset();
+    }
+
     void process (juce::AudioBuffer<float>& buffer)
     {
         juce::ScopedNoDenormals noDenormals;
@@ -335,6 +359,13 @@ private:
             buffer[static_cast<size_t> (writePos)] = temp;
             writePos = (writePos + 1) % bufferSize;
             return output;
+        }
+
+        void reset()
+        {
+            std::fill (buffer.begin(), buffer.end(), 0.0f);
+            writePos = 0;
+            lfoPhase = 0.0f;
         }
 
         std::vector<float> buffer;

@@ -28,6 +28,12 @@ public:
         reverb.prepare (spec);
     }
 
+    void resetTails()
+    {
+        bbdDelay.reset();
+        reverb.reset();
+    }
+
     template <size_t N>
     void process (juce::AudioBuffer<float>& buffer,
                   const TempoInfo& tempoInfo,

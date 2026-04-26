@@ -14,6 +14,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       lfoComponent (p.lfoData[0], p.parameters, true, 1, p.getSynth().getLFOPtr (0), &animationSource),
       adsrGraph (p.parameters, ParamIDs::envParamID (1, "Attack"), ParamIDs::envParamID (1, "AttackCurve"), ParamIDs::envParamID (1, "Decay"), ParamIDs::envParamID (1, "DecayCurve"), ParamIDs::envParamID (1, "Sustain"), ParamIDs::envParamID (1, "Release"), ParamIDs::envParamID (1, "ReleaseCurve"), p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount, &animationSource)
 {
+    setLookAndFeel (&customLookAndFeel);
+
     // Set up modulation mode state
     modModeState.setModTree (&processorRef.modTree);
     modModeState.setUndoManager (&processorRef.undoManager);
@@ -65,6 +67,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     {
         std::map<int, juce::File> idToFile;
         auto menu = processorRef.presetManager.buildMenu (idToFile);
+        menu.setLookAndFeel (&customLookAndFeel);
 
         menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&presetButton),
             [this, idToFile = std::move (idToFile)] (int result)
@@ -90,10 +93,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     contentWrapper.addAndMakeVisible (menuButton);
     menuButton.setAlwaysOnTop (true);
 
-    panicButton.setColour (juce::TextButton::buttonColourId, TERTIARY_COLOR);
-    panicButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
     panicButton.setTooltip ("Silence all voices and reset MIDI state");
-    panicButton.onClick = [this] { processorRef.getSynth().allNotesOff (0, false); };
+    panicButton.onClick = [this]
+    {
+        processorRef.getSynth().allNotesOff (0, false);
+        processorRef.getEffectsChain().resetTails();
+    };
     persistentPanel.addAndMakeVisible (panicButton);
 
     persistentPanel.addAndMakeVisible (keyVelComponent);
@@ -184,6 +189,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 PluginEditor::~PluginEditor()
 {
     tabbedComponent.setLookAndFeel (nullptr);
+    setLookAndFeel (nullptr);
     animationSource.stop();
     stopTimer();
     modModeState.removeListener (this);
@@ -319,7 +325,7 @@ void PluginEditor::resized()
     modWheel.setBounds (wheelsArea.removeFromLeft (wheelsArea.getWidth() / 2).reduced (2));
     pitchWheel.setBounds (wheelsArea.reduced (2));
 
-    keyboard.setBounds (keyboardRow.reduced (2));
+    keyboard.setBounds (keyboardRow.reduced (3));
 
     // Top: LFO/ADSR/KeyVel row — tabs integrated into component boxes
     auto row3 = panelArea;

@@ -44,20 +44,6 @@ public:
 };
 
 //==============================================================================
-class RedBorderButton final : public juce::TextButton
-{
-public:
-    using juce::TextButton::TextButton;
-
-    void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
-    {
-        juce::TextButton::paintButton (g, shouldDrawButtonAsHighlighted, shouldDrawButtonAsDown);
-        g.setColour (juce::Colours::red.withAlpha (0.5f));
-        g.drawRoundedRectangle (getLocalBounds().toFloat().reduced (0.75f), 6.0f, 1.5f);
-    }
-};
-
-//==============================================================================
 class HamburgerButton final : public juce::TextButton
 {
 public:
@@ -138,7 +124,7 @@ private:
     juce::TextButton presetButton { "Presets" };
     juce::TextButton nextPresetButton { ">" };
     HamburgerButton menuButton;
-    RedBorderButton panicButton { "Panic" };
+    PanicButton panicButton;
 
     void loadPresetByFile (const juce::File& file);
     void navigatePreset (int direction);

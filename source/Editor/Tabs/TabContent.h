@@ -273,6 +273,42 @@ private:
 };
 
 // =============================================================================
+// PanicButton: silence-all button styled to match VoiceCountControl
+// =============================================================================
+class PanicButton final : public juce::Component,
+                          public juce::SettableTooltipClient
+{
+public:
+    std::function<void()> onClick;
+
+    void paint (juce::Graphics& g) override
+    {
+        auto bounds = getLocalBounds().toFloat().reduced (2.0f, 2.0f);
+
+        g.setColour (TERTIARY_COLOR);
+        g.fillRoundedRectangle (bounds, Style::radiusMedium);
+
+        g.setColour (TEXT_COLOR);
+        g.setFont (Style::fontLabel);
+        g.drawText ("Panic", bounds, juce::Justification::centred, true);
+
+        g.setColour (juce::Colours::red.withAlpha (0.5f));
+        g.drawRoundedRectangle (bounds, Style::radiusMedium, 1.5f);
+    }
+
+    void mouseUp (const juce::MouseEvent& e) override
+    {
+        if (getLocalBounds().contains (e.x, e.y) && onClick)
+            onClick();
+    }
+
+    juce::MouseCursor getMouseCursor() override
+    {
+        return juce::MouseCursor::PointingHandCursor;
+    }
+};
+
+// =============================================================================
 // VoiceCountControl: click-to-select voice count via popup menu
 // =============================================================================
 class VoiceCountControl final : public juce::Component,
@@ -342,6 +378,7 @@ public:
         bool isLegato = legatoParam->get();
 
         juce::PopupMenu menu;
+        menu.setLookAndFeel (&getLookAndFeel());
         menu.addItem (2, "Mono", true, isMono && !isLegato);
         menu.addItem (1, "Legato", true, isLegato);
         menu.addSeparator();

@@ -18,7 +18,7 @@ public:
         // PopupMenu colours for consistent dropdown appearance
         setColour (juce::PopupMenu::backgroundColourId, SECONDARY_COLOR);
         setColour (juce::PopupMenu::textColourId, TEXT_COLOR);
-        setColour (juce::PopupMenu::highlightedBackgroundColourId, SECONDARY_COLOR.brighter (0.15f));
+        setColour (juce::PopupMenu::highlightedBackgroundColourId, TERTIARY_COLOR);
         setColour (juce::PopupMenu::highlightedTextColourId, TEXT_COLOR);
     }
 

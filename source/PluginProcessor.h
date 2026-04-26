@@ -99,6 +99,7 @@ public:
     std::atomic<int>   uiPitchBendValue { -1 };
 
     MySynth& getSynth() { return synth; }
+    EffectsChain& getEffectsChain() { return effectsChain; }
 
     std::shared_ptr<PitchTracker> pitchTracker = std::make_shared<PitchTracker>();
     std::array<std::shared_ptr<LFOData>, 4> lfoData = {
