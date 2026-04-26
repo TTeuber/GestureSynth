@@ -52,7 +52,7 @@ public:
     void paintButton (juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
     {
         juce::TextButton::paintButton (g, shouldDrawButtonAsHighlighted, shouldDrawButtonAsDown);
-        g.setColour (juce::Colour (0xffd03030));
+        g.setColour (juce::Colours::red.withAlpha (0.5f));
         g.drawRoundedRectangle (getLocalBounds().toFloat().reduced (0.75f), 6.0f, 1.5f);
     }
 };
@@ -132,10 +132,8 @@ private:
     KeyVelComponent keyVelComponent;
 
     // Bottom control row
-    PitchBendRangeControl pitchBendRangeControl;
+    BoxBackground bottomBarBackground;
     VoiceCountControl voiceCountControl;
-    VolumeControl volumeControl;
-    PortamentoBottomControl portamentoBottomControl;
     juce::TextButton prevPresetButton { "<" };
     juce::TextButton presetButton { "Presets" };
     juce::TextButton nextPresetButton { ">" };
@@ -150,6 +148,7 @@ private:
     ADSRGraph adsrGraph;
 
     ModSourceTab mwTab, atTab, expTab;
+    PitchBendRangeTab pbTab;
     ModSourceTab lfoTabs[4];
     ModSourceTab envTabs[4];
     ModSourceTab velTab, keyTab;

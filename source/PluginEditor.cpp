@@ -7,12 +7,10 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       pitchWheel (p, &animationSource),
       keyboard (p.keyboardState, &animationSource),
       keyVelComponent (p.parameters, &p.undoManager, &p.activeGestureCount, &modModeState, p.getSynth().getVelocityRawPtr(), p.getSynth().getKeyboardRawPtr(), &animationSource, p.getSynth().getAmpADSRPtr()),
-      pitchBendRangeControl (p.parameters.getParameter (ParamIDs::pitchBendRange)),
       voiceCountControl (dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::voiceCount)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::monoOn)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::legatoOn))),
-      volumeControl (p.parameters.getParameter (ParamIDs::volume)),
-      portamentoBottomControl (p.parameters.getParameter (ParamIDs::portamentoTime)),
+      pbTab (p.parameters.getParameter (ParamIDs::pitchBendRange)),
       lfoComponent (p.lfoData[0], p.parameters, true, 1, p.getSynth().getLFOPtr (0), &animationSource),
       adsrGraph (p.parameters, ParamIDs::envParamID (1, "Attack"), ParamIDs::envParamID (1, "AttackCurve"), ParamIDs::envParamID (1, "Decay"), ParamIDs::envParamID (1, "DecayCurve"), ParamIDs::envParamID (1, "Sustain"), ParamIDs::envParamID (1, "Release"), ParamIDs::envParamID (1, "ReleaseCurve"), p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount, &animationSource)
 {
@@ -52,10 +50,8 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     persistentPanel.addAndMakeVisible (modWheel);
     persistentPanel.addAndMakeVisible (pitchWheel);
     persistentPanel.addAndMakeVisible (keyboard);
-    persistentPanel.addAndMakeVisible (pitchBendRangeControl);
+    persistentPanel.addAndMakeVisible (bottomBarBackground);
     persistentPanel.addAndMakeVisible (voiceCountControl);
-    persistentPanel.addAndMakeVisible (volumeControl);
-    persistentPanel.addAndMakeVisible (portamentoBottomControl);
 
     prevPresetButton.setColour (juce::TextButton::buttonColourId, TERTIARY_COLOR);
     prevPresetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
@@ -94,7 +90,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     contentWrapper.addAndMakeVisible (menuButton);
     menuButton.setAlwaysOnTop (true);
 
-    panicButton.setColour (juce::TextButton::buttonColourId, SECONDARY_COLOR);
+    panicButton.setColour (juce::TextButton::buttonColourId, TERTIARY_COLOR);
     panicButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
     panicButton.setTooltip ("Silence all voices and reset MIDI state");
     panicButton.onClick = [this] { processorRef.getSynth().allNotesOff (0, false); };
@@ -138,6 +134,7 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     persistentPanel.addAndMakeVisible (mwTab);
     persistentPanel.addAndMakeVisible (atTab);
     persistentPanel.addAndMakeVisible (expTab);
+    persistentPanel.addAndMakeVisible (pbTab);
 
     const juce::StringArray lfoIDs = { "lfo1", "lfo2", "lfo3", "lfo4" };
     const juce::StringArray envIDs = { "env1", "env2", "env3", "env4" };
@@ -287,14 +284,12 @@ void PluginEditor::resized()
     constexpr int controlRowHeight = 28;
     auto controlRow = panelArea.removeFromBottom (controlRowHeight);
 
-    constexpr int controlItemWidth = 130;
-    pitchBendRangeControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
-    voiceCountControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
-    volumeControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
-    portamentoBottomControl.setBounds (controlRow.removeFromLeft (controlItemWidth).reduced (2, 2));
+    bottomBarBackground.setBounds (controlRow.reduced (Style::componentGap, 0));
 
+    auto controlInner = controlRow.reduced (8, 2);
     constexpr int panicButtonWidth = 80;
-    panicButton.setBounds (controlRow.removeFromRight (panicButtonWidth).reduced (2, 2));
+    panicButton.setBounds (controlInner.removeFromLeft (panicButtonWidth).reduced (2, 0));
+    voiceCountControl.setBounds (controlInner.removeFromLeft (panicButtonWidth).reduced (2, 0));
 
     // Keyboard row
     constexpr int keyboardRowHeight = 160;
@@ -312,12 +307,13 @@ void PluginEditor::resized()
     // Inset children by the same padding as ADSR (4 + 4 = 8px per side)
     auto wheelBoxInner = wheelBoxArea.reduced (8);
 
-    // MW/AT/EXP tabs stacked vertically to the left of the mod wheel
+    // MW/AT/EXP/PB tabs stacked vertically to the left of the mod wheel
     auto mwTabArea = wheelBoxInner.removeFromLeft (mwTabColumnWidth - 4);
-    int mwTabH = mwTabArea.getHeight() / 3;
+    int mwTabH = mwTabArea.getHeight() / 4;
     mwTab.setBounds (mwTabArea.removeFromTop (mwTabH).reduced (1, 2));
     atTab.setBounds (mwTabArea.removeFromTop (mwTabH).reduced (1, 2));
-    expTab.setBounds (mwTabArea.reduced (1, 2));
+    expTab.setBounds (mwTabArea.removeFromTop (mwTabH).reduced (1, 2));
+    pbTab.setBounds (mwTabArea.reduced (1, 2));
 
     auto wheelsArea = wheelBoxInner;
     modWheel.setBounds (wheelsArea.removeFromLeft (wheelsArea.getWidth() / 2).reduced (2));

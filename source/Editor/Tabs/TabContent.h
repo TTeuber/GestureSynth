@@ -180,20 +180,20 @@ private:
 };
 
 // =============================================================================
-// PitchBendRangeControl: drag-to-adjust pitch bend range inline display
+// PitchBendRangeTab: drag-up/down to adjust pitch bend range, styled like ModSourceTab
 // =============================================================================
-class PitchBendRangeControl final : public juce::Component,
-                                     private juce::AudioProcessorParameter::Listener
+class PitchBendRangeTab final : public juce::Component,
+                                 private juce::AudioProcessorParameter::Listener
 {
 public:
-    explicit PitchBendRangeControl (juce::RangedAudioParameter* param)
+    explicit PitchBendRangeTab (juce::RangedAudioParameter* param)
         : param (param)
     {
         jassert (param != nullptr);
         param->addListener (this);
     }
 
-    ~PitchBendRangeControl() override
+    ~PitchBendRangeTab() override
     {
         if (param != nullptr)
             param->removeListener (this);
@@ -201,30 +201,27 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        auto numArea = getLocalBounds().toFloat().reduced (2.0f, 2.0f);
-        g.setColour (SECONDARY_COLOR);
-        g.fillRoundedRectangle (numArea, Style::radiusMedium);
+        auto bounds = getLocalBounds().toFloat().reduced (2.0f, 1.0f);
+
+        g.setColour (TERTIARY_COLOR);
+        g.fillRoundedRectangle (bounds, Style::radiusSmall);
+
         g.setColour (TEXT_COLOR);
-        g.drawRoundedRectangle (numArea, Style::radiusMedium, 1.0f);
+        g.setFont (Style::fontLabel);
 
-        if (hoverAnimator.getAlpha() < 0.99f)
+        if (hovered || isDragging)
         {
-            g.setOpacity (1.0f - hoverAnimator.getAlpha());
-            g.setFont (Style::fontSmall);
-            g.drawText ("Pitch Bend", numArea, juce::Justification::centred, true);
-        }
-
-        if (hoverAnimator.getAlpha() > 0.01f)
-        {
-            g.setOpacity (hoverAnimator.getAlpha());
-            g.setFont (Style::fontBody);
             int val = static_cast<int> (param->convertFrom0to1 (param->getValue()));
-            g.drawText (juce::String (val), numArea, juce::Justification::centred, true);
+            g.drawText (juce::String (val), bounds, juce::Justification::centred, true);
+        }
+        else
+        {
+            g.drawText ("PB", bounds, juce::Justification::centred, true);
         }
     }
 
-    void mouseEnter (const juce::MouseEvent&) override { hoverAnimator.setHovered (true); }
-    void mouseExit (const juce::MouseEvent&) override { hoverAnimator.setHovered (false); }
+    void mouseEnter (const juce::MouseEvent&) override { hovered = true; repaint(); }
+    void mouseExit (const juce::MouseEvent&) override { hovered = false; repaint(); }
 
     void mouseDown (const juce::MouseEvent& e) override
     {
@@ -250,6 +247,7 @@ public:
         {
             param->endChangeGesture();
             isDragging = false;
+            repaint();
         }
     }
 
@@ -267,104 +265,11 @@ private:
 
     juce::RangedAudioParameter* param = nullptr;
     bool isDragging = false;
+    bool hovered = false;
     float dragStartY = 0.0f;
     int dragStartValue = 0;
-    HoverAnimator hoverAnimator { *this };
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchBendRangeControl)
-};
-
-// =============================================================================
-// VolumeControl: drag-to-adjust volume inline display
-// =============================================================================
-class VolumeControl final : public juce::Component,
-                             private juce::AudioProcessorParameter::Listener
-{
-public:
-    explicit VolumeControl (juce::RangedAudioParameter* param)
-        : param (param)
-    {
-        jassert (param != nullptr);
-        param->addListener (this);
-    }
-
-    ~VolumeControl() override
-    {
-        if (param != nullptr)
-            param->removeListener (this);
-    }
-
-    void paint (juce::Graphics& g) override
-    {
-        auto numArea = getLocalBounds().toFloat().reduced (2.0f, 2.0f);
-        g.setColour (SECONDARY_COLOR);
-        g.fillRoundedRectangle (numArea, Style::radiusMedium);
-        g.setColour (TEXT_COLOR);
-        g.drawRoundedRectangle (numArea, Style::radiusMedium, 1.0f);
-
-        if (hoverAnimator.getAlpha() < 0.99f)
-        {
-            g.setOpacity (1.0f - hoverAnimator.getAlpha());
-            g.setFont (Style::fontSmall);
-            g.drawText ("Volume", numArea, juce::Justification::centred, true);
-        }
-
-        if (hoverAnimator.getAlpha() > 0.01f)
-        {
-            g.setOpacity (hoverAnimator.getAlpha());
-            g.setFont (Style::fontBody);
-            int val = juce::roundToInt (param->convertFrom0to1 (param->getValue()) * 100.0f);
-            g.drawText (juce::String (val), numArea, juce::Justification::centred, true);
-        }
-    }
-
-    void mouseEnter (const juce::MouseEvent&) override { hoverAnimator.setHovered (true); }
-    void mouseExit (const juce::MouseEvent&) override { hoverAnimator.setHovered (false); }
-
-    void mouseDown (const juce::MouseEvent& e) override
-    {
-        isDragging = true;
-        dragStartY = static_cast<float> (e.y);
-        dragStartValue = param->getValue();
-        param->beginChangeGesture();
-    }
-
-    void mouseDrag (const juce::MouseEvent& e) override
-    {
-        if (!isDragging) return;
-        float deltaY = dragStartY - static_cast<float> (e.y);
-        float newValue = juce::jlimit (0.0f, 1.0f, dragStartValue + deltaY / 200.0f);
-        param->setValueNotifyingHost (newValue);
-    }
-
-    void mouseUp (const juce::MouseEvent&) override
-    {
-        if (isDragging)
-        {
-            param->endChangeGesture();
-            isDragging = false;
-        }
-    }
-
-    juce::MouseCursor getMouseCursor() override
-    {
-        return juce::MouseCursor::UpDownResizeCursor;
-    }
-
-private:
-    void parameterValueChanged (int, float) override
-    {
-        juce::MessageManager::callAsync ([this] { repaint(); });
-    }
-    void parameterGestureChanged (int, bool) override {}
-
-    juce::RangedAudioParameter* param = nullptr;
-    bool isDragging = false;
-    float dragStartY = 0.0f;
-    float dragStartValue = 0.0f;
-    HoverAnimator hoverAnimator { *this };
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VolumeControl)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PitchBendRangeTab)
 };
 
 // =============================================================================
@@ -397,22 +302,21 @@ public:
     void paint (juce::Graphics& g) override
     {
         auto numArea = getLocalBounds().toFloat().reduced (2.0f, 2.0f);
-        g.setColour (SECONDARY_COLOR);
+        g.setColour (TERTIARY_COLOR);
         g.fillRoundedRectangle (numArea, Style::radiusMedium);
+
         g.setColour (TEXT_COLOR);
-        g.drawRoundedRectangle (numArea, Style::radiusMedium, 1.0f);
+        g.setFont (Style::fontLabel);
 
         if (hoverAnimator.getAlpha() < 0.99f)
         {
             g.setOpacity (1.0f - hoverAnimator.getAlpha());
-            g.setFont (Style::fontSmall);
             g.drawText ("Voices", numArea, juce::Justification::centred, true);
         }
 
         if (hoverAnimator.getAlpha() > 0.01f)
         {
             g.setOpacity (hoverAnimator.getAlpha());
-            g.setFont (Style::fontBody);
 
             juce::String displayText;
             if (legatoParam->get())
@@ -500,100 +404,6 @@ private:
     HoverAnimator hoverAnimator { *this };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VoiceCountControl)
-};
-
-// =============================================================================
-// PortamentoBottomControl: drag-to-adjust portamento inline display
-// =============================================================================
-class PortamentoBottomControl final : public juce::Component,
-                                       private juce::AudioProcessorParameter::Listener
-{
-public:
-    explicit PortamentoBottomControl (juce::RangedAudioParameter* param)
-        : param (param)
-    {
-        jassert (param != nullptr);
-        param->addListener (this);
-    }
-
-    ~PortamentoBottomControl() override
-    {
-        if (param != nullptr)
-            param->removeListener (this);
-    }
-
-    void paint (juce::Graphics& g) override
-    {
-        auto numArea = getLocalBounds().toFloat().reduced (2.0f, 2.0f);
-        g.setColour (SECONDARY_COLOR);
-        g.fillRoundedRectangle (numArea, Style::radiusMedium);
-        g.setColour (TEXT_COLOR);
-        g.drawRoundedRectangle (numArea, Style::radiusMedium, 1.0f);
-
-        if (hoverAnimator.getAlpha() < 0.99f)
-        {
-            g.setOpacity (1.0f - hoverAnimator.getAlpha());
-            g.setFont (Style::fontSmall);
-            g.drawText ("Porta", numArea, juce::Justification::centred, true);
-        }
-
-        if (hoverAnimator.getAlpha() > 0.01f)
-        {
-            g.setOpacity (hoverAnimator.getAlpha());
-            g.setFont (Style::fontBody);
-            float ms = param->convertFrom0to1 (param->getValue());
-            juce::String text = ms < 1.0f ? "0 ms" : juce::String (static_cast<int> (ms)) + " ms";
-            g.drawText (text, numArea, juce::Justification::centred, true);
-        }
-    }
-
-    void mouseEnter (const juce::MouseEvent&) override { hoverAnimator.setHovered (true); }
-    void mouseExit (const juce::MouseEvent&) override { hoverAnimator.setHovered (false); }
-
-    void mouseDown (const juce::MouseEvent& e) override
-    {
-        isDragging = true;
-        dragStartY = static_cast<float> (e.y);
-        dragStartValue = param->getValue();
-        param->beginChangeGesture();
-    }
-
-    void mouseDrag (const juce::MouseEvent& e) override
-    {
-        if (!isDragging) return;
-        float deltaY = dragStartY - static_cast<float> (e.y);
-        float newValue = juce::jlimit (0.0f, 1.0f, dragStartValue + deltaY / 200.0f);
-        param->setValueNotifyingHost (newValue);
-    }
-
-    void mouseUp (const juce::MouseEvent&) override
-    {
-        if (isDragging)
-        {
-            param->endChangeGesture();
-            isDragging = false;
-        }
-    }
-
-    juce::MouseCursor getMouseCursor() override
-    {
-        return juce::MouseCursor::UpDownResizeCursor;
-    }
-
-private:
-    void parameterValueChanged (int, float) override
-    {
-        juce::MessageManager::callAsync ([this] { repaint(); });
-    }
-    void parameterGestureChanged (int, bool) override {}
-
-    juce::RangedAudioParameter* param = nullptr;
-    bool isDragging = false;
-    float dragStartY = 0.0f;
-    float dragStartValue = 0.0f;
-    HoverAnimator hoverAnimator { *this };
-
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PortamentoBottomControl)
 };
 
 // =============================================================================
