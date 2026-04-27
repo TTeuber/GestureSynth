@@ -34,9 +34,24 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        g.fillAll (juce::Colour (30, 35, 35));
-
         const auto bounds = getLocalBounds().toFloat();
+
+        {
+            juce::Graphics::ScopedSaveState clipState (g);
+            juce::Path clipPath;
+            clipPath.addRoundedRectangle (bounds, Style::radiusMedium);
+            g.reduceClipRegion (clipPath);
+
+            paintKeys (g, bounds);
+        }
+
+        g.setColour (juce::Colour (50, 55, 55));
+        g.drawRoundedRectangle (bounds.reduced (0.5f), Style::radiusMedium, 1.0f);
+    }
+
+    void paintKeys (juce::Graphics& g, juce::Rectangle<float> bounds)
+    {
+        g.fillAll (juce::Colour (30, 35, 35));
         const float whiteKeyWidth = bounds.getWidth() / static_cast<float> (numWhiteKeys);
         const float whiteKeyHeight = bounds.getHeight();
         const float blackKeyWidth = whiteKeyWidth * 0.6f;

@@ -51,7 +51,7 @@ protected:
 
     juce::String getParam2Text() const override
     {
-        return formatParameterText (param2, param2Value, "{name}: {value}%");
+        return formatParameterText (param2, param2Value, "{name}: {fullValue} Hz");
     }
 private:
     static void drawSineWave (const juce::Graphics& g,

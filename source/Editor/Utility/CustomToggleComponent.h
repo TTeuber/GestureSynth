@@ -49,6 +49,12 @@ public:
         repaint();
     }
 
+    void setCornerRadius (float radius)
+    {
+        cornerRadius = radius;
+        repaint();
+    }
+
     void paint (juce::Graphics& g) override
     {
         const float opacity = (opacityCallback && !opacityCallback()) ? 0.35f : 1.0f;
@@ -61,26 +67,26 @@ public:
             if (active)
             {
                 g.setColour (TERTIARY_COLOR.interpolatedWith (accentColor, 0.15f));
-                g.fillRoundedRectangle (bounds, Style::radiusLarge);
+                g.fillRoundedRectangle (bounds, cornerRadius);
                 g.setColour (accentColor.withAlpha (0.4f));
-                g.drawRoundedRectangle (bounds.reduced (0.5f), Style::radiusLarge, 1.5f);
+                g.drawRoundedRectangle (bounds.reduced (0.5f), cornerRadius, 1.5f);
             }
             else
             {
                 g.setColour (TERTIARY_COLOR);
-                g.fillRoundedRectangle (bounds, Style::radiusLarge);
+                g.fillRoundedRectangle (bounds, cornerRadius);
             }
             g.setColour (TEXT_COLOR);
         }
         else if (active)
         {
             g.setColour (TEXT_COLOR);
-            g.fillRoundedRectangle (bounds, Style::radiusLarge);
+            g.fillRoundedRectangle (bounds, cornerRadius);
             g.setColour (PRIMARY_COLOR);
         }
         else
         {
-            PaintHelpers::drawComponentBox (g, bounds, Style::radiusLarge, 1.0f);
+            PaintHelpers::drawComponentBox (g, bounds, cornerRadius, 1.0f);
             g.setColour (TEXT_COLOR);
         }
 
@@ -113,6 +119,7 @@ private:
     std::function<bool()> opacityCallback;
     juce::Colour accentColor;
     bool useAccent = false;
+    float cornerRadius = Style::radiusLarge;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CustomToggleComponent)
 };

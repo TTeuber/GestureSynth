@@ -45,15 +45,18 @@ LFOComponent::LFOComponent (std::shared_ptr<LFOData> data, juce::AudioProcessorV
 
         bpmToggle = std::make_unique<CustomToggleComponent> (tempoSyncParam, "BPM");
         bpmToggle->setAccentColor (LFO_COLOR);
+        bpmToggle->setCornerRadius (Style::radiusMedium);
         addAndMakeVisible (*bpmToggle);
 
         hostToggle = std::make_unique<CustomToggleComponent> (beatSyncParam, "Host");
         hostToggle->setAccentColor (LFO_COLOR);
+        hostToggle->setCornerRadius (Style::radiusMedium);
         hostToggle->setOpacityCallback ([tempoSyncParam]() { return tempoSyncParam->get(); });
         addAndMakeVisible (*hostToggle);
 
         monoToggle = std::make_unique<CustomToggleComponent> (monoParam, "Mono");
         monoToggle->setAccentColor (LFO_COLOR);
+        monoToggle->setCornerRadius (Style::radiusMedium);
         addAndMakeVisible (*monoToggle);
     }
 
@@ -356,13 +359,18 @@ void LFOComponent::resized()
         area = area.reduced (static_cast<int> (kTotalPadding));
         auto controlCol = area.removeFromRight (static_cast<int> (kControlColumnWidth));
 
-        int controlHeight = controlCol.getHeight() / 4;
-        const int pad = 2;
+        const int hPad = 2;
+        const int vGap = 4;
+        const int numControls = 4;
+        const int controlHeight = (controlCol.getHeight() - vGap * (numControls - 1)) / numControls;
 
-        monoToggle->setBounds (controlCol.removeFromTop (controlHeight).reduced (pad));
-        hostToggle->setBounds (controlCol.removeFromTop (controlHeight).reduced (pad));
-        bpmToggle->setBounds (controlCol.removeFromTop (controlHeight).reduced (pad));
-        rateComponent->setBounds (controlCol.reduced (pad));
+        monoToggle->setBounds (controlCol.removeFromTop (controlHeight).reduced (hPad, 0));
+        controlCol.removeFromTop (vGap);
+        hostToggle->setBounds (controlCol.removeFromTop (controlHeight).reduced (hPad, 0));
+        controlCol.removeFromTop (vGap);
+        bpmToggle->setBounds (controlCol.removeFromTop (controlHeight).reduced (hPad, 0));
+        controlCol.removeFromTop (vGap);
+        rateComponent->setBounds (controlCol.reduced (hPad, 0));
     }
 }
 

@@ -96,7 +96,7 @@ public:
         auto bounds = getLocalBounds().toFloat();
 
         g.setColour (TERTIARY_COLOR);
-        g.fillRoundedRectangle (bounds, Style::radiusLarge);
+        g.fillRoundedRectangle (bounds, Style::radiusMedium);
 
         g.setColour (TEXT_COLOR.withAlpha (0.6f));
         g.setFont (Style::fontCaption);
