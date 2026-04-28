@@ -205,7 +205,9 @@ private:
         if (menuLookAndFeel != nullptr)
             menu.setLookAndFeel (menuLookAndFeel);
 
-        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this),
+        menu.showMenuAsync (juce::PopupMenu::Options()
+                                .withTargetComponent (this)
+                                .withMinimumWidth (getWidth()),
             [this, idToFile = std::move (idToFile)] (int result)
             {
                 if (result <= 0)
