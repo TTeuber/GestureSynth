@@ -32,6 +32,21 @@ std::map<juce::String, std::vector<PresetManager::PresetInfo>> PresetManager::sc
     return result;
 }
 
+juce::File PresetManager::resolvePresetFile (const juce::String& name, const juce::String& category) const
+{
+    auto presetsDir = getPresetsDirectory();
+
+    if (category.isEmpty() || category == "Uncategorized")
+        return presetsDir.getChildFile (name + ".xml");
+
+    return presetsDir.getChildFile (category).getChildFile (name + ".xml");
+}
+
+bool PresetManager::presetExists (const juce::String& name, const juce::String& category) const
+{
+    return resolvePresetFile (name, category).existsAsFile();
+}
+
 bool PresetManager::savePreset (const juce::String& name,
                                 const juce::String& category,
                                 const juce::ValueTree& stateTree) const
@@ -48,19 +63,11 @@ bool PresetManager::savePreset (const juce::String& name,
     if (xml == nullptr)
         return false;
 
-    auto presetsDir = getPresetsDirectory();
-    juce::File outputDir;
+    auto outputFile = resolvePresetFile (name, category);
+    auto outputDir = outputFile.getParentDirectory();
+    if (! outputDir.exists())
+        outputDir.createDirectory();
 
-    if (category.isEmpty() || category == "Uncategorized")
-        outputDir = presetsDir;
-    else
-    {
-        outputDir = presetsDir.getChildFile (category);
-        if (! outputDir.exists())
-            outputDir.createDirectory();
-    }
-
-    auto outputFile = outputDir.getChildFile (name + ".xml");
     return xml->writeTo (outputFile);
 }
 

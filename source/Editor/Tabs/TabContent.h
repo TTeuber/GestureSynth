@@ -660,12 +660,4 @@ private:
     // On/off toggles
     std::unique_ptr<CustomToggleComponent> delayOnToggle;
     std::unique_ptr<CustomToggleComponent> reverbOnToggle;
-
-#if SYNTHDEMO_DEV_MODE
-    PluginProcessor& processorRef;
-    juce::Label presetSectionLabel { {}, "Preset Manager (Dev)" };
-    juce::TextEditor presetNameEditor;
-    juce::ComboBox categoryCombo;
-    juce::TextButton savePresetButton { "Save Preset" };
-#endif
 };

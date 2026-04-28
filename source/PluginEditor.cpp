@@ -55,39 +55,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     persistentPanel.addAndMakeVisible (bottomBarBackground);
     persistentPanel.addAndMakeVisible (voiceCountControl);
 
-    prevPresetButton.setColour (juce::TextButton::buttonColourId, TERTIARY_COLOR);
-    prevPresetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
-    prevPresetButton.onClick = [this] { navigatePreset (-1); };
-    contentWrapper.addAndMakeVisible (prevPresetButton);
-    prevPresetButton.setAlwaysOnTop (true);
-
-    presetButton.setColour (juce::TextButton::buttonColourId, TERTIARY_COLOR);
-    presetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
-    presetButton.onClick = [this]
-    {
-        std::map<int, juce::File> idToFile;
-        auto menu = processorRef.presetManager.buildMenu (idToFile);
-        menu.setLookAndFeel (&customLookAndFeel);
-
-        menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&presetButton),
-            [this, idToFile = std::move (idToFile)] (int result)
-            {
-                if (result > 0)
-                {
-                    auto it = idToFile.find (result);
-                    if (it != idToFile.end())
-                        loadPresetByFile (it->second);
-                }
-            });
-    };
-    contentWrapper.addAndMakeVisible (presetButton);
-    presetButton.setAlwaysOnTop (true);
-
-    nextPresetButton.setColour (juce::TextButton::buttonColourId, TERTIARY_COLOR);
-    nextPresetButton.setColour (juce::TextButton::textColourOffId, TEXT_COLOR);
-    nextPresetButton.onClick = [this] { navigatePreset (1); };
-    contentWrapper.addAndMakeVisible (nextPresetButton);
-    nextPresetButton.setAlwaysOnTop (true);
+    presetBar.setup (&processorRef, &customLookAndFeel);
+    presetBar.onNavigate = [this] (int dir) { navigatePreset (dir); };
+    presetBar.onLoadFile = [this] (const juce::File& f) { loadPresetByFile (f); };
+    presetBar.setPresetName (processorRef.currentPresetName);
+    contentWrapper.addAndMakeVisible (presetBar);
+    presetBar.setAlwaysOnTop (true);
 
     menuButton.onClick = [] { /* TODO: menu items */ };
     contentWrapper.addAndMakeVisible (menuButton);
@@ -238,7 +211,7 @@ void PluginEditor::loadPresetByFile (const juce::File& file)
         processorRef.restoreFromStateTree (state);
         processorRef.currentPresetName = file.getFileNameWithoutExtension();
         processorRef.currentPresetFile = file;
-        presetButton.setButtonText (processorRef.currentPresetName);
+        presetBar.setPresetName (processorRef.currentPresetName);
     }
 }
 
@@ -388,16 +361,12 @@ void PluginEditor::resized()
             tabBarRight = juce::jmax (tabBarRight, btn->getRight());
     }
     auto tabBarBounds = tabBar.getBounds();
-    // Preset navigation group: same width as one tab column (1/6)
+    // Preset bar: same width as one tab column (1/6)
     int presetGroupWidth = WIDTH / 6;
     int presetGroupY = tabBarBounds.getY() + 8;
     int presetGroupH = tabBarBounds.getHeight() - 16;
-    int arrowWidth = presetGroupH;
-    int nameWidth = presetGroupWidth - 2 * arrowWidth;
 
-    prevPresetButton.setBounds (tabBarRight, presetGroupY, arrowWidth, presetGroupH);
-    presetButton.setBounds (tabBarRight + arrowWidth, presetGroupY, nameWidth, presetGroupH);
-    nextPresetButton.setBounds (tabBarRight + arrowWidth + nameWidth, presetGroupY, arrowWidth, presetGroupH);
+    presetBar.setBounds (tabBarRight, presetGroupY, presetGroupWidth, presetGroupH);
 
     menuButton.setBounds (WIDTH - presetGroupH - 8 - Style::componentGap, presetGroupY, presetGroupH, presetGroupH);
 

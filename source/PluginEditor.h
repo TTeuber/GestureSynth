@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Editor/PresetBar.h"
 #include "Editor/Tabs/TabContent.h"
 #include "Editor/Utility/AnimationFrameSource.h"
 #include "Editor/Utility/CustomLookAndFeel.h"
@@ -120,9 +121,7 @@ private:
     // Bottom control row
     BoxBackground bottomBarBackground;
     VoiceCountControl voiceCountControl;
-    juce::TextButton prevPresetButton { "<" };
-    juce::TextButton presetButton { "Presets" };
-    juce::TextButton nextPresetButton { ">" };
+    PresetBar presetBar;
     HamburgerButton menuButton;
     PanicButton panicButton;
 

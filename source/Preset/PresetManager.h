@@ -25,6 +25,9 @@ public:
                      const juce::String& category,
                      const juce::ValueTree& stateTree) const;
 
+    juce::File resolvePresetFile (const juce::String& name, const juce::String& category) const;
+    bool presetExists (const juce::String& name, const juce::String& category) const;
+
     juce::ValueTree loadPreset (const juce::File& presetFile) const;
 
     juce::PopupMenu buildMenu (std::map<int, juce::File>& idToFileMap) const;
