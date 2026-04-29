@@ -75,6 +75,20 @@ void MySynth::setVoiceCount (int count)
     monoVoice = dynamic_cast<MySynthVoice*> (voices.getUnchecked (0));
     currentVoiceCount = count;
 
+    // Push cached MIDI controller state into the freshly-allocated voices so they
+    // pick up the current mod wheel / expression / aftertouch instead of starting at 0.
+    {
+        const int cc1 = juce::jlimit (0, 127, static_cast<int> (currentModWheelRaw.load() * 127.0f));
+        const int cc11 = juce::jlimit (0, 127, static_cast<int> (currentExpressionRaw.load() * 127.0f));
+        const int at = juce::jlimit (0, 127, static_cast<int> (currentAftertouchRaw.load() * 127.0f));
+        applyToAllVoices ([cc1, cc11, at] (MySynthVoice* voice)
+        {
+            voice->controllerMoved (1, cc1);
+            voice->controllerMoved (11, cc11);
+            voice->aftertouchChanged (at);
+        });
+    }
+
     // Prepare new voices with stored audio settings
     if (preparedSampleRate > 0.0)
         prepareVoices (preparedSampleRate, preparedSamplesPerBlock, preparedNumChannels);
@@ -335,6 +349,36 @@ void MySynth::noteOff (int midiChannel, int midiNoteNumber, float velocity, bool
         // Poly mode — unchanged
         Synthesiser::noteOff (midiChannel, midiNoteNumber, velocity, allowTailOff);
     }
+}
+
+void MySynth::handleController (int midiChannel, int controllerNumber, int controllerValue)
+{
+    // Base class handles sustain/soft-pedal routing and dispatches to voices that
+    // are currently playing the channel. We additionally cache CC1/CC11 and push
+    // them to *all* voices (including idle ones) so the mod matrix sees the latest
+    // value even when no notes are active and so newly-started notes pick it up.
+    Synthesiser::handleController (midiChannel, controllerNumber, controllerValue);
+
+    if (controllerNumber == 1 || controllerNumber == 11)
+    {
+        const float normalized = controllerValue / 127.0f;
+        AtomicHelpers::paramStore (controllerNumber == 1 ? currentModWheelRaw : currentExpressionRaw, normalized);
+        applyToAllVoices ([controllerNumber, controllerValue] (MySynthVoice* voice)
+        {
+            voice->controllerMoved (controllerNumber, controllerValue);
+        });
+    }
+}
+
+void MySynth::handleAftertouch (int midiChannel, int midiNoteNumber, int aftertouchValue)
+{
+    Synthesiser::handleAftertouch (midiChannel, midiNoteNumber, aftertouchValue);
+
+    AtomicHelpers::paramStore (currentAftertouchRaw, aftertouchValue / 127.0f);
+    applyToAllVoices ([aftertouchValue] (MySynthVoice* voice)
+    {
+        voice->aftertouchChanged (aftertouchValue);
+    });
 }
 
 void MySynth::handleSustainPedal (int midiChannel, bool isDown)

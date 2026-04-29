@@ -18,6 +18,8 @@ public:
 
     void noteOn (int midiChannel, int midiNoteNumber, float velocity) override;
     void noteOff (int midiChannel, int midiNoteNumber, float velocity, bool allowTailOff) override;
+    void handleController (int midiChannel, int controllerNumber, int controllerValue) override;
+    void handleAftertouch (int midiChannel, int midiNoteNumber, int aftertouchValue) override;
     void handleSustainPedal (int midiChannel, bool isDown) override;
     void allNotesOff (int midiChannel, bool allowTailOff) override;
 
