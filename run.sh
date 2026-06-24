@@ -1,1 +1,1 @@
-"cmake-build-relwithdebinfo/SynthDemo_artefacts/RelWithDebInfo/Standalone/Demo Synth.app/Contents/MacOS/Demo Synth"
+"cmake-build-relwithdebinfo/GestureSynth_artefacts/RelWithDebInfo/Standalone/Gesture Synth.app/Contents/MacOS/Gesture Synth"
