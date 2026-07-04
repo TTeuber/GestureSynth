@@ -35,5 +35,10 @@ packaging/Output/*
 
 TODO.md
 FIXES.md
+UI_TODO.md
+BETA_READINESS.md
+PORTFOLIO_TODO.md
+AGENTS.md
 docs/*.md
 .claude
+worktrees/

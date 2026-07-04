@@ -123,8 +123,8 @@ include(Assets)
 # MacOS only: Cleans up folder and target organization on Xcode.
 include(XcodePrettify)
 
-# Enable developer-only preset save UI (set to OFF for production builds)
-option(SYNTHDEMO_DEV_MODE "Enable developer preset save UI" ON)
+# Enable developer-only UI (Keyboard/Experiment tabs); keep OFF for production builds
+option(GESTURESYNTH_DEV_MODE "Enable developer-only UI" OFF)
 
 # This is where you can set preprocessor definitions for JUCE and your plugin
 target_compile_definitions(SharedCode
@@ -143,10 +143,10 @@ target_compile_definitions(SharedCode
     VERSION="${CURRENT_VERSION}"
 
     # JucePlugin_Name is for some reason doesn't use the nicer PRODUCT_NAME
-    PRODUCT_NAME_WITHOUT_VERSION="Demosynth"
+    PRODUCT_NAME_WITHOUT_VERSION="Gesture Synth"
 
-    # Developer preset save UI
-    $<$<BOOL:${SYNTHDEMO_DEV_MODE}>:SYNTHDEMO_DEV_MODE=0>
+    # Developer-only UI (always defined, 1 when the option is ON)
+    GESTURESYNTH_DEV_MODE=$<BOOL:${GESTURESYNTH_DEV_MODE}>
 )
 
 # Link to any other modules you added (with juce_add_module) here!

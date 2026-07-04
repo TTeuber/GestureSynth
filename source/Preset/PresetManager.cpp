@@ -3,11 +3,21 @@
 juce::File PresetManager::getPresetsDirectory() const
 {
     auto dir = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
-                   .getChildFile ("SynthDemo")
+                   .getChildFile ("GestureSynth")
                    .getChildFile ("Presets");
 
     if (! dir.exists())
-        dir.createDirectory();
+    {
+        // One-time migration of presets saved under the pre-rename app name
+        auto legacyDir = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
+                             .getChildFile ("SynthDemo")
+                             .getChildFile ("Presets");
+
+        if (legacyDir.isDirectory())
+            legacyDir.copyDirectoryTo (dir);
+        else
+            dir.createDirectory();
+    }
 
     return dir;
 }
@@ -51,7 +61,7 @@ bool PresetManager::savePreset (const juce::String& name,
                                 const juce::String& category,
                                 const juce::ValueTree& stateTree) const
 {
-    juce::ValueTree preset ("SynthDemoPreset");
+    juce::ValueTree preset ("GestureSynthPreset");
     preset.setProperty ("name", name, nullptr);
     preset.setProperty ("category", category.isEmpty() ? "Uncategorized" : category, nullptr);
     preset.setProperty ("formatVersion", kPresetFormatVersion, nullptr);
@@ -78,7 +88,10 @@ juce::ValueTree PresetManager::loadPreset (const juce::File& presetFile) const
         return {};
 
     auto preset = juce::ValueTree::fromXml (*xml);
-    if (! preset.isValid() || preset.getType().toString() != "SynthDemoPreset")
+    auto type = preset.getType().toString();
+
+    // "SynthDemoPreset" is the legacy tag from before the GestureSynth rename
+    if (! preset.isValid() || (type != "GestureSynthPreset" && type != "SynthDemoPreset"))
         return {};
 
     // Return the inner PluginState child

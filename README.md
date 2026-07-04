@@ -3,6 +3,7 @@
 **A gesture-driven, Juno-inspired polyphonic synthesizer plugin.**
 Built from scratch in modern C++ with JUCE — Standalone, AU, VST3, AUv3, and CLAP.
 
+[![Build and Test](https://github.com/TTeuber/GestureSynth/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/TTeuber/GestureSynth/actions/workflows/build_and_test.yml)
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=cplusplus&logoColor=white)
 ![JUCE 8](https://img.shields.io/badge/JUCE-8.x-8DC63F)
 ![CMake](https://img.shields.io/badge/CMake-3.25%2B-064F8C?logo=cmake&logoColor=white)
@@ -96,7 +97,7 @@ and fully **undoable**.
 - Full host tempo sync for LFOs and delay.
 
 ### Interface
-- Tabbed editor (Main / Keyboard / Modulation / Experiment) with a custom LookAndFeel.
+- Tabbed editor (Main / Modulation, plus developer-only Keyboard and Experiment tabs) with a custom LookAndFeel.
 - Real-time oscilloscope plus envelope, LFO, and filter visualizers.
 - Resizable UI (0.5×–1.5×) with an on-screen velocity-sensitive keyboard.
 

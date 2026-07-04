@@ -82,7 +82,7 @@ public:
         smoothedDelaySamples = 0.0f;
         smoothedFeedback = AtomicHelpers::paramLoad (feedback);
         lfoPhaseL = 0.0f;
-        lfoPhaseR = static_cast<float> (M_PI) * 0.5f;
+        lfoPhaseR = juce::MathConstants<float>::pi * 0.5f;
     }
 
     void prepare (const juce::dsp::ProcessSpec& spec)
@@ -122,7 +122,7 @@ public:
         smoothedDelaySamples = 0.0f;
         smoothedFeedback = 0.4f;
         lfoPhaseL = 0.0f;
-        lfoPhaseR = static_cast<float> (M_PI) * 0.5f; // 90-degree offset
+        lfoPhaseR = juce::MathConstants<float>::pi * 0.5f; // 90-degree offset
     }
 
     void process (juce::AudioBuffer<float>& buffer)
@@ -175,7 +175,7 @@ public:
         const float invDrive = 1.0f / drive;
 
         // LFO increment per sample
-        const float lfoInc = 2.0f * static_cast<float> (M_PI) * localModRate / static_cast<float> (sampleRate);
+        const float lfoInc = 2.0f * juce::MathConstants<float>::pi * localModRate / static_cast<float> (sampleRate);
 
         // Max modulation depth: 3ms in samples
         const float maxModSamples = 0.003f * static_cast<float> (sampleRate);
@@ -206,10 +206,10 @@ public:
             float lfoModR = std::sin (lfoPhaseR) * modDepthSamples;
             lfoPhaseL += lfoInc;
             lfoPhaseR += lfoInc;
-            if (lfoPhaseL >= 2.0f * static_cast<float> (M_PI))
-                lfoPhaseL -= 2.0f * static_cast<float> (M_PI);
-            if (lfoPhaseR >= 2.0f * static_cast<float> (M_PI))
-                lfoPhaseR -= 2.0f * static_cast<float> (M_PI);
+            if (lfoPhaseL >= 2.0f * juce::MathConstants<float>::pi)
+                lfoPhaseL -= 2.0f * juce::MathConstants<float>::pi;
+            if (lfoPhaseR >= 2.0f * juce::MathConstants<float>::pi)
+                lfoPhaseR -= 2.0f * juce::MathConstants<float>::pi;
 
             // Read from delay lines at modulated positions
             float readDelayL = std::max (smoothedDelaySamples + lfoModL, 1.0f);

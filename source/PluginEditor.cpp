@@ -30,12 +30,12 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 
     // Add tabs
     tabbedComponent.addTab ("Main", PRIMARY_COLOR, mainTab.get(), false);
-#if SYNTHDEMO_DEV_MODE
+#if GESTURESYNTH_DEV_MODE
     keyboardTab = std::make_unique<KeyboardTabContent> (p, &animationSource);
     tabbedComponent.addTab ("Keyboard", PRIMARY_COLOR, keyboardTab.get(), false);
 #endif
     tabbedComponent.addTab ("Modulation", PRIMARY_COLOR, modulationTab.get(), false);
-#if SYNTHDEMO_DEV_MODE
+#if GESTURESYNTH_DEV_MODE
     experimentTab = std::make_unique<ExperimentTabContent> (p);
     tabbedComponent.addTab ("Experiment", PRIMARY_COLOR, experimentTab.get(), false);
 #endif

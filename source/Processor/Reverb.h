@@ -99,13 +99,13 @@ public:
             crossoverLowState[i] = 0.0f;
 
             // LFO state — golden ratio phase offsets
-            lfoPhase[i] = static_cast<float> (i) * 0.6180339887f * 2.0f * static_cast<float> (M_PI);
-            while (lfoPhase[i] >= 2.0f * static_cast<float> (M_PI))
-                lfoPhase[i] -= 2.0f * static_cast<float> (M_PI);
+            lfoPhase[i] = static_cast<float> (i) * 0.6180339887f * 2.0f * juce::MathConstants<float>::pi;
+            while (lfoPhase[i] >= 2.0f * juce::MathConstants<float>::pi)
+                lfoPhase[i] -= 2.0f * juce::MathConstants<float>::pi;
         }
 
         // Update crossover coefficient for 250 Hz
-        float w = 2.0f * static_cast<float> (M_PI) * 250.0f / static_cast<float> (sampleRate);
+        float w = 2.0f * juce::MathConstants<float>::pi * 250.0f / static_cast<float> (sampleRate);
         float g = w / (1.0f + w);
         for (int i = 0; i < 16; ++i)
             crossoverCoeff[i] = g;
@@ -139,9 +139,9 @@ public:
             fdnLines[i].reset();
             dampingFilters[i].reset();
             crossoverLowState[i] = 0.0f;
-            lfoPhase[i] = static_cast<float> (i) * 0.6180339887f * 2.0f * static_cast<float> (M_PI);
-            while (lfoPhase[i] >= 2.0f * static_cast<float> (M_PI))
-                lfoPhase[i] -= 2.0f * static_cast<float> (M_PI);
+            lfoPhase[i] = static_cast<float> (i) * 0.6180339887f * 2.0f * juce::MathConstants<float>::pi;
+            while (lfoPhase[i] >= 2.0f * juce::MathConstants<float>::pi)
+                lfoPhase[i] -= 2.0f * juce::MathConstants<float>::pi;
         }
         for (int i = 0; i < 2; ++i)
         {
@@ -200,7 +200,7 @@ public:
         for (int i = 0; i < 16; ++i)
         {
             float freq = localModRate * (0.7f + 0.4f * static_cast<float> (i) / 15.0f);
-            lfoInc[i] = 2.0f * static_cast<float> (M_PI) * freq / static_cast<float> (sampleRate);
+            lfoInc[i] = 2.0f * juce::MathConstants<float>::pi * freq / static_cast<float> (sampleRate);
         }
 
         const float inputScale = 1.0f / 4.0f; // 1/sqrt(16) = 0.25
@@ -229,8 +229,8 @@ public:
                 float modDepthSamp = localModDepth * 0.01f * baseDelaySamp;
                 float mod = std::sin (lfoPhase[i]) * modDepthSamp;
                 lfoPhase[i] += lfoInc[i];
-                if (lfoPhase[i] >= 2.0f * static_cast<float> (M_PI))
-                    lfoPhase[i] -= 2.0f * static_cast<float> (M_PI);
+                if (lfoPhase[i] >= 2.0f * juce::MathConstants<float>::pi)
+                    lfoPhase[i] -= 2.0f * juce::MathConstants<float>::pi;
 
                 float readDelay = baseDelaySamp + mod;
                 readDelay = std::max (readDelay, 1.0f);
@@ -328,7 +328,7 @@ private:
         {
             baseDelay = delaySamples;
             modDepthSamples = modDepthVal;
-            lfoInc = static_cast<float> (2.0 * M_PI * modRateHz / sr);
+            lfoInc = static_cast<float> (2.0 * juce::MathConstants<double>::pi * modRateHz / sr);
             lfoPhase = 0.0f;
 
             int maxDelay = delaySamples + static_cast<int> (modDepthVal) + 2;
@@ -341,8 +341,8 @@ private:
         {
             float mod = std::sin (lfoPhase) * modDepthSamples;
             lfoPhase += lfoInc;
-            if (lfoPhase >= 2.0f * static_cast<float> (M_PI))
-                lfoPhase -= 2.0f * static_cast<float> (M_PI);
+            if (lfoPhase >= 2.0f * juce::MathConstants<float>::pi)
+                lfoPhase -= 2.0f * juce::MathConstants<float>::pi;
 
             float readDelay = static_cast<float> (baseDelay) + mod;
             float readPosF = static_cast<float> (writePos) - readDelay;
