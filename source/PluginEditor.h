@@ -8,6 +8,7 @@
 #include "Editor/Utility/PaintHelpers.h"
 #include "PluginProcessor.h"
 #include "Theme.h"
+#include "Utility/UpdateChecker.h"
 #include <juce_audio_utils/juce_audio_utils.h>
 
 #define HEIGHT 800
@@ -124,6 +125,10 @@ private:
     PresetBar presetBar;
     HamburgerButton menuButton;
     PanicButton panicButton;
+
+    UpdateChecker updateChecker { VERSION };
+    juce::TextButton updateButton { "Update available" };
+    juce::String updateURL { UpdateCheck::releasesPageURL };
 
     void loadPresetByFile (const juce::File& file);
     void navigatePreset (int direction);

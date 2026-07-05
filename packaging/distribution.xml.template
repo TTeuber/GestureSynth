@@ -6,8 +6,6 @@
     </allowed-os-versions>
     <license file="EULA" />
     <readme file="README" />
-    <background file="background.png" mime-type="image/png" scaling="tofit" alignment="bottomleft"/>
-    <background-darkAqua file="background.png" mime-type="image/png" scaling="tofit" alignment="bottomleft"/>
     <options customize="always" rootVolumeOnly="true" hostArchitectures="x86_64,arm64" />
     <domain enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true" />
 

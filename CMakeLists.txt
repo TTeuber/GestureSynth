@@ -27,7 +27,8 @@ set(PROJECT_NAME "GestureSynth")
 # allowing you to change parameters and behavior without breaking existing user projects
 set(PRODUCT_NAME "Gesture Synth")
 
-set(CURRENT_VERSION "0.1.0")
+# The version is read from the VERSION file by PamplejuceVersion.cmake (single
+# source of truth — the update checker and release tags rely on it matching)
 
 # Change me! Used for the MacOS bundle name and Installers
 set(COMPANY_NAME "Tyler Teuber")

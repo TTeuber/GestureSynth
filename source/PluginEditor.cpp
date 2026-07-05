@@ -70,6 +70,19 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     contentWrapper.addAndMakeVisible (menuButton);
     menuButton.setAlwaysOnTop (true);
 
+    // Hidden until the background check finds a newer release
+    updateButton.setTooltip ("A new version is available — opens the download page");
+    updateButton.onClick = [this] { juce::URL (updateURL).launchInDefaultBrowser(); };
+    contentWrapper.addChildComponent (updateButton);
+    updateButton.setAlwaysOnTop (true);
+    updateChecker.onUpdateAvailable = [this] (const juce::String& newVersion, const juce::String& releaseURL)
+    {
+        updateURL = releaseURL;
+        updateButton.setButtonText ("Update to v" + newVersion);
+        updateButton.setVisible (true);
+    };
+    updateChecker.checkNow();
+
     panicButton.setTooltip ("Silence all voices and reset MIDI state");
     // Panic is deferred to the next processBlock — mutating voice state from the
     // message thread would race the audio thread (the synth is lock-free).
@@ -371,6 +384,9 @@ void PluginEditor::resized()
     presetBar.setBounds (tabBarRight, presetGroupY, presetGroupWidth, presetGroupH);
 
     menuButton.setBounds (WIDTH - presetGroupH - 8 - Style::componentGap, presetGroupY, presetGroupH, presetGroupH);
+
+    constexpr int updateButtonWidth = 130;
+    updateButton.setBounds (menuButton.getX() - updateButtonWidth - 8, presetGroupY, updateButtonWidth, presetGroupH);
 
     // Resize grip at physical bottom-right corner (not inside contentWrapper)
     resizeGrip->setBounds (getWidth() - 16, getHeight() - 16, 16, 16);

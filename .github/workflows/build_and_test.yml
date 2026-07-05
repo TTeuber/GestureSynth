@@ -144,13 +144,50 @@ jobs:
           7z x pluginval_${{ matrix.name }}.zip
           ${{ matrix.pluginval-binary }} --strictness-level 10 --verbose --validate "${{ env.VST3_PATH }}"
 
-      # Note: macOS artifacts are unsigned/un-notarized for now.
-      # Signing and notarization require an Apple Developer account;
-      # the previous template steps for it are in the git history.
       - name: Zip
         if: ${{ matrix.name != 'Windows' }}
         working-directory: ${{ env.ARTIFACTS_PATH }}
         run: 7z a -tzip "${{ env.ARTIFACT_NAME }}.zip" "-xr!lib${{ env.PRODUCT_NAME }}_SharedCode.a" .
+
+      # macOS installer: works without Apple credentials (unsigned pkg).
+      # Add the DEV_ID_*/NOTARIZATION_*/APPLE_TEAM_ID secrets (see packaging/RELEASING.md)
+      # and the same steps produce a signed + notarized installer.
+      - name: Detect Apple signing secrets (macOS)
+        if: ${{ matrix.name == 'macOS' }}
+        run: echo "HAS_APPLE_CERTS=${{ secrets.DEV_ID_APP_CERT != '' && secrets.DEV_ID_INSTALLER_CERT != '' }}" >> $GITHUB_ENV
+
+      - name: Import Developer ID Application certificate (macOS)
+        if: ${{ matrix.name == 'macOS' && env.HAS_APPLE_CERTS == 'true' }}
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          keychain-password: ${{ github.run_id }}
+          p12-file-base64: ${{ secrets.DEV_ID_APP_CERT }}
+          p12-password: ${{ secrets.DEV_ID_APP_PASSWORD }}
+
+      - name: Import Developer ID Installer certificate (macOS)
+        if: ${{ matrix.name == 'macOS' && env.HAS_APPLE_CERTS == 'true' }}
+        uses: apple-actions/import-codesign-certs@v3
+        with:
+          create-keychain: false
+          keychain-password: ${{ github.run_id }}
+          p12-file-base64: ${{ secrets.DEV_ID_INSTALLER_CERT }}
+          p12-password: ${{ secrets.DEV_ID_INSTALLER_PASSWORD }}
+
+      - name: Build macOS installer (.pkg)
+        if: ${{ matrix.name == 'macOS' }}
+        env:
+          OUTPUT_DIR: ${{ env.BUILD_DIR }}/installer
+          NOTARIZATION_APPLE_ID: ${{ secrets.NOTARIZATION_APPLE_ID }}
+          NOTARIZATION_PASSWORD: ${{ secrets.NOTARIZATION_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: ./packaging/package-macos.sh
+
+      - name: Upload Installer (macOS)
+        if: ${{ matrix.name == 'macOS' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}.pkg
+          path: "${{ env.BUILD_DIR }}/installer/${{ env.ARTIFACT_NAME }}.pkg"
 
       - name: Generate Installer
         if: ${{ matrix.name == 'Windows' }}
@@ -190,4 +227,5 @@ jobs:
           files: |
             */*.exe
             */*.zip
+            */*.pkg
             */*.dmg
