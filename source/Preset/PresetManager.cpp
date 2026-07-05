@@ -2,6 +2,13 @@
 
 juce::File PresetManager::getPresetsDirectory() const
 {
+    if (presetsDirOverride != juce::File())
+    {
+        if (! presetsDirOverride.exists())
+            presetsDirOverride.createDirectory();
+        return presetsDirOverride;
+    }
+
     auto dir = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
                    .getChildFile ("GestureSynth")
                    .getChildFile ("Presets");

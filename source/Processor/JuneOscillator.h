@@ -76,7 +76,12 @@ public:
         subPhaseIncrement = frequency / oversampledSampleRate / 2; // Sub-oscillator is one octave lower
     }
 
-    // PolyBLEP function to reduce aliasing
+    // PolyBLEP function to reduce aliasing.
+    // Call unconditionally with the (wrapped) distance from the discontinuity:
+    // both the sample just after (t < dt) and just before (t > 1 - dt) an edge
+    // need correcting, so gating the call on "did we just wrap" drops half the
+    // correction and leaves ~15 dB of alias suppression on the table.
+    // Subtract for falling edges, add for rising edges.
     static float polyBlep (float t, const float dt)
     {
         // t is the phase position (0 to 1)
@@ -98,15 +103,15 @@ public:
         return 0.0f;
     }
 
+    // Wraps a phase offset (e.g. distance from the pulse-width edge) into [0, 1)
+    static float wrapPhase (const float t)
+    {
+        return t < 0.0f ? t + 1.0f : t;
+    }
+
     // Process a single sample
     std::array<float, 2> process()
     {
-        // Store previous phase for discontinuity detection
-        float previousPhase = phase;
-        float previousPhaseL = phaseL;
-        float previousPhaseR = phaseR;
-        float previousSubPhase = subPhase;
-
         // Update phase (0.0 to 1.0)
         phase += phaseIncrement;
         phaseL += phaseIncrementL;
@@ -136,49 +141,34 @@ public:
         if (oscillatorEnabled)
         {
             // Process main oscillators
+            // The saw ramps up and falls at the wrap: subtract the polyBLEP.
+            // The pulse here is -1 below the width point and +1 above, so its
+            // edges are: falling at the wrap, rising at the width point.
+            const float pw = pulseWidth.getCurrentValue();
             if (detuneEnabled)
             {
                 // Detuned stereo processing
-                sawOutputL = 2.0f * phaseL - 1.0f;
-                sawOutputR = 2.0f * phaseR - 1.0f;
-
-                // Apply PolyBLEP correction at discontinuity
-                if (previousPhaseL > phaseL)
-                    sawOutputL -= polyBlep (phaseL, phaseIncrementL);
-                if (previousPhaseR > phaseR)
-                    sawOutputR -= polyBlep (phaseR, phaseIncrementR);
+                sawOutputL = 2.0f * phaseL - 1.0f - polyBlep (phaseL, phaseIncrementL);
+                sawOutputR = 2.0f * phaseR - 1.0f - polyBlep (phaseR, phaseIncrementR);
 
                 // Pulse wave processing
-                pulseOutputL = (phaseL < pulseWidth.getCurrentValue()) ? -1.0 : 1.0;
-                pulseOutputR = (phaseR < pulseWidth.getCurrentValue()) ? -1.0 : 1.0;
+                pulseOutputL = (phaseL < pw) ? -1.0f : 1.0f;
+                pulseOutputL -= polyBlep (phaseL, phaseIncrementL);
+                pulseOutputL += polyBlep (wrapPhase (phaseL - pw), phaseIncrementL);
 
-                // Apply PolyBLEP correction at rising and falling edges
-                if (phaseL < phaseIncrementL)
-                    pulseOutputL += polyBlep (phaseL, phaseIncrementL);
-                if (phaseL > pulseWidth.getCurrentValue() && phaseL < pulseWidth.getCurrentValue() + phaseIncrementL)
-                    pulseOutputL -= polyBlep (phaseL - pulseWidth.getCurrentValue(), phaseIncrementL);
-                if (phaseR < phaseIncrementR)
-                    pulseOutputR += polyBlep (phaseR, phaseIncrementR);
-                if (phaseR > pulseWidth.getCurrentValue() && phaseR < pulseWidth.getCurrentValue() + phaseIncrementR)
-                    pulseOutputR -= polyBlep (phaseR - pulseWidth.getCurrentValue(), phaseIncrementR);
+                pulseOutputR = (phaseR < pw) ? -1.0f : 1.0f;
+                pulseOutputR -= polyBlep (phaseR, phaseIncrementR);
+                pulseOutputR += polyBlep (wrapPhase (phaseR - pw), phaseIncrementR);
             }
             else
             {
                 // Mono processing
-                sawOutput = 2.0f * phase - 1.0f;
-
-                // Apply PolyBLEP correction at discontinuity
-                if (previousPhase > phase)
-                    sawOutput -= polyBlep (phase, phaseIncrement);
+                sawOutput = 2.0f * phase - 1.0f - polyBlep (phase, phaseIncrement);
 
                 // Pulse wave processing
-                pulseOutput = (phase < pulseWidth.getCurrentValue()) ? -1.0 : 1.0;
-
-                // Apply PolyBLEP correction at rising and falling edges
-                if (phase < phaseIncrement)
-                    pulseOutput += polyBlep (phase, phaseIncrement);
-                if (phase > pulseWidth.getCurrentValue() && phase < pulseWidth.getCurrentValue() + phaseIncrement)
-                    pulseOutput -= polyBlep (phase - pulseWidth.getCurrentValue(), phaseIncrement);
+                pulseOutput = (phase < pw) ? -1.0f : 1.0f;
+                pulseOutput -= polyBlep (phase, phaseIncrement);
+                pulseOutput += polyBlep (wrapPhase (phase - pw), phaseIncrement);
             }
         }
 
@@ -198,21 +188,17 @@ public:
 
             auto genSquare = [&]()
             {
+                // +1 below the midpoint: rising edge at the wrap, falling at 0.5
                 float sq = (subPhase < 0.5f) ? 1.0f : -1.0f;
-                if (subPhase < subPhaseIncrement)
-                    sq += polyBlep (subPhase, subPhaseIncrement);
-                if (subPhase > 0.5f && subPhase < 0.5f + subPhaseIncrement)
-                    sq -= polyBlep (subPhase - 0.5f, subPhaseIncrement);
+                sq += polyBlep (subPhase, subPhaseIncrement);
+                sq -= polyBlep (wrapPhase (subPhase - 0.5f), subPhaseIncrement);
                 return sq;
             };
 
             auto genSaw = [&]()
             {
-                // Down ramp: 1 - 2*phase
-                float saw = 1.0f - 2.0f * subPhase;
-                if (previousSubPhase > subPhase)
-                    saw += polyBlep (subPhase, subPhaseIncrement);
-                return saw;
+                // Down ramp: 1 - 2*phase, rising edge at the wrap
+                return 1.0f - 2.0f * subPhase + polyBlep (subPhase, subPhaseIncrement);
             };
 
             // Segment mapping: 0.0=Sine, 1/3=Triangle, 2/3=Square, 1.0=Saw

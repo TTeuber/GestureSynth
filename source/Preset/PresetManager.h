@@ -17,6 +17,10 @@ public:
 
     PresetManager() = default;
 
+    // Redirects all preset IO to the given directory (used by unit tests so
+    // they never touch the user's real preset folder).
+    void setPresetsDirectoryOverride (const juce::File& dir) { presetsDirOverride = dir; }
+
     juce::File getPresetsDirectory() const;
 
     std::map<juce::String, std::vector<PresetInfo>> scanPresets() const;
@@ -37,4 +41,7 @@ public:
     bool deletePreset (const juce::File& presetFile) const;
 
     std::vector<PresetInfo> getFlatPresetList() const;
+
+private:
+    juce::File presetsDirOverride;
 };
