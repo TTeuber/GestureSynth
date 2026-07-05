@@ -163,6 +163,85 @@ TEST_CASE ("Unrecognized or corrupt preset files are rejected", "[preset]")
     }
 }
 
+TEST_CASE ("Factory presets install from the binary into the preset folder", "[preset]")
+{
+    TempPresetDir tempDir;
+    PresetManager manager;
+    manager.setPresetsDirectoryOverride (tempDir.dir);
+
+    const int installed = manager.installFactoryPresets ("test-stamp-1");
+    REQUIRE (installed > 0);
+
+    // Sound-design brief: at least these categories must exist
+    auto categories = manager.getCategories();
+    for (auto expected : { "Bass", "Leads", "Pads", "Keys", "Plucks", "FX", "Templates" })
+    {
+        INFO ("missing category: " << expected);
+        CHECK (categories.contains (expected));
+    }
+
+    CHECK (static_cast<int> (manager.getFlatPresetList().size()) == installed);
+
+    SECTION ("second call with the same stamp is a no-op")
+    {
+        CHECK (manager.installFactoryPresets ("test-stamp-1") == 0);
+    }
+
+    SECTION ("user deletions are respected until the stamp changes")
+    {
+        const auto victim = manager.getFlatPresetList().front().file;
+        REQUIRE (victim.deleteFile());
+
+        CHECK (manager.installFactoryPresets ("test-stamp-1") == 0);
+        CHECK_FALSE (victim.existsAsFile());
+
+        // A version bump restores only the missing file
+        CHECK (manager.installFactoryPresets ("test-stamp-2") == 1);
+        CHECK (victim.existsAsFile());
+    }
+
+    SECTION ("user-edited presets are never overwritten")
+    {
+        const auto edited = manager.getFlatPresetList().front().file;
+        REQUIRE (edited.replaceWithText ("<GestureSynthPreset name=\"user edit\"/>"));
+
+        manager.installFactoryPresets ("test-stamp-3");
+        CHECK (edited.loadFileAsString().contains ("user edit"));
+    }
+}
+
+TEST_CASE ("Every factory preset loads cleanly into the processor", "[preset]")
+{
+    TempPresetDir tempDir;
+    PluginProcessor plugin;
+    plugin.presetManager.setPresetsDirectoryOverride (tempDir.dir);
+    REQUIRE (plugin.presetManager.installFactoryPresets ("load-check") > 0);
+
+    for (const auto& info : plugin.presetManager.getFlatPresetList())
+    {
+        INFO ("preset: " << info.name);
+
+        const auto state = plugin.presetManager.loadPreset (info.file);
+        REQUIRE (state.isValid());
+        REQUIRE (state.getType().toString() == "PluginState");
+
+        // Factory presets pin every parameter explicitly so loads are deterministic
+        auto paramState = state.getChildWithName (plugin.parameters.state.getType());
+        REQUIRE (paramState.isValid());
+        for (const auto* param : plugin.getParameters())
+            if (const auto* withID = dynamic_cast<const juce::AudioProcessorParameterWithID*> (param))
+            {
+                INFO ("parameter not pinned by preset: " << withID->paramID);
+                CHECK (paramState.getChildWithProperty ("id", withID->paramID).isValid());
+            }
+
+        plugin.restoreFromStateTree (state);
+
+        // The mod matrix keeps its full complement of slots after the load
+        CHECK (plugin.modTree.getNumChildren() >= 12);
+    }
+}
+
 TEST_CASE ("scanPresets finds categorized and uncategorized presets", "[preset]")
 {
     TempPresetDir tempDir;

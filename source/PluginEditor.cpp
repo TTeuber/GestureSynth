@@ -16,6 +16,10 @@ PluginEditor::PluginEditor (PluginProcessor& p)
 {
     setLookAndFeel (&customLookAndFeel);
 
+    // First-run (and post-update) extraction of the bundled factory presets
+    // into the user preset folder, before the preset bar builds its menu.
+    processorRef.presetManager.installFactoryPresets (VERSION);
+
     // Set up modulation mode state
     modModeState.setModTree (&processorRef.modTree);
     modModeState.setUndoManager (&processorRef.undoManager);

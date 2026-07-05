@@ -1,4 +1,5 @@
 #include "PresetManager.h"
+#include "BinaryData.h"
 
 juce::File PresetManager::getPresetsDirectory() const
 {
@@ -111,6 +112,52 @@ juce::ValueTree PresetManager::loadPreset (const juce::File& presetFile) const
         return preset.getChild (0);
 
     return {};
+}
+
+int PresetManager::installFactoryPresets (const juce::String& versionStamp) const
+{
+    auto presetsDir = getPresetsDirectory();
+    auto stampFile = presetsDir.getChildFile (".factory-presets-version");
+
+    if (stampFile.existsAsFile() && stampFile.loadFileAsString().trim() == versionStamp)
+        return 0;
+
+    int installed = 0;
+
+    for (int i = 0; i < BinaryData::namedResourceListSize; ++i)
+    {
+        const char* resourceName = BinaryData::namedResourceList[i];
+        const char* originalName = BinaryData::getNamedResourceOriginalFilename (resourceName);
+        if (originalName == nullptr || ! juce::String (originalName).endsWithIgnoreCase (".xml"))
+            continue;
+
+        int dataSize = 0;
+        const char* data = BinaryData::getNamedResource (resourceName, dataSize);
+        if (data == nullptr || dataSize <= 0)
+            continue;
+
+        auto xml = juce::XmlDocument::parse (juce::String::fromUTF8 (data, dataSize));
+        if (xml == nullptr || xml->getTagName() != "GestureSynthPreset")
+            continue;
+
+        auto name = xml->getStringAttribute ("name",
+            juce::String (originalName).upToLastOccurrenceOf (".", false, false));
+        auto category = xml->getStringAttribute ("category", "Uncategorized");
+
+        auto target = resolvePresetFile (name, category);
+        if (target.existsAsFile())
+            continue; // never clobber a user-edited preset of the same name
+
+        auto targetDir = target.getParentDirectory();
+        if (! targetDir.exists())
+            targetDir.createDirectory();
+
+        if (xml->writeTo (target))
+            ++installed;
+    }
+
+    stampFile.replaceWithText (versionStamp + "\n");
+    return installed;
 }
 
 juce::PopupMenu PresetManager::buildMenu (std::map<int, juce::File>& idToFileMap) const

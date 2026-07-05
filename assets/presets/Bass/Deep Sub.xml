@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<GestureSynthPreset name="Deep Sub" category="Bass" formatVersion="1" pluginVersion="0.1.0">
+  <PluginState>
+    <parameters>
+      <PARAM id="volume" value="0.6"/>
+      <PARAM id="noiseLevel" value="0.5"/>
+      <PARAM id="noiseTone" value="0.5"/>
+      <PARAM id="filterFrequency" value="700"/>
+      <PARAM id="filterResonance" value="0.5"/>
+      <PARAM id="hpfFrequency" value="20"/>
+      <PARAM id="oscWaveform" value="0.5"/>
+      <PARAM id="pulseWidth" value="0.5"/>
+      <PARAM id="oscDetune" value="0.2"/>
+      <PARAM id="oscWidth" value="1"/>
+      <PARAM id="subOsc" value="1"/>
+      <PARAM id="subOscWave" value="0"/>
+      <PARAM id="mainOscLevel" value="1"/>
+      <PARAM id="fineTune" value="0"/>
+      <PARAM id="chorusMix" value="0.5"/>
+      <PARAM id="chorusDepth" value="0.015"/>
+      <PARAM id="chorusRate" value="0.15"/>
+      <PARAM id="vibratoRate" value="5"/>
+      <PARAM id="vibratoDepth" value="0"/>
+      <PARAM id="manualBpm" value="120"/>
+      <PARAM id="oscOn" value="0"/>
+      <PARAM id="detuneOn" value="0"/>
+      <PARAM id="subOn" value="1"/>
+      <PARAM id="filterOn" value="1"/>
+      <PARAM id="hpfOn" value="0"/>
+      <PARAM id="noiseOn" value="0"/>
+      <PARAM id="chorusOn" value="0"/>
+      <PARAM id="vibratoOn" value="0"/>
+      <PARAM id="delayOn" value="0"/>
+      <PARAM id="reverbOn" value="0"/>
+      <PARAM id="portamentoTime" value="45"/>
+      <PARAM id="reverbDecay" value="4"/>
+      <PARAM id="reverbSize" value="2"/>
+      <PARAM id="reverbDamping" value="6000"/>
+      <PARAM id="reverbBassMult" value="1.5"/>
+      <PARAM id="reverbModRate" value="1"/>
+      <PARAM id="reverbModDepth" value="0.3"/>
+      <PARAM id="reverbDiffusion" value="0.7"/>
+      <PARAM id="reverbPreDelay" value="20"/>
+      <PARAM id="reverbWidth" value="1"/>
+      <PARAM id="reverbLevel" value="0.35"/>
+      <PARAM id="delayTime" value="375"/>
+      <PARAM id="delayTempoSync" value="0"/>
+      <PARAM id="delayNoteDivision" value="4"/>
+      <PARAM id="delayFeedback" value="0.4"/>
+      <PARAM id="delayMix" value="0.3"/>
+      <PARAM id="delayLowpass" value="4000"/>
+      <PARAM id="delayHighpass" value="80"/>
+      <PARAM id="delaySaturation" value="0.3"/>
+      <PARAM id="delayModRate" value="0.7"/>
+      <PARAM id="delayModDepth" value="0.15"/>
+      <PARAM id="delayPingPong" value="0"/>
+      <PARAM id="delayDiffusion" value="0"/>
+      <PARAM id="monoOn" value="1"/>
+      <PARAM id="legatoOn" value="1"/>
+      <PARAM id="pitchBendRange" value="2"/>
+      <PARAM id="voiceCount" value="5"/>
+      <PARAM id="velocityCurve" value="0"/>
+      <PARAM id="keyboardCurve" value="0"/>
+      <PARAM id="lfo1Rate" value="1"/>
+      <PARAM id="lfo1TempoSync" value="0"/>
+      <PARAM id="lfo1NoteDivision" value="6"/>
+      <PARAM id="lfo1BeatSync" value="0"/>
+      <PARAM id="lfo1Mono" value="0"/>
+      <PARAM id="env1Attack" value="0.01"/>
+      <PARAM id="env1AttackCurve" value="0"/>
+      <PARAM id="env1Decay" value="0.4"/>
+      <PARAM id="env1DecayCurve" value="0.25"/>
+      <PARAM id="env1Sustain" value="1"/>
+      <PARAM id="env1Release" value="0.12"/>
+      <PARAM id="env1ReleaseCurve" value="0.25"/>
+      <PARAM id="lfo2Rate" value="1"/>
+      <PARAM id="lfo2TempoSync" value="0"/>
+      <PARAM id="lfo2NoteDivision" value="6"/>
+      <PARAM id="lfo2BeatSync" value="0"/>
+      <PARAM id="lfo2Mono" value="0"/>
+      <PARAM id="env2Attack" value="0.01"/>
+      <PARAM id="env2AttackCurve" value="0"/>
+      <PARAM id="env2Decay" value="0.5"/>
+      <PARAM id="env2DecayCurve" value="0.25"/>
+      <PARAM id="env2Sustain" value="1"/>
+      <PARAM id="env2Release" value="0.08"/>
+      <PARAM id="env2ReleaseCurve" value="0.25"/>
+      <PARAM id="lfo3Rate" value="1"/>
+      <PARAM id="lfo3TempoSync" value="0"/>
+      <PARAM id="lfo3NoteDivision" value="6"/>
+      <PARAM id="lfo3BeatSync" value="0"/>
+      <PARAM id="lfo3Mono" value="0"/>
+      <PARAM id="env3Attack" value="0.01"/>
+      <PARAM id="env3AttackCurve" value="0"/>
+      <PARAM id="env3Decay" value="0.5"/>
+      <PARAM id="env3DecayCurve" value="0.25"/>
+      <PARAM id="env3Sustain" value="1"/>
+      <PARAM id="env3Release" value="0.08"/>
+      <PARAM id="env3ReleaseCurve" value="0.25"/>
+      <PARAM id="lfo4Rate" value="1"/>
+      <PARAM id="lfo4TempoSync" value="0"/>
+      <PARAM id="lfo4NoteDivision" value="6"/>
+      <PARAM id="lfo4BeatSync" value="0"/>
+      <PARAM id="lfo4Mono" value="0"/>
+      <PARAM id="env4Attack" value="0.01"/>
+      <PARAM id="env4AttackCurve" value="0"/>
+      <PARAM id="env4Decay" value="0.5"/>
+      <PARAM id="env4DecayCurve" value="0.25"/>
+      <PARAM id="env4Sustain" value="1"/>
+      <PARAM id="env4Release" value="0.08"/>
+      <PARAM id="env4ReleaseCurve" value="0.25"/>
+    </parameters>
+    <modTree>
+      <modulation0 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation1 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation2 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation3 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation4 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation5 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation6 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation7 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation8 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation9 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation10 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation11 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation12 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation13 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation14 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+      <modulation15 source="None" depth="0" destination="None" isBipolar="0" bypassed="0"/>
+    </modTree>
+    <LFOData lfoIndex="0">
+      <Point position="0" value="0.5" curve="0.13"/>
+      <Point position="0.25" value="1" curve="-0.13"/>
+      <Point position="0.5" value="0.5" curve="0.13"/>
+      <Point position="0.75" value="0" curve="-0.13"/>
+      <Point position="1" value="0.5" curve="0"/>
+    </LFOData>
+    <LFOData lfoIndex="1">
+      <Point position="0" value="0.5" curve="0.13"/>
+      <Point position="0.25" value="1" curve="-0.13"/>
+      <Point position="0.5" value="0.5" curve="0.13"/>
+      <Point position="0.75" value="0" curve="-0.13"/>
+      <Point position="1" value="0.5" curve="0"/>
+    </LFOData>
+    <LFOData lfoIndex="2">
+      <Point position="0" value="0.5" curve="0.13"/>
+      <Point position="0.25" value="1" curve="-0.13"/>
+      <Point position="0.5" value="0.5" curve="0.13"/>
+      <Point position="0.75" value="0" curve="-0.13"/>
+      <Point position="1" value="0.5" curve="0"/>
+    </LFOData>
+    <LFOData lfoIndex="3">
+      <Point position="0" value="0.5" curve="0.13"/>
+      <Point position="0.25" value="1" curve="-0.13"/>
+      <Point position="0.5" value="0.5" curve="0.13"/>
+      <Point position="0.75" value="0" curve="-0.13"/>
+      <Point position="1" value="0.5" curve="0"/>
+    </LFOData>
+  </PluginState>
+</GestureSynthPreset>

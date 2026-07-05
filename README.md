@@ -94,6 +94,8 @@ and fully **undoable**.
 
 ### Presets & tempo
 - Categorized preset browser with save/load via `ValueTree` serialization.
+- **21 factory presets** across 7 categories (Bass, Leads, Pads, Keys, Plucks, FX, Templates),
+  embedded in the binary and installed to the user preset folder on first run.
 - Full host tempo sync for LFOs and delay.
 
 ### Interface
@@ -204,8 +206,8 @@ source/
 
 ## Status
 
-Active development, pre-1.0. The synthesis engine, modulation system, effects, and UI are all
-functional; remaining work is polish and factory-preset authoring ahead of a public beta.
+Active development, pre-1.0. The synthesis engine, modulation system, effects, UI, and factory
+preset library are all functional; remaining work is polish ahead of a public beta.
 
 ## License & credits
 

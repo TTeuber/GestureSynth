@@ -34,6 +34,13 @@ public:
 
     juce::ValueTree loadPreset (const juce::File& presetFile) const;
 
+    // Extracts the factory presets embedded in the plugin binary (assets/presets)
+    // into the user presets folder. Existing files are never overwritten, and a
+    // version stamp file makes repeat launches a no-op — so user edits and
+    // deletions are respected until the stamp changes. Returns the number of
+    // preset files written.
+    int installFactoryPresets (const juce::String& versionStamp) const;
+
     juce::PopupMenu buildMenu (std::map<int, juce::File>& idToFileMap) const;
 
     juce::StringArray getCategories() const;
