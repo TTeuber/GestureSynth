@@ -13,9 +13,7 @@ PluginProcessor::PluginProcessor()
               .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
 #endif
               ),
-      synth (parameters, modTree, pitchTracker, lfoData),
-      lastProcessingTimeMs (0.0),
-      maxAllowedProcessingTimeMs (0.0)
+      synth (parameters, modTree, pitchTracker, lfoData)
 {
     for (size_t i = 0; i < modList.size(); i++)
     {
@@ -111,9 +109,6 @@ void PluginProcessor::prepareToPlay (const double sampleRate, const int samplesP
     // Report oversampling latency to the host so it can compensate for audio/MIDI sync
     if (auto* voice = dynamic_cast<MySynthVoice*> (synth.getVoice (0)))
         setLatencySamples (static_cast<int> (voice->getOversamplingLatency()));
-
-    // Calculate maximum allowed processing time (90% of the theoretical maximum)
-    maxAllowedProcessingTimeMs = (samplesPerBlock / sampleRate) * 1000.0 * 0.9;
 }
 
 void PluginProcessor::releaseResources()
@@ -147,8 +142,13 @@ bool PluginProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     juce::MidiBuffer& midiMessages)
 {
-    // Start timing the processing
-    const double startTime = juce::Time::getMillisecondCounterHiRes();
+    // Service a panic request from the editor here so voice/note state is only
+    // ever touched on the audio thread (the synth's note handlers are lock-free).
+    if (panicRequested.exchange (false, std::memory_order_acq_rel))
+    {
+        synth.allNotesOff (0, false);
+        effectsChain.resetTails();
+    }
 
     keyboardState.processNextMidiBuffer (midiMessages, 0, buffer.getNumSamples(), true);
 
@@ -215,15 +215,6 @@ void PluginProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                 break;
             }
         }
-    }
-
-    // Calculate processing time
-    lastProcessingTimeMs = juce::Time::getMillisecondCounterHiRes() - startTime;
-
-    // Detect potential overload (log only — raise(SIGUSR1) crashes outside debugger)
-    if (lastProcessingTimeMs > maxAllowedProcessingTimeMs)
-    {
-        DBG ("AUDIO OVERLOAD DETECTED: Processing took " + juce::String (lastProcessingTimeMs) + "ms, limit is " + juce::String (maxAllowedProcessingTimeMs) + "ms");
     }
 }
 

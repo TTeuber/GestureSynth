@@ -143,21 +143,3 @@ void ModMatrix::resetOutputs() const noexcept
         }
     }
 }
-
-void ModMatrix::debug()
-{
-    for (const auto& [destination, mods] : matrix)
-    {
-        if (destination == nullptr)
-            continue;
-
-        DBG ("Destination: " << destination->getName() << "\n");
-        for (const auto& mod : mods)
-        {
-            if (mod.source == nullptr)
-                continue;
-
-            DBG ("  Source: " << mod.source->getName() << ", Depth: " << mod.depth << ", Bipolar: " << (mod.isBipolar ? "true" : "false") << "\n");
-        }
-    }
-}

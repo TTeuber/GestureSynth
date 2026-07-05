@@ -101,6 +101,10 @@ public:
     MySynth& getSynth() { return synth; }
     EffectsChain& getEffectsChain() { return effectsChain; }
 
+    // Message-thread-safe panic: sets a flag that processBlock services, so all
+    // voice/note state is only ever mutated on the audio thread.
+    void requestPanic() { panicRequested.store (true, std::memory_order_release); }
+
     std::shared_ptr<PitchTracker> pitchTracker = std::make_shared<PitchTracker>();
     std::array<std::shared_ptr<LFOData>, 4> lfoData = {
         std::make_shared<LFOData>(),
@@ -115,8 +119,7 @@ private:
     MySynth synth;
     EffectsChain effectsChain { parameters };
 
-    double lastProcessingTimeMs;
-    double maxAllowedProcessingTimeMs;
+    std::atomic<bool> panicRequested { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (PluginProcessor)
 };

@@ -16,6 +16,13 @@ class MySynth final : public juce::Synthesiser
 public:
     explicit MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, std::shared_ptr<PitchTracker> pt, std::array<std::shared_ptr<LFOData>, 4>& lfoData);
 
+    // Threading contract: the note/MIDI handlers below and updateParameters()/
+    // setVoiceCount() are only ever called on the audio thread — MIDI events are
+    // dispatched from renderNextBlock(), and UI-originated events (on-screen
+    // keyboard, wheels, panic) reach the synth via MidiKeyboardState / atomics
+    // serviced in processBlock. Because of this they take no locks; note-tracking
+    // state (heldNotes, sustainedNotes, lastMidiNote, ...) is plain data owned by
+    // the audio thread. Do not call these from the message thread.
     void noteOn (int midiChannel, int midiNoteNumber, float velocity) override;
     void noteOff (int midiChannel, int midiNoteNumber, float velocity, bool allowTailOff) override;
     void handleController (int midiChannel, int controllerNumber, int controllerValue) override;

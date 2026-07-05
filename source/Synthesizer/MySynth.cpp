@@ -23,6 +23,11 @@ MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, st
         lfoParams[i].mono         = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "Mono"));
     }
 
+    // Note-tracking vectors never exceed the MIDI note range, so reserving up
+    // front keeps push_back from allocating on the audio thread.
+    heldNotes.reserve (128);
+    sustainedNotes.reserve (128);
+
     clearVoices();
     for (int i = 0; i < 8; ++i)
         addVoice (new MySynthVoice (parameters, modTree, envPtrs, lfoPtrs, pt, lfoData, &currentVelocityRaw, &currentKeyboardRaw, &currentModWheelRaw, &currentPitchBendRaw, &currentAftertouchRaw, &currentExpressionRaw));
@@ -58,8 +63,6 @@ void MySynth::setVoiceCount (int count)
 {
     if (count == currentVoiceCount)
         return;
-
-    const juce::ScopedLock sl (lock);
 
     // Stop all voices and clear held notes
     allNotesOff (0, false);
@@ -261,7 +264,6 @@ void MySynth::resetOutputsIfIdle()
 
 void MySynth::noteOn (int midiChannel, int midiNoteNumber, float velocity)
 {
-    const juce::ScopedLock sl (lock);
     const bool sameNote = (midiNoteNumber == lastMidiNote);
     const float fromFreq = lastNoteFrequency;
 
@@ -304,8 +306,6 @@ void MySynth::noteOn (int midiChannel, int midiNoteNumber, float velocity)
 
 void MySynth::noteOff (int midiChannel, int midiNoteNumber, float velocity, bool allowTailOff)
 {
-    const juce::ScopedLock sl (lock);
-
     if (monoMode && sustainPedalDown)
     {
         if (std::find (sustainedNotes.begin(), sustainedNotes.end(), midiNoteNumber) == sustainedNotes.end())
@@ -386,7 +386,6 @@ void MySynth::handleSustainPedal (int midiChannel, bool isDown)
     // Let the base class do per-voice sustain bookkeeping (poly mode handled here).
     Synthesiser::handleSustainPedal (midiChannel, isDown);
 
-    const juce::ScopedLock sl (lock);
     sustainPedalDown = isDown;
 
     if (! isDown && monoMode)
@@ -407,7 +406,6 @@ void MySynth::allNotesOff (int midiChannel, bool allowTailOff)
 {
     Synthesiser::allNotesOff (midiChannel, allowTailOff);
 
-    const juce::ScopedLock sl (lock);
     heldNotes.clear();
     sustainedNotes.clear();
     sustainPedalDown = false;

@@ -111,8 +111,6 @@ public:
 
     void resetOutputs() const noexcept;
 
-    void debug();
-
 private:
     std::map<ModDestination*, std::vector<Modulation>> matrix = {};
     LockFreeQueue<ModCommand, 64> commandQueue;

@@ -67,11 +67,9 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     menuButton.setAlwaysOnTop (true);
 
     panicButton.setTooltip ("Silence all voices and reset MIDI state");
-    panicButton.onClick = [this]
-    {
-        processorRef.getSynth().allNotesOff (0, false);
-        processorRef.getEffectsChain().resetTails();
-    };
+    // Panic is deferred to the next processBlock — mutating voice state from the
+    // message thread would race the audio thread (the synth is lock-free).
+    panicButton.onClick = [this] { processorRef.requestPanic(); };
     persistentPanel.addAndMakeVisible (panicButton);
 
     persistentPanel.addAndMakeVisible (keyVelComponent);
