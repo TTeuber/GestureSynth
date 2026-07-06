@@ -22,18 +22,12 @@ protected:
         const float cx = static_cast<float> (bounds.getCentreX());
         const float cy = static_cast<float> (bounds.getCentreY());
         const float dim = static_cast<float> (juce::jmin (bounds.getWidth(), bounds.getHeight()));
-        const float dryRadius = dim * 0.4f;
-        const float wetRadius = dryRadius * 0.6f;
-        const float offset = wetRadius * 0.6f;
+        const float radius = dim * 0.28f;
+        const float maxOffset = radius * 0.6f;
 
-        const float activeAlpha = isActive ? 1.0f : Style::alphaInactive;
-
-        // Single circle (dry signal) — fades out as mix increases
-        g.setOpacity ((1.0f - paramValue) * activeAlpha);
-        g.drawEllipse (cx - dryRadius, cy - dryRadius, dryRadius * 2.0f, dryRadius * 2.0f, 2.0f);
-
-        // Three intersecting circles (wet/chorus signal) — fades in as mix increases
-        g.setOpacity (paramValue * activeAlpha);
+        // Three voice circles: concentric at mix = 0 (reads as one dry circle),
+        // sliding apart into a trefoil as the mix increases
+        const float offset = paramValue * maxOffset;
         constexpr float angles[] = {
             -juce::MathConstants<float>::halfPi,                          // 90° (top)
             -juce::MathConstants<float>::halfPi + juce::MathConstants<float>::twoPi / 3.0f,  // 210°
@@ -44,9 +38,7 @@ protected:
         {
             const float x = cx + offset * std::cos (angle);
             const float y = cy + offset * std::sin (angle);
-            g.drawEllipse (x - wetRadius, y - wetRadius, wetRadius * 2.0f, wetRadius * 2.0f, 2.0f);
+            g.drawEllipse (x - radius, y - radius, radius * 2.0f, radius * 2.0f, 2.0f);
         }
-
-        g.setOpacity (1.0f);
     }
 };

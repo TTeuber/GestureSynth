@@ -48,24 +48,22 @@ protected:
         speaker.closeSubPath();
         g.strokePath (speaker, juce::PathStrokeType (2.0f));
 
-        // Draw sound wave arcs with fade-in opacity
+        // Sound wave arcs radiate outward from the cone as volume increases.
+        // Arc i exists when size >= i; the outermost arc continuously grows
+        // and new arcs are born at the cone (same emerge-and-grow pattern
+        // as the concentric-circle components).
         const float arcStartX = coneRight + w * 0.04f;
-        const float arcSpacing = w * 0.09f;
+        const float maxArcRadius = w * 0.35f;
         const float halfArc = juce::MathConstants<float>::pi * 0.25f; // 45°
         const float centreAngle = juce::MathConstants<float>::pi * 0.5f; // 3 o'clock
-        constexpr int numArcs = 3;
+        constexpr float numArcs = 3.0f;
 
-        for (int i = 0; i < numArcs; ++i)
+        const float size = paramValue * numArcs;
+        const int fullArcs = static_cast<int> (size);
+        const float fraction = size - static_cast<float> (fullArcs);
+
+        auto drawArc = [&] (float radius)
         {
-            const float arcStart = static_cast<float> (i) / static_cast<float> (numArcs);
-            const float arcEnd = static_cast<float> (i + 1) / static_cast<float> (numArcs);
-            const float opacity = juce::jlimit (0.0f, 1.0f, (paramValue - arcStart) / (arcEnd - arcStart));
-
-            if (opacity <= 0.0f)
-                continue;
-
-            g.setOpacity (opacity);
-            const float radius = (static_cast<float> (i) + 1.0f) * arcSpacing;
             juce::Path arc;
             arc.addCentredArc (arcStartX,
                 centreY,
@@ -75,8 +73,19 @@ protected:
                 centreAngle - halfArc,
                 centreAngle + halfArc,
                 true);
-            g.strokePath (arc, juce::PathStrokeType (3.0f));
+            g.strokePath (arc, juce::PathStrokeType (2.0f));
+        };
+
+        // Draw full arcs
+        for (int i = 1; i <= fullArcs; ++i)
+            drawArc (maxArcRadius * (size - static_cast<float> (i) + 1.0f) / numArcs);
+
+        // Draw the fractional (growing-in) arc — appears from the cone
+        if (fraction > 0.01f && fullArcs < static_cast<int> (numArcs))
+        {
+            g.setOpacity (fraction);
+            drawArc (maxArcRadius * fraction / numArcs);
+            g.setOpacity (1.0f);
         }
-        g.setOpacity (1.0f);
     }
 };
