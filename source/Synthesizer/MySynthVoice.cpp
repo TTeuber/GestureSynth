@@ -74,6 +74,11 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     if (!adsr1.isActive())
     {
         clearCurrentNote();
+        // Output is cut to silence here, so the slewed envelope value must
+        // follow — otherwise the next note starts at the leftover level and
+        // clicks. Voices stolen while still rendering skip this path and keep
+        // the smooth slew-down instead.
+        currentEnvVal = 0.0f;
     }
     if (!isVoiceActive())
     {
@@ -376,6 +381,17 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocityToUs
 {
     static uint64_t globalStartCounter = 0;
     voiceStartOrder = ++globalStartCounter;
+
+    // Sync cached destination values from the live parameters. They go stale
+    // while the voice is idle (only ModMatrix::processSample refreshes them,
+    // and only during rendering), yet the oscillator and filter read them
+    // before the mod matrix first runs in renderNextBlock — without this, the
+    // first block after a parameter/preset change plays with outdated values
+    // and the jump to the real ones is an audible click.
+    for (const auto& [_, dest] : modDestinations)
+        dest->setCurrentValue (dest->getRange().convertFrom0to1 (
+            juce::jlimit (0.0f, 1.0f, dest->getRawParameterValue())));
+
     pitchBendValue = static_cast<float> (currentPitchWheelPosition - 8192) / 8192.0f;
     targetFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
 
