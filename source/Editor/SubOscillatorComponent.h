@@ -14,20 +14,20 @@ class SubOscillatorComponent : public DualParameterComponent, public AnimationFr
 public:
     SubOscillatorComponent (juce::AudioProcessorValueTreeState& apvts,
         const UIContext& ctx = {},
-        std::atomic<float>* modSubOscOutput = nullptr,
-        std::atomic<float>* modSubOscWaveOutput = nullptr,
-        const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {})
+        std::atomic<float>* modSubOscOutputToUse = nullptr,
+        std::atomic<float>* modSubOscWaveOutputToUse = nullptr,
+        const juce::String& param1DestIDToUse = {},
+        const juce::String& param2DestIDToUse = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::subOsc),
               apvts.getParameter (ParamIDs::subOscWave),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::subOn)),
               ctx,
-              param1DestID,
-              param2DestID,
+              param1DestIDToUse,
+              param2DestIDToUse,
               "Sub Osc"),
-          modSubOscOutput (modSubOscOutput),
-          modSubOscWaveOutput (modSubOscWaveOutput),
+          modSubOscOutput (modSubOscOutputToUse),
+          modSubOscWaveOutput (modSubOscWaveOutputToUse),
           animSource (ctx.animationSource)
     {
         if ((modSubOscOutput != nullptr || modSubOscWaveOutput != nullptr) && animSource != nullptr)
@@ -136,7 +136,7 @@ private:
         float amplitude, float waveParam)
     {
         const float width = static_cast<float> (bounds.getWidth());
-        const float maxHeight = bounds.getHeight() / 2.0f * amplitude;
+        const float maxHeight = static_cast<float> (bounds.getHeight()) / 2.0f * amplitude;
         const float centerY = static_cast<float> (bounds.getCentreY());
         const int numPoints = 128;
 

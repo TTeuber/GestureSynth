@@ -186,8 +186,8 @@ class PitchBendRangeTab final : public juce::Component,
                                  private juce::AudioProcessorParameter::Listener
 {
 public:
-    explicit PitchBendRangeTab (juce::RangedAudioParameter* param)
-        : param (param)
+    explicit PitchBendRangeTab (juce::RangedAudioParameter* paramToUse)
+        : param (paramToUse)
     {
         jassert (param != nullptr);
         param->addListener (this);
@@ -315,10 +315,10 @@ class VoiceCountControl final : public juce::Component,
                                  private juce::AudioProcessorParameter::Listener
 {
 public:
-    VoiceCountControl (juce::AudioParameterChoice* voiceCountParam,
-                       juce::AudioParameterBool* monoParam,
-                       juce::AudioParameterBool* legatoParam)
-        : voiceCountParam (voiceCountParam), monoParam (monoParam), legatoParam (legatoParam)
+    VoiceCountControl (juce::AudioParameterChoice* voiceCountParamToUse,
+                       juce::AudioParameterBool* monoParamToUse,
+                       juce::AudioParameterBool* legatoParamToUse)
+        : voiceCountParam (voiceCountParamToUse), monoParam (monoParamToUse), legatoParam (legatoParamToUse)
     {
         jassert (voiceCountParam != nullptr);
         jassert (monoParam != nullptr);

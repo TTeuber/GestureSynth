@@ -7,12 +7,12 @@ class LFORateComponent final : public TextParameterComponent
 {
 public:
     LFORateComponent (juce::RangedAudioParameter* rateParam,
-                      juce::AudioParameterChoice* noteDivParam,
-                      juce::AudioParameterBool* tempoSyncParam)
+                      juce::AudioParameterChoice* noteDivParamToUse,
+                      juce::AudioParameterBool* tempoSyncParamToUse)
         : TextParameterComponent (rateParam),
-          noteDivParam (noteDivParam),
-          tempoSyncParam (tempoSyncParam),
-          extraListener (*this)
+          extraListener (*this),
+          noteDivParam (noteDivParamToUse),
+          tempoSyncParam (tempoSyncParamToUse)
     {
         if (noteDivParam != nullptr)
             noteDivParam->addListener (&extraListener);
@@ -162,10 +162,10 @@ private:
     // Helper listener to avoid diamond inheritance with AudioProcessorParameter::Listener
     struct ExtraParamListener : juce::AudioProcessorParameter::Listener
     {
-        explicit ExtraParamListener (LFORateComponent& owner) : owner (owner) {}
+        explicit ExtraParamListener (LFORateComponent& ownerToUse) : owner (ownerToUse) {}
         void parameterValueChanged (int, float) override
         {
-            juce::MessageManager::callAsync ([&owner = this->owner] { owner.repaint(); });
+            juce::MessageManager::callAsync ([ownerRef = &owner] { ownerRef->repaint(); });
         }
         void parameterGestureChanged (int, bool) override {}
         LFORateComponent& owner;

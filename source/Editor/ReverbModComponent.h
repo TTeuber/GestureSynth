@@ -12,15 +12,15 @@ class ReverbModComponent final : public DualParameterComponent
 public:
     ReverbModComponent (const juce::AudioProcessorValueTreeState& apvts,
         const UIContext& ctx = {},
-        const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {})
+        const juce::String& param1DestIDToUse = {},
+        const juce::String& param2DestIDToUse = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::reverbModDepth),
               apvts.getParameter (ParamIDs::reverbModRate),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::reverbOn)),
               ctx,
-              param1DestID,
-              param2DestID,
+              param1DestIDToUse,
+              param2DestIDToUse,
               "Modulation")
     {
     }
@@ -31,16 +31,16 @@ protected:
         g.setOpacity (isActive ? 1.0f : 0.5f);
         g.setColour (getDrawColor());
 
-        const float wavelength = bounds.getWidth() * (1.0f - param2Value * 0.8f);
-        const float amplitude = bounds.getHeight() * 0.40f * param1Value;
+        const float wavelength = static_cast<float> (bounds.getWidth()) * (1.0f - param2Value * 0.8f);
+        const float amplitude = static_cast<float> (bounds.getHeight()) * 0.40f * param1Value;
         drawSineWave (g, bounds, amplitude, wavelength, 0.0f, 1.5f);
     }
 
     void drawVisualizationWithValues (juce::Graphics& g,
         const juce::Rectangle<int>& bounds, float p1, float p2) const override
     {
-        const float wavelength = bounds.getWidth() * (1.0f - p2 * 0.8f);
-        const float amplitude = bounds.getHeight() * 0.40f * p1;
+        const float wavelength = static_cast<float> (bounds.getWidth()) * (1.0f - p2 * 0.8f);
+        const float amplitude = static_cast<float> (bounds.getHeight()) * 0.40f * p1;
         drawSineWave (g, bounds, amplitude, wavelength, 0.0f, 1.5f);
     }
 
@@ -63,18 +63,18 @@ private:
         const float strokeThickness)
     {
         juce::Path path;
-        const float midY = bounds.getCentreY();
+        const float midY = static_cast<float> (bounds.getCentreY());
 
         const float step = juce::jmin (5.0f, wavelength / 20.0f);
-        for (float x = 0; x <= bounds.getWidth(); x += step)
+        for (float x = 0; x <= static_cast<float> (bounds.getWidth()); x += step)
         {
             const float normalizedX = (x / wavelength) * juce::MathConstants<float>::twoPi;
             const float y = midY - amplitude * std::sin (normalizedX + phaseOffset * juce::MathConstants<float>::twoPi);
 
-            if (x == 0)
-                path.startNewSubPath (bounds.getX() + x, y);
+            if (juce::exactlyEqual (x, 0.0f))
+                path.startNewSubPath (static_cast<float> (bounds.getX()) + x, y);
             else
-                path.lineTo (bounds.getX() + x, y);
+                path.lineTo (static_cast<float> (bounds.getX()) + x, y);
         }
 
         g.strokePath (path, juce::PathStrokeType (strokeThickness));

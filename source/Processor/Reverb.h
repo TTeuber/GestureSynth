@@ -70,7 +70,7 @@ public:
         for (int i = 0; i < 4; ++i)
         {
             int delaySamples = static_cast<int> (std::round (inputDiffDelaysMs[i] / 1000.0f * sampleRate));
-            inputDiffusers[i].prepare (delaySamples, sampleRate, 0.7f + 0.15f * i, 1.5f);
+            inputDiffusers[i].prepare (delaySamples, sampleRate, 0.7f + 0.15f * static_cast<float> (i), 1.5f);
         }
         inputDiffDamper.prepare (spec);
         inputDiffDamper.setType (juce::dsp::FirstOrderTPTFilterType::lowpass);
@@ -83,7 +83,7 @@ public:
         };
         for (int i = 0; i < 16; ++i)
         {
-            baseDelayMs[i] = primeDelaysMs[i];
+            baseDelayMs[static_cast<size_t> (i)] = primeDelaysMs[i];
             // Max delay: baseDelay * 2.2 (size) + modulation headroom + 4 samples
             int maxSamples = static_cast<int> ((primeDelaysMs[i] * 2.2f / 1000.0f) * sampleRate) + 100;
             fdnLines[i].prepare (spec);
@@ -95,28 +95,28 @@ public:
             dampingFilters[i].setCutoffFrequency (6000.0f);
 
             // Crossover state for frequency-dependent decay (one-pole at 250 Hz)
-            crossoverCoeff[i] = 0.0f;
-            crossoverLowState[i] = 0.0f;
+            crossoverCoeff[static_cast<size_t> (i)] = 0.0f;
+            crossoverLowState[static_cast<size_t> (i)] = 0.0f;
 
             // LFO state — golden ratio phase offsets
-            lfoPhase[i] = static_cast<float> (i) * 0.6180339887f * 2.0f * juce::MathConstants<float>::pi;
-            while (lfoPhase[i] >= 2.0f * juce::MathConstants<float>::pi)
-                lfoPhase[i] -= 2.0f * juce::MathConstants<float>::pi;
+            lfoPhase[static_cast<size_t> (i)] = static_cast<float> (i) * 0.6180339887f * 2.0f * juce::MathConstants<float>::pi;
+            while (lfoPhase[static_cast<size_t> (i)] >= 2.0f * juce::MathConstants<float>::pi)
+                lfoPhase[static_cast<size_t> (i)] -= 2.0f * juce::MathConstants<float>::pi;
         }
 
         // Update crossover coefficient for 250 Hz
         float w = 2.0f * juce::MathConstants<float>::pi * 250.0f / static_cast<float> (sampleRate);
         float g = w / (1.0f + w);
         for (int i = 0; i < 16; ++i)
-            crossoverCoeff[i] = g;
+            crossoverCoeff[static_cast<size_t> (i)] = g;
 
         // Output diffusion: 2 allpass per channel
         constexpr float outDiffDelaysMs[2] = { 3.07f, 4.51f };
         for (int i = 0; i < 2; ++i)
         {
             int ds = static_cast<int> (std::round (outDiffDelaysMs[i] / 1000.0f * sampleRate));
-            outputDiffusersL[i].prepare (ds, sampleRate, 0.6f + 0.25f * i, 1.5f);
-            outputDiffusersR[i].prepare (ds, sampleRate, 0.65f + 0.3f * i, 1.5f);
+            outputDiffusersL[i].prepare (ds, sampleRate, 0.6f + 0.25f * static_cast<float> (i), 1.5f);
+            outputDiffusersR[i].prepare (ds, sampleRate, 0.65f + 0.3f * static_cast<float> (i), 1.5f);
         }
 
         // DC blocking highpass (10 Hz)
@@ -138,10 +138,10 @@ public:
         {
             fdnLines[i].reset();
             dampingFilters[i].reset();
-            crossoverLowState[i] = 0.0f;
-            lfoPhase[i] = static_cast<float> (i) * 0.6180339887f * 2.0f * juce::MathConstants<float>::pi;
-            while (lfoPhase[i] >= 2.0f * juce::MathConstants<float>::pi)
-                lfoPhase[i] -= 2.0f * juce::MathConstants<float>::pi;
+            crossoverLowState[static_cast<size_t> (i)] = 0.0f;
+            lfoPhase[static_cast<size_t> (i)] = static_cast<float> (i) * 0.6180339887f * 2.0f * juce::MathConstants<float>::pi;
+            while (lfoPhase[static_cast<size_t> (i)] >= 2.0f * juce::MathConstants<float>::pi)
+                lfoPhase[static_cast<size_t> (i)] -= 2.0f * juce::MathConstants<float>::pi;
         }
         for (int i = 0; i < 2; ++i)
         {
@@ -190,9 +190,9 @@ public:
         std::array<float, 16> fbLow {};
         for (int i = 0; i < 16; ++i)
         {
-            float delayTimeSec = (baseDelayMs[i] * localSize) / 1000.0f;
-            fbHigh[i] = std::pow (10.0f, -3.0f * delayTimeSec / std::max (localDecay, 0.01f));
-            fbLow[i]  = std::pow (10.0f, -3.0f * delayTimeSec / std::max (localDecay * localBassMult, 0.01f));
+            float delayTimeSec = (baseDelayMs[static_cast<size_t> (i)] * localSize) / 1000.0f;
+            fbHigh[static_cast<size_t> (i)] = std::pow (10.0f, -3.0f * delayTimeSec / std::max (localDecay, 0.01f));
+            fbLow[static_cast<size_t> (i)]  = std::pow (10.0f, -3.0f * delayTimeSec / std::max (localDecay * localBassMult, 0.01f));
         }
 
         // Precompute LFO increments per line
@@ -200,7 +200,7 @@ public:
         for (int i = 0; i < 16; ++i)
         {
             float freq = localModRate * (0.7f + 0.4f * static_cast<float> (i) / 15.0f);
-            lfoInc[i] = 2.0f * juce::MathConstants<float>::pi * freq / static_cast<float> (sampleRate);
+            lfoInc[static_cast<size_t> (i)] = 2.0f * juce::MathConstants<float>::pi * freq / static_cast<float> (sampleRate);
         }
 
         const float inputScale = 1.0f / 4.0f; // 1/sqrt(16) = 0.25
@@ -225,17 +225,17 @@ public:
             std::array<float, 16> delayReads {};
             for (int i = 0; i < 16; ++i)
             {
-                float baseDelaySamp = (baseDelayMs[i] * localSize / 1000.0f) * static_cast<float> (sampleRate);
+                float baseDelaySamp = (baseDelayMs[static_cast<size_t> (i)] * localSize / 1000.0f) * static_cast<float> (sampleRate);
                 float modDepthSamp = localModDepth * 0.01f * baseDelaySamp;
-                float mod = std::sin (lfoPhase[i]) * modDepthSamp;
-                lfoPhase[i] += lfoInc[i];
-                if (lfoPhase[i] >= 2.0f * juce::MathConstants<float>::pi)
-                    lfoPhase[i] -= 2.0f * juce::MathConstants<float>::pi;
+                float mod = std::sin (lfoPhase[static_cast<size_t> (i)]) * modDepthSamp;
+                lfoPhase[static_cast<size_t> (i)] += lfoInc[static_cast<size_t> (i)];
+                if (lfoPhase[static_cast<size_t> (i)] >= 2.0f * juce::MathConstants<float>::pi)
+                    lfoPhase[static_cast<size_t> (i)] -= 2.0f * juce::MathConstants<float>::pi;
 
                 float readDelay = baseDelaySamp + mod;
                 readDelay = std::max (readDelay, 1.0f);
                 fdnLines[i].setDelay (readDelay);
-                delayReads[i] = fdnLines[i].popSample (0);
+                delayReads[static_cast<size_t> (i)] = fdnLines[i].popSample (0);
             }
 
             // 4. In-place Walsh-Hadamard 16x16 transform
@@ -245,15 +245,15 @@ public:
             // 5. Per-line: crossover split, freq-dependent feedback, damping, soft-clip, inject input
             for (int i = 0; i < 16; ++i)
             {
-                float signal = mixed[i];
+                float signal = mixed[static_cast<size_t> (i)];
 
                 // One-pole crossover at 250 Hz
-                float low = crossoverLowState[i] + crossoverCoeff[i] * (signal - crossoverLowState[i]);
-                crossoverLowState[i] = low;
+                float low = crossoverLowState[static_cast<size_t> (i)] + crossoverCoeff[static_cast<size_t> (i)] * (signal - crossoverLowState[static_cast<size_t> (i)]);
+                crossoverLowState[static_cast<size_t> (i)] = low;
                 float high = signal - low;
 
                 // Frequency-dependent feedback
-                float fb = low * fbLow[i] + high * fbHigh[i];
+                float fb = low * fbLow[static_cast<size_t> (i)] + high * fbHigh[static_cast<size_t> (i)];
 
                 // HF damping lowpass
                 fb = dampingFilters[i].processSample (0, fb);
@@ -272,8 +272,8 @@ public:
             for (int i = 0; i < 8; ++i)
             {
                 float sign = (i % 2 == 0) ? 1.0f : -1.0f;
-                outL += sign * delayReads[i];
-                outR += sign * delayReads[i + 8];
+                outL += sign * delayReads[static_cast<size_t> (i)];
+                outR += sign * delayReads[static_cast<size_t> (i + 8)];
             }
             outL *= 0.25f; // 1/sqrt(16) scaling
             outR *= 0.25f;

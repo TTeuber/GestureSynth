@@ -16,9 +16,9 @@
 class MyLFO final : public ModSource
 {
 public:
-    explicit MyLFO (const juce::String& id = "lfo", const juce::String& name = "LFO", const float rate = 1.0f, std::shared_ptr<LFOData> data = nullptr)
-        : ModSource (id, name),
-          rate (rate),
+    explicit MyLFO (const juce::String& idToUse = "lfo", const juce::String& nameToUse = "LFO", const float rateToUse = 1.0f, std::shared_ptr<LFOData> data = nullptr)
+        : ModSource (idToUse, nameToUse),
+          rate (rateToUse),
           phase (0.0f),
           currentValue (0.0f),
           lfoData (data ? data : std::make_shared<LFOData>())

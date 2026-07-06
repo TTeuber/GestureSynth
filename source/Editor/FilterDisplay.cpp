@@ -5,12 +5,12 @@
 #include "FilterDisplay.h"
 #include "../Utility/AtomicHelpers.h"
 #include "../Utility/Parameters.h"
-FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
+FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvtsToUse,
     const UIContext& ctx,
-    std::atomic<float>* modCutoffOutput,
-    std::atomic<float>* modResonanceOutput)
-    : apvts (apvts), undoManager (ctx.undoManager), gestureCount (ctx.gestureCount),
-      modCutoffOutput (modCutoffOutput), modResonanceOutput (modResonanceOutput),
+    std::atomic<float>* modCutoffOutputToUse,
+    std::atomic<float>* modResonanceOutputToUse)
+    : apvts (apvtsToUse), undoManager (ctx.undoManager), gestureCount (ctx.gestureCount),
+      modCutoffOutput (modCutoffOutputToUse), modResonanceOutput (modResonanceOutputToUse),
       animSource (ctx.animationSource), modModeState (ctx.modModeState)
 {
     // Add listeners to the parameters
@@ -29,7 +29,7 @@ FilterDisplay::FilterDisplay (juce::AudioProcessorValueTreeState& apvts,
     // Get initial parameter values
     updateParameterValues();
 
-    if ((modCutoffOutput != nullptr || modResonanceOutput != nullptr) && animSource != nullptr)
+    if ((modCutoffOutputToUse != nullptr || modResonanceOutputToUse != nullptr) && animSource != nullptr)
         animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
 
     setSize (300, 200);
@@ -364,16 +364,16 @@ void FilterDisplay::parameterChanged (const juce::String& parameterID, float new
 void FilterDisplay::updateParameterValues()
 {
     // Get the normalized values (0-1)
-    const auto* cutoffParam = apvts.getParameter (ParamIDs::filterFrequency);
-    auto* resonanceParam = apvts.getParameter (ParamIDs::filterResonance);
+    const auto* cutoffParamLocal = apvts.getParameter (ParamIDs::filterFrequency);
+    auto* resonanceParamLocal = apvts.getParameter (ParamIDs::filterResonance);
 
-    if (cutoffParam && resonanceParam)
+    if (cutoffParamLocal && resonanceParamLocal)
     {
-        normalizedCutoff = cutoffParam->getValue();
-        normalizedResonance = resonanceParam->getValue();
+        normalizedCutoff = cutoffParamLocal->getValue();
+        normalizedResonance = resonanceParamLocal->getValue();
 
-        cutoffFrequency = cutoffParam->getNormalisableRange().convertFrom0to1 (normalizedCutoff);
-        resonance = resonanceParam->getNormalisableRange().convertFrom0to1 (normalizedResonance);
+        cutoffFrequency = cutoffParamLocal->getNormalisableRange().convertFrom0to1 (normalizedCutoff);
+        resonance = resonanceParamLocal->getNormalisableRange().convertFrom0to1 (normalizedResonance);
     }
 
 }
@@ -386,16 +386,16 @@ void FilterDisplay::drawFrequencyPath (juce::Graphics& g) const
     for (int xPixel = 0; xPixel < getWidth(); xPixel += step)
     {
         const double x = static_cast<double> (xPixel) / getWidth(); // Normalize to 0-1
-        const double dB = getYCoordinate (x);
+        const double dB = getYCoordinate (static_cast<float> (x));
         // Map dB to y-pixel (invert and scale, e.g., 0 dB at the middle of height)
-        const float yPixel = getHeight() / 2.0f - dB * getHeight() / 50.0f; // Example scaling
+        const float yPixel = static_cast<float> (getHeight()) / 2.0f - static_cast<float> (dB) * static_cast<float> (getHeight()) / 50.0f; // Example scaling
         if (xPixel == 0)
         {
-            path.startNewSubPath (xPixel, yPixel);
+            path.startNewSubPath (static_cast<float> (xPixel), yPixel);
         }
         else
         {
-            path.lineTo (xPixel, yPixel);
+            path.lineTo (static_cast<float> (xPixel), yPixel);
         }
     }
 
@@ -608,7 +608,7 @@ void FilterDisplay::drawFilterCurveAt (juce::Graphics& g, float normCutoff, floa
         const double freq = displayXToFreq (x);
 
         const double dB = computeSecondOrderStage (freq, modCutoffFreq, modRes);
-        const float yPixel = getHeight() / 2.0f - static_cast<float> (dB) * getHeight() / 50.0f;
+        const float yPixel = static_cast<float> (getHeight()) / 2.0f - static_cast<float> (dB) * static_cast<float> (getHeight()) / 50.0f;
 
         if (xPixel == 0)
             path.startNewSubPath (static_cast<float> (xPixel), yPixel);

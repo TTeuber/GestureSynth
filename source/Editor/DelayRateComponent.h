@@ -12,14 +12,14 @@ class DelayRateComponent final : public SingleParameterComponent
 {
 public:
     DelayRateComponent (juce::RangedAudioParameter* timeParam,
-                        juce::AudioParameterBool* tempoSyncParam,
-                        juce::AudioParameterChoice* noteDivParam,
-                        juce::AudioParameterBool* activeParam = nullptr,
+                        juce::AudioParameterBool* tempoSyncParamToUse,
+                        juce::AudioParameterChoice* noteDivParamToUse,
+                        juce::AudioParameterBool* activeParamToUse = nullptr,
                         const UIContext& ctx = {})
-        : SingleParameterComponent (timeParam, activeParam, ctx),
-          tempoSyncParam (tempoSyncParam),
-          noteDivParam (noteDivParam),
-          extraListener (*this)
+        : SingleParameterComponent (timeParam, activeParamToUse, ctx),
+          extraListener (*this),
+          tempoSyncParam (tempoSyncParamToUse),
+          noteDivParam (noteDivParamToUse)
     {
         if (tempoSyncParam != nullptr)
             tempoSyncParam->addListener (&extraListener);
@@ -182,10 +182,10 @@ private:
 
     struct ExtraParamListener : juce::AudioProcessorParameter::Listener
     {
-        explicit ExtraParamListener (DelayRateComponent& owner) : owner (owner) {}
+        explicit ExtraParamListener (DelayRateComponent& ownerToUse) : owner (ownerToUse) {}
         void parameterValueChanged (int, float) override
         {
-            juce::MessageManager::callAsync ([&owner = this->owner] { owner.repaint(); });
+            juce::MessageManager::callAsync ([&ownerRef = this->owner] { ownerRef.repaint(); });
         }
         void parameterGestureChanged (int, bool) override {}
         DelayRateComponent& owner;

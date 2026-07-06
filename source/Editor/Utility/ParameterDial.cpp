@@ -27,7 +27,7 @@ ParameterDial::ParameterDial (PluginProcessor& p, juce::StringRef id, const juce
     setSize (200, 300);
 }
 
-void ParameterDial::paint (juce::Graphics& g)
+void ParameterDial::paint (juce::Graphics& /*g*/)
 {
 }
 

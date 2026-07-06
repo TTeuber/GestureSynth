@@ -239,7 +239,7 @@ juce::ValueTree PluginProcessor::buildStateTree()
 
     for (int i = 0; i < 4; ++i)
     {
-        auto lfoTree = lfoData[i]->toValueTree();
+        auto lfoTree = lfoData[static_cast<size_t>(i)]->toValueTree();
         lfoTree.setProperty ("lfoIndex", i, nullptr);
         state.addChild (lfoTree, -1, nullptr);
     }
@@ -290,7 +290,7 @@ void PluginProcessor::restoreFromStateTree (const juce::ValueTree& state)
         {
             int idx = static_cast<int> (child.getProperty ("lfoIndex"));
             if (idx >= 0 && idx < 4)
-                lfoData[idx]->fromValueTree (child);
+                lfoData[static_cast<size_t>(idx)]->fromValueTree (child);
             foundIndexed = true;
         }
     }

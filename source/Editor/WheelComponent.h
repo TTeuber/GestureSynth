@@ -13,10 +13,10 @@
 class ModWheelComponent final : public juce::Component, public AnimationFrameSource::Listener
 {
 public:
-    ModWheelComponent (PluginProcessor& p, ModulationModeState*, AnimationFrameSource* animSource = nullptr)
+    ModWheelComponent (PluginProcessor& p, ModulationModeState*, AnimationFrameSource* animSourceToUse = nullptr)
         : processor (p),
           modWheelRawPtr (p.getSynth().getModWheelRawPtr()),
-          animSource (animSource)
+          animSource (animSourceToUse)
     {
         if (animSource != nullptr)
             animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
@@ -119,10 +119,10 @@ private:
 class PitchWheelComponent final : public juce::Component, public AnimationFrameSource::Listener
 {
 public:
-    explicit PitchWheelComponent (PluginProcessor& p, AnimationFrameSource* animSource = nullptr)
+    explicit PitchWheelComponent (PluginProcessor& p, AnimationFrameSource* animSourceToUse = nullptr)
         : processor (p),
           pitchBendRawPtr (p.getSynth().getPitchBendRawPtr()),
-          animSource (animSource)
+          animSource (animSourceToUse)
     {
         if (animSource != nullptr)
             animSource->addListener (this, AnimationFrameSource::Rate::Hz30);

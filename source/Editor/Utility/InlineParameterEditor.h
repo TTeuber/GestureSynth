@@ -95,8 +95,7 @@ public:
     using CommitCallback = std::function<void (const juce::String&)>;
     using CancelCallback = std::function<void()>;
 
-    explicit InlineParameterEditor (juce::Component& owner)
-        : owner (owner)
+    explicit InlineParameterEditor (juce::Component& ownerToUse)
     {
         editor.setColour (juce::TextEditor::backgroundColourId, SECONDARY_COLOR);
         editor.setColour (juce::TextEditor::textColourId, TEXT_COLOR);
@@ -109,7 +108,7 @@ public:
         editor.onEscapeKey = [this] { cancel(); };
         editor.onFocusLost = [this] { commitOnFocusLost(); };
         editor.onTextChange = [this] { textChanged = true; };
-        owner.addChildComponent (editor);
+        ownerToUse.addChildComponent (editor);
         editor.setVisible (false);
     }
 
@@ -233,7 +232,6 @@ private:
         globalMouseListenerRegistered = false;
     }
 
-    juce::Component& owner;
     juce::TextEditor editor;
     CommitCallback commitCallback;
     CancelCallback cancelCallback;

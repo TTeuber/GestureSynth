@@ -39,7 +39,7 @@ public:
         updateFunction = updateFunc;
     }
 
-    void parameterGestureChanged (int /*parameterIndex*/, bool gestureIsStarting) override
+    void parameterGestureChanged (int /*parameterIndex*/, bool /*gestureIsStarting*/) override
     {
         // if (gestureIsStarting)
         //     value = currentValue;

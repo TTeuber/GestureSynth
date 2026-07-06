@@ -6,7 +6,7 @@
 class HoverAnimator : private juce::Timer
 {
 public:
-    explicit HoverAnimator (juce::Component& owner) : owner (owner) {}
+    explicit HoverAnimator (juce::Component& ownerToUse) : owner (ownerToUse) {}
 
     void setHovered (bool hovered)
     {

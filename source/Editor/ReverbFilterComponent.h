@@ -21,7 +21,7 @@ protected:
         constexpr double minFreq = 200.0;
         constexpr double maxFreq = 20000.0;
 
-        const float centreY = bounds.getCentreY();
+        const float centreY = static_cast<float> (bounds.getCentreY());
         bool started = false;
 
         for (int xPx = bounds.getX(); xPx < bounds.getRight(); xPx += step)
@@ -29,7 +29,7 @@ protected:
             const double x = static_cast<double> (xPx - bounds.getX()) / bounds.getWidth();
             const double freq = xToLogFreq (x, minFreq, maxFreq);
             const double dB = computeLPGainDb (freq, cutoffHz);
-            const float yPx = centreY - static_cast<float> (dB) * bounds.getHeight() / 50.0f;
+            const float yPx = centreY - static_cast<float> (dB) * static_cast<float> (bounds.getHeight()) / 50.0f;
 
             if (! started)
             {
@@ -89,7 +89,7 @@ protected:
         constexpr double maxFreq = 2000.0;
         constexpr double fc = 200.0;
 
-        const float centreY = bounds.getCentreY();
+        const float centreY = static_cast<float> (bounds.getCentreY());
         const double gainLinear = bassMult;
         bool started = false;
 
@@ -98,7 +98,7 @@ protected:
             const double x = static_cast<double> (xPx - bounds.getX()) / bounds.getWidth();
             const double freq = xToLogFreq (x, minFreq, maxFreq);
             const double dB = computeShelfGainDb (freq, fc, gainLinear);
-            const float yPx = centreY - static_cast<float> (dB) * bounds.getHeight() / 20.0f;
+            const float yPx = centreY - static_cast<float> (dB) * static_cast<float> (bounds.getHeight()) / 20.0f;
 
             if (! started)
             {

@@ -5,9 +5,9 @@
 #include "HPFDisplay.h"
 #include "../Utility/Parameters.h"
 
-HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvts,
+HPFDisplay::HPFDisplay (juce::AudioProcessorValueTreeState& apvtsToUse,
     const UIContext& ctx)
-    : apvts (apvts), undoManager (ctx.undoManager), gestureCount (ctx.gestureCount),
+    : apvts (apvtsToUse), undoManager (ctx.undoManager), gestureCount (ctx.gestureCount),
       modModeState (ctx.modModeState)
 {
     this->apvts.addParameterListener (ParamIDs::hpfFrequency, this);
@@ -274,7 +274,7 @@ void HPFDisplay::drawFrequencyPath (juce::Graphics& g) const
         const double x = static_cast<double> (xPixel) / getWidth();
         const double freq = displayXToFreq (x);
         const double dB = getHPGainDb (freq);
-        const float yPixel = getHeight() / 2.0f - static_cast<float> (dB) * getHeight() / 50.0f;
+        const float yPixel = static_cast<float> (getHeight()) / 2.0f - static_cast<float> (dB) * static_cast<float> (getHeight()) / 50.0f;
 
         if (! pathStarted)
         {
@@ -399,7 +399,7 @@ void HPFDisplay::drawHPFCurveAt (juce::Graphics& g, float cutoffFreqHz,
         const double x = static_cast<double> (xPixel) / getWidth();
         const double freq = displayXToFreq (x);
         const double dB = computeHPGainDb (freq, cutoffFreqHz);
-        const float yPixel = getHeight() / 2.0f - static_cast<float> (dB) * getHeight() / 50.0f;
+        const float yPixel = static_cast<float> (getHeight()) / 2.0f - static_cast<float> (dB) * static_cast<float> (getHeight()) / 50.0f;
 
         if (! pathStarted)
         {

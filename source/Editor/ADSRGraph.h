@@ -112,8 +112,6 @@ private:
     Point selectedPoint;
     Point hoveredPoint = None;
 
-    float sustain;
-
     float attackTime;
     float attackCurve;
     float decayTime;

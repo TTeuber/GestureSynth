@@ -178,7 +178,7 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout()
     filterFrequency->range.setSkewForCentre (1200.0f);
     layout.add (std::move (filterFrequency));
 
-    auto filterResonance = make_unique<Parameter> (ID (ParamIDs::filterResonance, 1), "Filter Resonance", Normalize (0.1, 10, 0.01, 0.45), 0.71f);
+    auto filterResonance = make_unique<Parameter> (ID (ParamIDs::filterResonance, 1), "Filter Resonance", Normalize (0.1f, 10.0f, 0.01f, 0.45f), 0.71f);
     filterResonance->range.setSkewForCentre (1.0f);
     layout.add (std::move (filterResonance));
 

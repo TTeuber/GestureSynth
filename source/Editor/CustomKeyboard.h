@@ -7,8 +7,8 @@
 class CustomKeyboard final : public juce::Component, public AnimationFrameSource::Listener
 {
 public:
-    explicit CustomKeyboard (juce::MidiKeyboardState& state, AnimationFrameSource* animSource = nullptr)
-        : keyboardState (state), animSource (animSource)
+    explicit CustomKeyboard (juce::MidiKeyboardState& state, AnimationFrameSource* animSourceToUse = nullptr)
+        : keyboardState (state), animSource (animSourceToUse)
     {
         setMouseCursor (juce::MouseCursor::PointingHandCursor);
         setWantsKeyboardFocus (true);

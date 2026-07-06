@@ -9,8 +9,8 @@ class CustomToggleComponent final : public juce::Component,
                                      private juce::AudioProcessorParameter::Listener
 {
 public:
-    explicit CustomToggleComponent (juce::AudioParameterBool* param, const juce::String& label)
-        : param (param), label (label)
+    explicit CustomToggleComponent (juce::AudioParameterBool* paramToUse, const juce::String& labelToUse)
+        : param (paramToUse), label (labelToUse)
     {
         jassert (param != nullptr);
         param->addListener (this);

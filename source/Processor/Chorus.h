@@ -35,7 +35,7 @@ public:
         // Initialize LFO phases with stereo offset
         for (int channel = 0; channel < 2; ++channel)
         {
-            phase[channel] = channel * 0.5f; // 180 degree offset between channels
+            phase[channel] = static_cast<float> (channel) * 0.5f; // 180 degree offset between channels
         }
 
         parameters.addParameterListener (ParamIDs::chorusMix, this);
@@ -115,7 +115,7 @@ public:
             filter[i].reset();
 
             // Reset phases but maintain stereo offset
-            phase[i] = i * 0.5f;
+            phase[i] = static_cast<float> (i) * 0.5f;
         }
 
         delayWritePosition = 0;

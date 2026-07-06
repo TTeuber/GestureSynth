@@ -54,7 +54,7 @@ public:
             // Parameter name
             g.setColour (TEXT_COLOR);
             g.setFont (Style::fontBody);
-            g.drawText (entries[i].name, sectionBounds.withTrimmedLeft (6).withTrimmedRight (iconSize * 3 + iconPad * 3),
+            g.drawText (entries[static_cast<size_t> (i)].name, sectionBounds.withTrimmedLeft (6).withTrimmedRight (iconSize * 3 + iconPad * 3),
                         juce::Justification::centredLeft, true);
 
             // Icon positions (right-aligned): bipolar, bypass, clear
@@ -78,8 +78,8 @@ public:
                 PaintHelpers::drawHoverBox (g, hoverBounds, true, Style::radiusSmall);
             }
 
-            bool bipolar = modModeState->isBipolar (entries[i].sourceID, entries[i].destID);
-            bool bypassed = modModeState->isBypassed (entries[i].sourceID, entries[i].destID);
+            bool bipolar = modModeState->isBipolar (entries[static_cast<size_t> (i)].sourceID, entries[static_cast<size_t> (i)].destID);
+            bool bypassed = modModeState->isBypassed (entries[static_cast<size_t> (i)].sourceID, entries[static_cast<size_t> (i)].destID);
 
             ModulationIcons::drawBipolarIcon (g, bipolarBounds, bipolar);
             ModulationIcons::drawBypassIcon (g, bypassBounds, bypassed);
@@ -105,12 +105,12 @@ public:
             return;
 
         int section, button;
-        hitTest (e.getPosition(), section, button);
+        hitTestItem (e.getPosition(), section, button);
 
         if (section < 0 || button < 0)
             return;
 
-        auto& entry = entries[section];
+        auto& entry = entries[static_cast<size_t> (section)];
 
         if (button == 0) // bipolar
         {
@@ -141,7 +141,7 @@ private:
     void updateHover (juce::Point<int> pos)
     {
         int section, button;
-        hitTest (pos, section, button);
+        hitTestItem (pos, section, button);
 
         if (section != hoveredSection || button != hoveredButton)
         {
@@ -151,7 +151,7 @@ private:
         }
     }
 
-    void hitTest (juce::Point<int> pos, int& outSection, int& outButton) const
+    void hitTestItem (juce::Point<int> pos, int& outSection, int& outButton) const
     {
         outSection = -1;
         outButton = -1;

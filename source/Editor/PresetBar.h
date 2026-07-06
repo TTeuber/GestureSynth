@@ -208,12 +208,12 @@ private:
         menu.showMenuAsync (juce::PopupMenu::Options()
                                 .withTargetComponent (this)
                                 .withMinimumWidth (getWidth()),
-            [this, idToFile = std::move (idToFile)] (int result)
+            [this, idToFileMap = std::move (idToFile)] (int result)
             {
                 if (result <= 0)
                     return;
-                auto it = idToFile.find (result);
-                if (it != idToFile.end() && onLoadFile)
+                auto it = idToFileMap.find (result);
+                if (it != idToFileMap.end() && onLoadFile)
                     onLoadFile (it->second);
             });
     }
@@ -283,7 +283,7 @@ private:
                 if (category == "Uncategorized")
                     category = {};
 
-                auto commitSave = [this, name, category]
+                auto commitSaveFunc = [this, name, category]
                 {
                     auto stateTree = proc->buildStateTree();
                     if (! proc->presetManager.savePreset (name, category, stateTree))
@@ -304,15 +304,15 @@ private:
                             .withMessage ("A preset named \"" + name + "\" already exists. Overwrite it?")
                             .withButton ("Overwrite")
                             .withButton ("Cancel"),
-                        [commitSave = std::move (commitSave)] (int r)
+                        [doCommitSave = std::move (commitSaveFunc)] (int r)
                         {
                             if (r == 1)
-                                commitSave();
+                                doCommitSave();
                         });
                 }
                 else
                 {
-                    commitSave();
+                    commitSaveFunc();
                 }
             }),
             true);

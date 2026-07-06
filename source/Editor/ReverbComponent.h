@@ -12,15 +12,15 @@ class ReverbComponent final : public DualParameterComponent
 public:
     ReverbComponent (const juce::AudioProcessorValueTreeState& apvts,
         const UIContext& ctx = {},
-        const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {})
+        const juce::String& param1DestIDToUse = {},
+        const juce::String& param2DestIDToUse = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::reverbLevel),
               apvts.getParameter (ParamIDs::reverbDecay),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::reverbOn)),
               ctx,
-              param1DestID,
-              param2DestID,
+              param1DestIDToUse,
+              param2DestIDToUse,
               "Reverb")
     {
     }
@@ -58,7 +58,7 @@ private:
 
             const float screenY = top + height * (1.0f - y);
 
-            if (px == 0)
+            if (juce::exactlyEqual (px, 0.0f))
                 path.startNewSubPath (left, screenY);
             else
                 path.lineTo (left + px, screenY);

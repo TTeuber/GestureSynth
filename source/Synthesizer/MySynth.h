@@ -47,13 +47,13 @@ public:
     std::shared_ptr<MyADSR*> getEnvPtr (int index)
     {
         jassert (index >= 0 && index < 4);
-        return envPtrs[index];
+        return envPtrs[static_cast<size_t> (index)];
     }
 
     std::shared_ptr<MyLFO*> getLFOPtr (int index)
     {
         jassert (index >= 0 && index < 4);
-        return lfoPtrs[index];
+        return lfoPtrs[static_cast<size_t> (index)];
     }
 
     std::atomic<float>* getVelocityRawPtr() { return &currentVelocityRaw; }

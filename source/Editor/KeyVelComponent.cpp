@@ -6,20 +6,19 @@
 #include "../Utility/Parameters.h"
 
 KeyVelComponent::KeyVelComponent (juce::AudioProcessorValueTreeState& apvts,
-                                  juce::UndoManager* um,
+                                  juce::UndoManager* /*um*/,
                                   std::atomic<int>* gestureCount,
                                   ModulationModeState* modState,
                                   std::atomic<float>* velocityRaw,
                                   std::atomic<float>* keyboardRaw,
-                                  AnimationFrameSource* animSource,
+                                  AnimationFrameSource* animSourceToUse,
                                   std::shared_ptr<MyADSR*> ampEnv)
     : parameters (apvts),
-      undoManager (um),
       activeGestureCount (gestureCount),
       modModeState (modState),
       velocityRawPtr (velocityRaw),
       keyboardRawPtr (keyboardRaw),
-      animSource (animSource),
+      animSource (animSourceToUse),
       ampEnvPtr (std::move (ampEnv))
 {
     velCurveParam = parameters.getParameter (ParamIDs::velocityCurve);
@@ -49,7 +48,7 @@ void KeyVelComponent::onAnimationFrame()
     if (ptr != nullptr)
     {
         float newVal = AtomicHelpers::paramLoad (*ptr);
-        if (newVal != currentInputValue)
+        if (!juce::exactlyEqual (newVal, currentInputValue))
         {
             currentInputValue = newVal;
             needsRepaint = true;

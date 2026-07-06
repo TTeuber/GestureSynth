@@ -14,20 +14,20 @@ class ChorusComponent final : public DualParameterComponent, public AnimationFra
 public:
     ChorusComponent (const juce::AudioProcessorValueTreeState& apvts,
         const UIContext& ctx = {},
-        std::atomic<float>* modDepthOutput = nullptr,
-        std::atomic<float>* modRateOutput = nullptr,
-        const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {})
+        std::atomic<float>* modDepthOutputToUse = nullptr,
+        std::atomic<float>* modRateOutputToUse = nullptr,
+        const juce::String& param1DestIDToUse = {},
+        const juce::String& param2DestIDToUse = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::chorusDepth),
               apvts.getParameter (ParamIDs::chorusRate),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::chorusOn)),
               ctx,
-              param1DestID,
-              param2DestID,
+              param1DestIDToUse,
+              param2DestIDToUse,
               "Chorus"),
-          modDepthOutput (modDepthOutput),
-          modRateOutput (modRateOutput),
+          modDepthOutput (modDepthOutputToUse),
+          modRateOutput (modRateOutputToUse),
           animSource (ctx.animationSource)
     {
         if ((modDepthOutput != nullptr || modRateOutput != nullptr) && animSource != nullptr)
@@ -93,10 +93,10 @@ private:
         constexpr float strokeThickness = 1.5f;
 
         // Calculate wavelength based on rate (higher rate = shorter wavelength)
-        const float baseWaveLength = bounds.getWidth() * (1.0f - rate * 0.8f);
+        const float baseWaveLength = static_cast<float> (bounds.getWidth()) * (1.0f - rate * 0.8f);
 
         // Calculate amplitude based on depth
-        const float maxAmplitude = bounds.getHeight() * 0.40f;
+        const float maxAmplitude = static_cast<float> (bounds.getHeight()) * 0.40f;
         const float amplitude = maxAmplitude * depth;
 
         // Draw three sine waves with phase offsets
@@ -112,12 +112,12 @@ private:
 protected:
     juce::String getParam1Text() const override
     {
-        return formatParameterText (param1, param1Value, juce::StringRef ("Chrs Depth: ") + juce::String (param1Value * 30, param1Value == 1 ? 0 : 2) + juce::StringRef ("ms"));
+        return formatParameterText (param1, param1Value, juce::StringRef ("Chrs Depth: ") + juce::String (param1Value * 30, juce::exactlyEqual (param1Value, 1.0f) ? 0 : 2) + juce::StringRef ("ms"));
     }
 
     juce::String getParam2Text() const override
     {
-        return formatParameterText (param2, param2Value, juce::StringRef ("Chrs Rate: ") + juce::String (param2Value, param2Value == 1 ? 0 : 2) + juce::StringRef ("Hz"));
+        return formatParameterText (param2, param2Value, juce::StringRef ("Chrs Rate: ") + juce::String (param2Value, juce::exactlyEqual (param2Value, 1.0f) ? 0 : 2) + juce::StringRef ("Hz"));
     }
 
     // The display shows the normalized value directly as "Hz", so parse the
@@ -144,11 +144,11 @@ private:
         juce::Path path;
 
         // Calculate the midpoint of the bounds for y-axis
-        const float midY = bounds.getCentreY();
+        const float midY = static_cast<float> (bounds.getCentreY());
 
         // Draw sine wave from left to right
         const float step = juce::jmin (5.0f, wavelength / 20.0f);
-        for (float x = 0; x <= bounds.getWidth(); x += step)
+        for (float x = 0.0f; x <= static_cast<float> (bounds.getWidth()); x += step)
         {
             // Calculate normalized x-position (0 to 2π)
             const float normalizedX = (x / wavelength) * juce::MathConstants<float>::twoPi;
@@ -156,15 +156,15 @@ private:
             // Calculate y-position using sine function with phase offset
             const float y = midY - amplitude * std::sin (normalizedX + phaseOffset * juce::MathConstants<float>::twoPi);
 
-            if (x == 0)
+            if (juce::exactlyEqual (x, 0.0f))
             {
                 // Start a new path on the left side of the bounds
-                path.startNewSubPath (bounds.getX() + x, y);
+                path.startNewSubPath (static_cast<float> (bounds.getX()) + x, y);
             }
             else
             {
                 // Add a point to a path
-                path.lineTo (bounds.getX() + x, y);
+                path.lineTo (static_cast<float> (bounds.getX()) + x, y);
             }
         }
 

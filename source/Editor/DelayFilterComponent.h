@@ -22,8 +22,8 @@ protected:
         constexpr double maxFreq = 3000.0;
         constexpr double curveStartFreq = 5.0;
 
-        const int startPixel = static_cast<int> (logFreqToX (curveStartFreq, minFreq, maxFreq) * bounds.getWidth()) + bounds.getX();
-        const float centreY = bounds.getCentreY();
+        const int startPixel = static_cast<int> (logFreqToX (curveStartFreq, minFreq, maxFreq) * static_cast<double> (bounds.getWidth())) + bounds.getX();
+        const float centreY = static_cast<float> (bounds.getCentreY());
         bool started = false;
 
         for (int xPx = startPixel; xPx < bounds.getRight(); xPx += step)
@@ -31,7 +31,7 @@ protected:
             const double x = static_cast<double> (xPx - bounds.getX()) / bounds.getWidth();
             const double freq = xToLogFreq (x, minFreq, maxFreq);
             const double dB = computeHPGainDb (freq, cutoffHz);
-            const float yPx = centreY - static_cast<float> (dB) * bounds.getHeight() / 50.0f;
+            const float yPx = centreY - static_cast<float> (dB) * static_cast<float> (bounds.getHeight()) / 50.0f;
 
             if (! started)
             {
@@ -96,15 +96,15 @@ protected:
         constexpr double minFreq = 200.0;
         constexpr double maxFreq = 20000.0;
 
-        const float centreY = bounds.getCentreY();
+        const float centreY = static_cast<float> (bounds.getCentreY());
         bool started = false;
 
         for (int xPx = bounds.getX(); xPx < bounds.getRight(); xPx += step)
         {
-            const double x = static_cast<double> (xPx - bounds.getX()) / bounds.getWidth();
+            const double x = static_cast<double> (xPx - bounds.getX()) / static_cast<double> (bounds.getWidth());
             const double freq = xToLogFreq (x, minFreq, maxFreq);
             const double dB = computeLPGainDb (freq, cutoffHz);
-            const float yPx = centreY - static_cast<float> (dB) * bounds.getHeight() / 50.0f;
+            const float yPx = centreY - static_cast<float> (dB) * static_cast<float> (bounds.getHeight()) / 50.0f;
 
             if (! started)
             {

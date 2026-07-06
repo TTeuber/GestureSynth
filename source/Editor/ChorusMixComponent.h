@@ -10,17 +10,17 @@ class ChorusMixComponent final : public SingleParameterComponent
 {
 public:
     ChorusMixComponent (juce::RangedAudioParameter* chorusMixParam,
-        juce::AudioParameterBool* activeParam = nullptr,
+        juce::AudioParameterBool* activeParamToUse = nullptr,
         const UIContext& ctx = {})
-        : SingleParameterComponent (chorusMixParam, activeParam, ctx)
+        : SingleParameterComponent (chorusMixParam, activeParamToUse, ctx)
     {
     }
 
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
-        const float cx = bounds.getCentreX();
-        const float cy = bounds.getCentreY();
+        const float cx = static_cast<float> (bounds.getCentreX());
+        const float cy = static_cast<float> (bounds.getCentreY());
         const float dim = static_cast<float> (juce::jmin (bounds.getWidth(), bounds.getHeight()));
         const float dryRadius = dim * 0.4f;
         const float wetRadius = dryRadius * 0.6f;

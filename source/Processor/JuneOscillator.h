@@ -67,8 +67,8 @@ public:
     {
         frequency = freq;
         const float currentDetune = detuneParam.getCurrentValue();
-        frequencyL = frequency * std::pow (2, currentDetune * detuneAmount / 12.0f);
-        frequencyR = frequency * std::pow (2, -(currentDetune * detuneAmount) / 12.0f);
+        frequencyL = frequency * std::pow (2.0f, currentDetune * detuneAmount / 12.0f);
+        frequencyR = frequency * std::pow (2.0f, -(currentDetune * detuneAmount) / 12.0f);
         const float oversampledSampleRate = sampleRate * static_cast<float> (oversampling.getOversamplingFactor());
         phaseIncrement = frequency / oversampledSampleRate;
         phaseIncrementL = frequencyL / oversampledSampleRate;
@@ -117,16 +117,16 @@ public:
         phaseL += phaseIncrementL;
         phaseR += phaseIncrementR;
         if (phase >= 1.0)
-            phase -= 1.0;
+            phase -= 1.0f;
         if (phaseL >= 1.0)
-            phaseL -= 1.0;
+            phaseL -= 1.0f;
         if (phaseR >= 1.0)
-            phaseR -= 1.0;
+            phaseR -= 1.0f;
 
         // Update sub-oscillator phase
         subPhase += subPhaseIncrement;
         if (subPhase >= 1.0)
-            subPhase -= 1.0;
+            subPhase -= 1.0f;
 
         // Initialize outputs
         float sawOutput = 0.0f;
@@ -273,7 +273,7 @@ public:
 
         const auto osBuffer = oversampling.processSamplesUp (buffer);
 
-        for (int i = 0; i < osBuffer.getNumSamples(); ++i)
+        for (int i = 0; i < static_cast<int> (osBuffer.getNumSamples()); ++i)
         {
             const std::array<float, 2> vals = process();
             osBuffer.getChannelPointer (0)[i] = vals[0];

@@ -12,9 +12,9 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
     const juce::StringRef releaseParam,
     const juce::StringRef releaseCurveParam,
     std::shared_ptr<MyADSR*> adsr,
-    juce::UndoManager* undoManager,
-    std::atomic<int>* gestureCount,
-    AnimationFrameSource* animSource)
+    juce::UndoManager* undoManagerToUse,
+    std::atomic<int>* gestureCountToUse,
+    AnimationFrameSource* animSourceToUse)
     : parameters(p),
     attackId(attackParam),
     attackCurveId (attackCurveParam),
@@ -24,9 +24,9 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
     releaseId(releaseParam),
     releaseCurveId (releaseCurveParam),
     myADSR(std::move(adsr)),
-    undoManager(undoManager),
-    gestureCount(gestureCount),
-    animSource(animSource)
+    undoManager(undoManagerToUse),
+    gestureCount(gestureCountToUse),
+    animSource(animSourceToUse)
 // clang-format on
 {
     parameters.addParameterListener (attackId, this);
@@ -49,8 +49,8 @@ ADSRGraph::ADSRGraph(juce::AudioProcessorValueTreeState& p,
 
     totalDuration = attackTime + decayTime + releaseTime;
 
-    if (animSource != nullptr)
-        animSource->addListener (this, AnimationFrameSource::Rate::Hz60);
+    if (animSourceToUse != nullptr)
+        animSourceToUse->addListener (this, AnimationFrameSource::Rate::Hz60);
 }
 
 ADSRGraph::~ADSRGraph()
@@ -123,28 +123,28 @@ void ADSRGraph::rebind (
 void ADSRGraph::parameterChanged (const juce::String& parameterID, float newValue)
 {
     if (parameterID == attackId)
-        attackTime = juce::jmax<float> (0.01, newValue);
+        attackTime = juce::jmax<float> (0.01f, newValue);
     else if (parameterID == attackCurveId)
         attackCurve = newValue;
     else if (parameterID == decayId)
-        decayTime = juce::jmax<float> (0.01, newValue);
+        decayTime = juce::jmax<float> (0.01f, newValue);
     else if (parameterID == decayCurveId)
         decayCurve = newValue;
     else if (parameterID == sustainId)
         sustainLevel = (1 - newValue) * height;
     else if (parameterID == releaseId)
-        releaseTime = juce::jmax<float> (0.01, newValue);
+        releaseTime = juce::jmax<float> (0.01f, newValue);
     else if (parameterID == releaseCurveId)
         releaseCurve = newValue;
 
     repaint();
 }
 
-void ADSRGraph::setParameters (const float attack, const float decay, const float sustain, const float release)
+void ADSRGraph::setParameters (const float attack, const float decay, const float sustainToUse, const float release)
 {
-    attackTime = juce::jmax<float> (0.01, attack);
+    attackTime = juce::jmax<float> (0.01f, attack);
     decayTime = decay;
-    sustainLevel = (1 - sustain) * height;
+    sustainLevel = (1 - sustainToUse) * height;
     releaseTime = release;
     repaint();
 }
@@ -269,7 +269,7 @@ void ADSRGraph::paint (juce::Graphics& g)
             marker.startNewSubPath (markerPosition - xOffset, 0);
             marker.lineTo (markerPosition - xOffset, h);
             g.strokePath (marker, juce::PathStrokeType (2.0f));
-            g.drawText (juce::String (secondNumber), markerPosition - (durationWidth / 10) - xOffset, h - 20, 20, 20, juce::Justification::centred);
+            g.drawText (juce::String (secondNumber), static_cast<int> (markerPosition - (durationWidth / 10) - xOffset), static_cast<int> (h - 20), 20, 20, juce::Justification::centred);
         }
 
         if (subdivisionsVisible)
@@ -334,10 +334,10 @@ float ADSRGraph::getCurveY (const float x) const
         return (1 - MyADSR::toAttackCurve (x / attackTime / width * durationWidth, attackCurve)) * height;
 
     if (x < decayX)
-        return (1 - MyADSR::toDecayCurve ((x - attackX) / juce::jmax<float> (0.0001, decayTime) / width * durationWidth, 1 - sustainLevel / height, decayCurve)) * height;
+        return (1 - MyADSR::toDecayCurve ((x - attackX) / juce::jmax<float> (0.0001f, decayTime) / width * durationWidth, 1 - sustainLevel / height, decayCurve)) * height;
 
     if (x < releaseX)
-        return (1 - MyADSR::toReleaseCurve (juce::jmin<float> (1, (x - decayX) / juce::jmax<float> (0.0001, releaseTime) / width * durationWidth), 1 - sustainLevel / height, releaseCurve)) * height;
+        return (1 - MyADSR::toReleaseCurve (juce::jmin<float> (1, (x - decayX) / juce::jmax<float> (0.0001f, releaseTime) / width * durationWidth), 1 - sustainLevel / height, releaseCurve)) * height;
 
     return height;
 }
@@ -366,12 +366,12 @@ void ADSRGraph::onAnimationFrame()
 
 void ADSRGraph::mouseMove (const juce::MouseEvent& event)
 {
-    auto mousePos = juce::Point (event.position.x - innerBoxOrigin.x, event.position.y - innerBoxOrigin.y);
+    auto mousePos = juce::Point (event.position.x - static_cast<float> (innerBoxOrigin.x), event.position.y - static_cast<float> (innerBoxOrigin.y));
     constexpr Point pointEnums[] = { Attack, AttackCurve, Decay, DecayCurve, Release, ReleaseCurve };
     Point newHovered = None;
     for (int i = 0; i < static_cast<int> (points.size()); ++i)
     {
-        if (points[i]->getDistanceFrom (mousePos) < 20)
+        if (points[static_cast<size_t> (i)]->getDistanceFrom (mousePos) < 20)
         {
             newHovered = pointEnums[i];
             break;
@@ -401,7 +401,7 @@ void ADSRGraph::mouseExit (const juce::MouseEvent&)
 
 void ADSRGraph::mouseDown (const juce::MouseEvent& event)
 {
-    clickPoint = { event.position.x - innerBoxOrigin.x, event.position.y - innerBoxOrigin.y };
+    clickPoint = { event.position.x - static_cast<float> (innerBoxOrigin.x), event.position.y - static_cast<float> (innerBoxOrigin.y) };
     constexpr float clickWidth = 20;
 
     if (clickPoint.getDistanceFrom (attackPoint) < clickWidth)
@@ -429,7 +429,7 @@ void ADSRGraph::mouseDown (const juce::MouseEvent& event)
     }
 }
 
-void ADSRGraph::mouseUp (const juce::MouseEvent& event)
+void ADSRGraph::mouseUp (const juce::MouseEvent& /*event*/)
 {
     if (!activeGestureParams.empty())
     {
@@ -461,20 +461,21 @@ void ADSRGraph::beginGesturesForSelectedPoint()
         case DecayCurve:   addParam (decayCurveId); break;
         case Release:      addParam (releaseId); break;
         case ReleaseCurve: addParam (releaseCurveId); break;
-        default: break;
+        case Sustain:
+        case None:         break;
     }
 }
 
 void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
 {
     // Translate mouse position into inner-box-local coordinates
-    const float mx = event.position.x - innerBoxOrigin.x;
-    const float my = event.position.y - innerBoxOrigin.y;
+    const float mx = event.position.x - static_cast<float> (innerBoxOrigin.x);
+    const float my = event.position.y - static_cast<float> (innerBoxOrigin.y);
 
     if (selectedPoint == Attack)
     {
         const auto attackPosition = juce::jlimit (0.0f, width, mx);
-        attackTime = juce::jmax<float> (0.01, attackPosition / width * durationWidth);
+        attackTime = juce::jmax<float> (0.01f, attackPosition / width * durationWidth);
         parameters.getParameter (attackId)->setValueNotifyingHost (parameters.getParameterRange (attackId).convertTo0to1 (attackTime));
     }
 
@@ -490,7 +491,7 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
     else if (selectedPoint == Decay)
     {
         const auto decayPosition = juce::jlimit (attackX, width, mx);
-        decayTime = juce::jmax<float> (0.01, (decayPosition - attackX) / width * durationWidth);
+        decayTime = juce::jmax<float> (0.01f, (decayPosition - attackX) / width * durationWidth);
         parameters.getParameter (decayId)->setValueNotifyingHost (parameters.getParameterRange (decayId).convertTo0to1 (decayTime));
 
         sustainLevel = juce::jlimit (0.0f, height, my);
@@ -499,9 +500,9 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
 
     else if (selectedPoint == DecayCurve)
     {
-        float sustain = 1.0f - sustainLevel / height;
+        float sustainToUse = 1.0f - sustainLevel / height;
         float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - my / height);
-        float t = juce::jlimit (0.001f, 0.999f, (1.0f - graphValue) / (1.0f - sustain));
+        float t = juce::jlimit (0.001f, 0.999f, (1.0f - graphValue) / (1.0f - sustainToUse));
         float k = CurveUtils::inverseCurveAtHalf (t);
         decayCurve = juce::jlimit (-1.0f, 1.0f, k);
         float normalized = parameters.getParameterRange (decayCurveId).convertTo0to1 (decayCurve);
@@ -511,16 +512,16 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
     else if (selectedPoint == Release)
     {
         const auto releasePosition = juce::jlimit (decayX, width, mx);
-        releaseTime = juce::jmax<float> (0.01, (releasePosition - decayX) / width * durationWidth);
+        releaseTime = juce::jmax<float> (0.01f, (releasePosition - decayX) / width * durationWidth);
         const auto x = parameters.getParameterRange (releaseId).convertTo0to1 (releaseTime);
         parameters.getParameter (releaseId)->setValueNotifyingHost (x);
     }
 
     else if (selectedPoint == ReleaseCurve)
     {
-        float sustain = 1.0f - sustainLevel / height;
+        float sustainToUse = 1.0f - sustainLevel / height;
         float graphValue = juce::jlimit (0.001f, 0.999f, 1.0f - my / height);
-        float t = juce::jlimit (0.001f, 0.999f, (sustain - graphValue) / sustain);
+        float t = juce::jlimit (0.001f, 0.999f, (sustainToUse - graphValue) / sustainToUse);
         float k = CurveUtils::inverseCurveAtHalf (t);
         releaseCurve = juce::jlimit (-1.0f, 1.0f, k);
         float normalized = parameters.getParameterRange (releaseCurveId).convertTo0to1 (releaseCurve);
@@ -530,14 +531,14 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
     repaint();
 }
 
-void ADSRGraph::mouseWheelMove (const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
+void ADSRGraph::mouseWheelMove (const juce::MouseEvent& /*event*/, const juce::MouseWheelDetails& wheel)
 {
     xOffset = juce::jlimit (0.0f, width * 2, xOffset - wheel.deltaX * 100);
 
     repaint();
 }
 
-void ADSRGraph::mouseMagnify (const juce::MouseEvent& event, float scaleFactor)
+void ADSRGraph::mouseMagnify (const juce::MouseEvent& /*event*/, float scaleFactor)
 {
     durationWidth *= 1 + (1 - scaleFactor);
 

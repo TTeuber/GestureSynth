@@ -10,9 +10,9 @@ class DelaySyncToggleComponent final : public juce::Component,
                                         private juce::AudioProcessorParameter::Listener
 {
 public:
-    DelaySyncToggleComponent (juce::AudioParameterBool* param,
-        juce::AudioParameterBool* activeParam = nullptr)
-        : param (param), activeParam (activeParam)
+    DelaySyncToggleComponent (juce::AudioParameterBool* paramToUse,
+        juce::AudioParameterBool* activeParamToUse = nullptr)
+        : param (paramToUse), activeParam (activeParamToUse)
     {
         jassert (param != nullptr);
         param->addListener (this);
@@ -158,9 +158,9 @@ private:
 
     void drawClock (juce::Graphics& g, const juce::Rectangle<int>& bounds) const
     {
-        const float cx = bounds.getCentreX();
-        const float cy = bounds.getCentreY();
-        const float radius = juce::jmin (bounds.getWidth(), bounds.getHeight()) * 0.35f;
+        const float cx = static_cast<float> (bounds.getCentreX());
+        const float cy = static_cast<float> (bounds.getCentreY());
+        const float radius = static_cast<float> (juce::jmin (bounds.getWidth(), bounds.getHeight())) * 0.35f;
 
         g.setColour (isActive ? TEXT_COLOR : TEXT_INACTIVE_COLOR);
 
@@ -188,8 +188,8 @@ private:
     {
         const float w = static_cast<float> (bounds.getWidth());
         const float h = static_cast<float> (bounds.getHeight());
-        const float cx = bounds.getCentreX();
-        const float cy = bounds.getCentreY();
+        const float cx = static_cast<float> (bounds.getCentreX());
+        const float cy = static_cast<float> (bounds.getCentreY());
 
         // Scale everything relative to available space
         const float scale = juce::jmin (w, h) * 0.4f;

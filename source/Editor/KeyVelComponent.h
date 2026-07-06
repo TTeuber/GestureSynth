@@ -48,7 +48,6 @@ private:
     bool isOverHandle (const juce::MouseEvent& e) const;
 
     juce::AudioProcessorValueTreeState& parameters;
-    juce::UndoManager* undoManager;
     std::atomic<int>* activeGestureCount;
     ModulationModeState* modModeState = nullptr;
 

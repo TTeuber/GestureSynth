@@ -9,11 +9,11 @@
 class ReverbPreDelayComponent final : public SingleParameterComponent
 {
 public:
-    ReverbPreDelayComponent (juce::RangedAudioParameter* param,
-        juce::AudioParameterBool* activeParam = nullptr,
+    ReverbPreDelayComponent (juce::RangedAudioParameter* paramToUse,
+        juce::AudioParameterBool* activeParamToUse = nullptr,
         const UIContext& ctx = {},
-        const juce::String& paramDestID = {})
-        : SingleParameterComponent (param, activeParam, ctx, paramDestID)
+        const juce::String& paramDestIDToUse = {})
+        : SingleParameterComponent (paramToUse, activeParamToUse, ctx, paramDestIDToUse)
     {
     }
 

@@ -10,9 +10,9 @@ PluginEditor::PluginEditor (PluginProcessor& p)
       voiceCountControl (dynamic_cast<juce::AudioParameterChoice*> (p.parameters.getParameter (ParamIDs::voiceCount)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::monoOn)),
                          dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::legatoOn))),
-      pbTab (p.parameters.getParameter (ParamIDs::pitchBendRange)),
       lfoComponent (p.lfoData[0], p.parameters, true, 1, p.getSynth().getLFOPtr (0), &animationSource),
-      adsrGraph (p.parameters, ParamIDs::envParamID (1, "Attack"), ParamIDs::envParamID (1, "AttackCurve"), ParamIDs::envParamID (1, "Decay"), ParamIDs::envParamID (1, "DecayCurve"), ParamIDs::envParamID (1, "Sustain"), ParamIDs::envParamID (1, "Release"), ParamIDs::envParamID (1, "ReleaseCurve"), p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount, &animationSource)
+      adsrGraph (p.parameters, ParamIDs::envParamID (1, "Attack"), ParamIDs::envParamID (1, "AttackCurve"), ParamIDs::envParamID (1, "Decay"), ParamIDs::envParamID (1, "DecayCurve"), ParamIDs::envParamID (1, "Sustain"), ParamIDs::envParamID (1, "Release"), ParamIDs::envParamID (1, "ReleaseCurve"), p.getSynth().getAmpADSRPtr(), &p.undoManager, &p.activeGestureCount, &animationSource),
+      pbTab (p.parameters.getParameter (ParamIDs::pitchBendRange))
 {
     setLookAndFeel (&customLookAndFeel);
 
@@ -96,30 +96,21 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     // MW / AT / EXP tabs
     mwTab.setup ("MW", "modWheel", &modModeState, [this]
     {
-        if (&modModeState != nullptr)
-        {
-            modModeState.setTargetSource ("modWheel");
-            if (!modModeState.isModulationMode())
-                modModeState.setMode (ModulationModeState::Mode::Modulation);
-        }
+        modModeState.setTargetSource ("modWheel");
+        if (!modModeState.isModulationMode())
+            modModeState.setMode (ModulationModeState::Mode::Modulation);
     });
     atTab.setup ("AT", "aftertouch", &modModeState, [this]
     {
-        if (&modModeState != nullptr)
-        {
-            modModeState.setTargetSource ("aftertouch");
-            if (!modModeState.isModulationMode())
-                modModeState.setMode (ModulationModeState::Mode::Modulation);
-        }
+        modModeState.setTargetSource ("aftertouch");
+        if (!modModeState.isModulationMode())
+            modModeState.setMode (ModulationModeState::Mode::Modulation);
     });
     expTab.setup ("EXP", "expression", &modModeState, [this]
     {
-        if (&modModeState != nullptr)
-        {
-            modModeState.setTargetSource ("expression");
-            if (!modModeState.isModulationMode())
-                modModeState.setMode (ModulationModeState::Mode::Modulation);
-        }
+        modModeState.setTargetSource ("expression");
+        if (!modModeState.isModulationMode())
+            modModeState.setMode (ModulationModeState::Mode::Modulation);
     });
     mwTab.setCompactMode (true);
     atTab.setCompactMode (true);
@@ -189,7 +180,7 @@ void PluginEditor::selectLfo (int index)
     activeLfoIndex = index;
     for (int i = 0; i < 4; ++i)
         lfoTabs[i].setSelected (i == index);
-    lfoComponent.rebind (processorRef.lfoData[index], index + 1, processorRef.getSynth().getLFOPtr (index));
+    lfoComponent.rebind (processorRef.lfoData[static_cast<size_t>(index)], index + 1, processorRef.getSynth().getLFOPtr (index));
 }
 
 void PluginEditor::selectEnv (int index)
@@ -239,7 +230,7 @@ void PluginEditor::navigatePreset (int direction)
     int currentIndex = -1;
     for (int i = 0; i < (int) flatList.size(); ++i)
     {
-        if (flatList[i].file == processorRef.currentPresetFile)
+        if (flatList[static_cast<size_t>(i)].file == processorRef.currentPresetFile)
         {
             currentIndex = i;
             break;
@@ -252,7 +243,7 @@ void PluginEditor::navigatePreset (int direction)
     else
         newIndex = (currentIndex + direction + (int) flatList.size()) % (int) flatList.size();
 
-    loadPresetByFile (flatList[newIndex].file);
+    loadPresetByFile (flatList[static_cast<size_t>(newIndex)].file);
 }
 
 void PluginEditor::paint (juce::Graphics& g)
@@ -426,7 +417,7 @@ void PluginEditor::timerCallback()
         processorRef.undoManager.beginNewTransaction();
 }
 
-void PluginEditor::modulationModeChanged (ModulationModeState::Mode newMode)
+void PluginEditor::modulationModeChanged (ModulationModeState::Mode /*newMode*/)
 {
     // Repaint mod source tabs
     for (int i = 0; i < 4; ++i)
@@ -442,7 +433,7 @@ void PluginEditor::modulationModeChanged (ModulationModeState::Mode newMode)
     modWheel.repaint();
 }
 
-void PluginEditor::targetSourceChanged (const juce::String& newSourceID)
+void PluginEditor::targetSourceChanged (const juce::String& /*newSourceID*/)
 {
     for (int i = 0; i < 4; ++i)
     {

@@ -51,16 +51,16 @@ public:
         }
     }
 
-    explicit SingleParameterComponent (juce::RangedAudioParameter* param,
-        juce::AudioParameterBool* activeParam = nullptr,
+    explicit SingleParameterComponent (juce::RangedAudioParameter* paramToUse,
+        juce::AudioParameterBool* activeParamToUse = nullptr,
         const UIContext& ctx = {},
-        const juce::String& paramDestID = {})
-        : param (param),
-          activeParam (activeParam),
+        const juce::String& paramDestIDToUse = {})
+        : param (paramToUse),
+          activeParam (activeParamToUse),
           undoManager (ctx.undoManager),
           gestureCount (ctx.gestureCount),
           modModeState (ctx.modModeState),
-          paramDestID (paramDestID)
+          paramDestID (paramDestIDToUse)
     {
         // Register as a listener for the parameter
         param->addListener (this);
@@ -277,7 +277,7 @@ public:
             auto sourceID = modModeState->getTargetSourceID();
             const auto bounds = getInnerBoxBounds();
 
-            float verticalDelta = (mouseDownY - e.y) / (bounds.getHeight() - padding) / 2.0f;
+            float verticalDelta = static_cast<float> (mouseDownY - e.y) / (static_cast<float> (bounds.getHeight()) - padding) / 2.0f;
             float newDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialDepth + verticalDelta);
             modModeState->setDepth (sourceID, paramDestID, newDepth);
             repaint();
@@ -301,7 +301,7 @@ public:
 
         // Calculate vertical movement for the parameter
         // Moving up increases the value
-        const float verticalDelta = (mouseDownY - e.y) / (bounds.getHeight() - padding) / 2.0f;
+        const float verticalDelta = static_cast<float> (mouseDownY - e.y) / (static_cast<float> (bounds.getHeight()) - padding) / 2.0f;
         const float newParamValue = juce::jlimit (0.0f, 1.0f, initialParamValue + verticalDelta);
 
         // Update parameter
@@ -399,7 +399,7 @@ protected:
     }
 
     // Virtual method to be implemented by derived classes
-    virtual void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const {}
+    virtual void drawVisualization (juce::Graphics& /*g*/, const juce::Rectangle<int>& /*bounds*/) const {}
 
     // Virtual method for text display that can be overridden
     virtual juce::String getParameterText() const
@@ -418,21 +418,21 @@ protected:
     }
 
     // Helper method to format parameter text using templates
-    juce::String formatParameterText (juce::RangedAudioParameter* param,
+    juce::String formatParameterText (juce::RangedAudioParameter* paramToUse,
         float normValue,
         const juce::String& textTemplate) const
     {
         // Get the parameter name
-        juce::String name = param->getName (15);
+        juce::String name = paramToUse->getName (15);
 
         // Calculate percentage value (0-100)
         int percentValue = static_cast<int> (normValue * 100.0f);
 
         // Get the full value from the normalized value (using parameter mapping)
-        float fullValue = param->convertFrom0to1 (normValue);
+        float fullValue = paramToUse->convertFrom0to1 (normValue);
 
         // Get display text from the parameter with correct units
-        juce::String valueWithUnit = param->getText (normValue, 10);
+        juce::String valueWithUnit = paramToUse->getText (normValue, 10);
 
         // Split value and unit (if possible)
         juce::String value, unit;
@@ -549,7 +549,7 @@ private:
 
         // Draw a simple indicator line at the modulated position
         float modValue = juce::jlimit (0.0f, 1.0f, paramValue + depth);
-        float modY = bounds.getBottom() - modValue * bounds.getHeight();
+        float modY = static_cast<float> (bounds.getBottom()) - modValue * static_cast<float> (bounds.getHeight());
 
         g.setColour (getModColor (sourceID).withAlpha (Style::alphaMod));
         g.drawHorizontalLine (static_cast<int> (modY), static_cast<float> (bounds.getX()), static_cast<float> (bounds.getRight()));
@@ -557,7 +557,7 @@ private:
         if (bipolar)
         {
             float ghostValue = juce::jlimit (0.0f, 1.0f, paramValue - depth);
-            float ghostY = bounds.getBottom() - ghostValue * bounds.getHeight();
+            float ghostY = static_cast<float> (bounds.getBottom()) - ghostValue * static_cast<float> (bounds.getHeight());
             g.setColour (getModColor (sourceID).withAlpha (Style::alphaModGhost));
             g.drawHorizontalLine (static_cast<int> (ghostY), static_cast<float> (bounds.getX()), static_cast<float> (bounds.getRight()));
         }

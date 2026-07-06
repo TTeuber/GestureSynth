@@ -18,23 +18,23 @@ class WaveformComponent final : public DualParameterComponent, public AnimationF
 public:
     WaveformComponent (juce::AudioProcessorValueTreeState& apvts,
         const UIContext& ctx = {},
-        std::atomic<float>* modPulseWidthOutput = nullptr,
-        std::atomic<float>* modWaveformOutput = nullptr,
-        const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {})
+        std::atomic<float>* modPulseWidthOutputToUse = nullptr,
+        std::atomic<float>* modWaveformOutputToUse = nullptr,
+        const juce::String& param1DestIDToUse = {},
+        const juce::String& param2DestIDToUse = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::oscWaveform),
               apvts.getParameter (ParamIDs::pulseWidth),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::oscOn)),
               ctx,
-              param1DestID,
-              param2DestID,
+              param1DestIDToUse,
+              param2DestIDToUse,
               "Oscillator"),
-          modPulseWidthOutput (modPulseWidthOutput),
-          modWaveformOutput (modWaveformOutput),
+          modPulseWidthOutput (modPulseWidthOutputToUse),
+          modWaveformOutput (modWaveformOutputToUse),
           animSource (ctx.animationSource)
     {
-        if ((modPulseWidthOutput != nullptr || modWaveformOutput != nullptr) && animSource != nullptr)
+        if ((modPulseWidthOutputToUse != nullptr || modWaveformOutputToUse != nullptr) && animSource != nullptr)
             animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
     }
 
@@ -49,7 +49,7 @@ protected:
     {
         g.setOpacity (isActive ? 1.0f : 0.5f);
 
-        const float centerY = bounds.getCentreY();
+        const float centerY = static_cast<float> (bounds.getCentreY());
 
         // Draw ghost path at modulated values (behind main)
         if ((modPulseWidthOutput != nullptr || modWaveformOutput != nullptr)
@@ -68,7 +68,7 @@ protected:
     void drawVisualizationWithValues (juce::Graphics& g,
         const juce::Rectangle<int>& bounds, float p1, float p2) const override
     {
-        drawPath (g, bounds, bounds.getCentreY(), 0.0f, p1, p2);
+        drawPath (g, bounds, static_cast<float> (bounds.getCentreY()), 0.0f, p1, p2);
     }
 
 private:
@@ -100,10 +100,10 @@ private:
 
         // Create waveform path
         juce::Path path;
-        const float width = bounds.getWidth();
-        const float startX = bounds.getX() + xOffset;
+        const float width = static_cast<float> (bounds.getWidth());
+        const float startX = static_cast<float> (bounds.getX()) + xOffset;
 
-        const float amplitude = bounds.getHeight() * padding; // 40% of height for amplitude
+        const float amplitude = static_cast<float> (bounds.getHeight()) * padding; // 40% of height for amplitude
 
         // Define fixed points for consistent slope calculation
         const float topLeft = centerY - amplitude;

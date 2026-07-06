@@ -12,15 +12,15 @@ class DelayComponent final : public DualParameterComponent
 public:
     DelayComponent (const juce::AudioProcessorValueTreeState& apvts,
         const UIContext& ctx = {},
-        const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {})
+        const juce::String& param1DestIDToUse = {},
+        const juce::String& param2DestIDToUse = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::delayMix),
               apvts.getParameter (ParamIDs::delayFeedback),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::delayOn)),
               ctx,
-              param1DestID,
-              param2DestID,
+              param1DestIDToUse,
+              param2DestIDToUse,
               "Delay")
     {
     }

@@ -32,7 +32,7 @@ namespace ConnectorPainting
 
         // Top border
         g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
-        g.fillRect (static_cast<float> (source.getRight() - radius),
+        g.fillRect (static_cast<float> (source.getRight()) - radius,
                     static_cast<float> (blockY) - 0.0f,
                     static_cast<float> (target.getX() - source.getRight()) + radius * 2.0f,
                     borderWidth);
@@ -105,7 +105,7 @@ namespace ConnectorPainting
         // Left border
         g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
         g.fillRect (static_cast<float> (blockX),
-                    static_cast<float> (source.getBottom() - radius),
+                    static_cast<float> (source.getBottom()) - radius,
                     borderWidth,
                     static_cast<float> (target.getY() - source.getBottom()) + radius * 2.0f);
 
@@ -172,13 +172,13 @@ namespace ConnectorPainting
 
         // Top border
         g.setColour (BORDER_COLOR.withAlpha (borderAlpha));
-        g.fillRect (static_cast<float> (source.getRight() - radius),
+        g.fillRect (static_cast<float> (source.getRight()) - radius,
                     static_cast<float> (blockY),
                     static_cast<float> (target.getX() - source.getRight()) + radius * 2.0f,
                     borderWidth);
 
         // Bottom border
-        g.fillRect (static_cast<float> (source.getRight() - radius),
+        g.fillRect (static_cast<float> (source.getRight()) - radius,
                     static_cast<float> (source.getBottom()) - borderWidth,
                     static_cast<float> (target.getX() - source.getRight()) + radius * 2.0f,
                     borderWidth);

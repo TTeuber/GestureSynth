@@ -105,10 +105,11 @@ clap_juce_extensions_plugin(TARGET "${PROJECT_NAME}"
 include(SharedCodeDefaults)
 
 # -Ofast is deprecated in newer Clang/GCC; replace the submodule's flag with
-# the equivalent -O3 -ffast-math (same semantics, no deprecation warning)
+# the equivalent -O3 -ffast-math. -fno-finite-math-only keeps inf/NaN
+# behavior defined (safer for audio, silences -Wnan-infinity-disabled)
 if (NOT MSVC)
     get_target_property(shared_code_options SharedCode INTERFACE_COMPILE_OPTIONS)
-    list(TRANSFORM shared_code_options REPLACE "-Ofast" "-O3;-ffast-math")
+    list(TRANSFORM shared_code_options REPLACE "-Ofast" "-O3;-ffast-math;-fno-finite-math-only")
     set_target_properties(SharedCode PROPERTIES INTERFACE_COMPILE_OPTIONS "${shared_code_options}")
 endif ()
 

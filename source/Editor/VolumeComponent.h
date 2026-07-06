@@ -11,8 +11,8 @@ class VolumeComponent final : public SingleParameterComponent
 public:
     explicit VolumeComponent (juce::RangedAudioParameter* volumeParam,
         const UIContext& ctx = {},
-        const juce::String& paramDestID = {})
-        : SingleParameterComponent (volumeParam, nullptr, ctx, paramDestID)
+        const juce::String& paramDestIDToUse = {})
+        : SingleParameterComponent (volumeParam, nullptr, ctx, paramDestIDToUse)
     {
     }
 

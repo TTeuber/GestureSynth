@@ -72,7 +72,7 @@ public:
             return;
 
         const float sensitivity = e.mods.isShiftDown() ? 600.0f : 150.0f;
-        const float delta = (e.x - mouseDownX) / sensitivity;
+        const float delta = static_cast<float> (e.x - mouseDownX) / sensitivity;
         setValue (juce::jlimit (-1.0f, 1.0f, initialValue + delta));
     }
 

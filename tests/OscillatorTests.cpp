@@ -109,7 +109,7 @@ float worstAliasDb (const std::vector<float>& samples, float fundamental)
     float worstAliasFreq = 0.0f;
     for (int bin = exclusionBins; bin < numBins; ++bin)
     {
-        const float freq = bin * binHz;
+        const float freq = static_cast<float> (bin) * binHz;
         const float harmonicRatio = freq / fundamental;
         const float distanceToHarmonic = std::abs (harmonicRatio - std::round (harmonicRatio)) * fundamental;
 

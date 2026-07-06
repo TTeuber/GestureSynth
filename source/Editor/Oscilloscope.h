@@ -16,13 +16,13 @@
 class Oscilloscope final : public juce::Component, public AnimationFrameSource::Listener
 {
 public:
-    explicit Oscilloscope (PluginProcessor& p, AnimationFrameSource* animSource = nullptr)
-        : processor (p), pitchTracker (p.pitchTracker), animSource (animSource)
+    explicit Oscilloscope (PluginProcessor& p, AnimationFrameSource* animSourceToUse = nullptr)
+        : processor (p), pitchTracker (p.pitchTracker), animSource (animSourceToUse)
     {
         subOnParam = dynamic_cast<juce::AudioParameterBool*> (p.parameters.getParameter (ParamIDs::subOn));
         subLevelParam = p.parameters.getParameter (ParamIDs::subOsc);
-        if (animSource != nullptr)
-            animSource->addListener (this, AnimationFrameSource::Rate::Hz30);
+        if (animSourceToUse != nullptr)
+            animSourceToUse->addListener (this, AnimationFrameSource::Rate::Hz30);
     }
 
     ~Oscilloscope() override

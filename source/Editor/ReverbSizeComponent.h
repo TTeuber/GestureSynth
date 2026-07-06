@@ -18,9 +18,9 @@ protected:
         const int fullCircles = static_cast<int> (size);
         const float fraction = size - static_cast<float> (fullCircles);
 
-        const float centreX = bounds.getCentreX();
-        const float centreY = bounds.getCentreY();
-        const float maxRadius = juce::jmin (bounds.getWidth(), bounds.getHeight()) / 2.0f;
+        const float centreX = static_cast<float> (bounds.getCentreX());
+        const float centreY = static_cast<float> (bounds.getCentreY());
+        const float maxRadius = static_cast<float> (juce::jmin (bounds.getWidth(), bounds.getHeight())) / 2.0f;
 
         const float baseAlpha = isActive ? 0.8f : 0.4f;
 

@@ -50,7 +50,7 @@ public:
 
     void pitchWheelMoved (int newPitchWheelValue) override
     {
-        pitchBendValue = (newPitchWheelValue - 8192) / 8192.0f;
+        pitchBendValue = static_cast<float> (newPitchWheelValue - 8192) / 8192.0f;
         if (pitchBendRawOutput != nullptr)
             AtomicHelpers::paramStore (*pitchBendRawOutput, static_cast<float> (newPitchWheelValue));
     }
@@ -59,23 +59,23 @@ public:
     {
         if (controllerNumber == 1)
         {
-            modWheelSource.setValue (newControllerValue / 127.0f);
+            modWheelSource.setValue (static_cast<float> (newControllerValue) / 127.0f);
             if (modWheelRawOutput != nullptr)
-                AtomicHelpers::paramStore (*modWheelRawOutput, newControllerValue / 127.0f);
+                AtomicHelpers::paramStore (*modWheelRawOutput, static_cast<float> (newControllerValue) / 127.0f);
         }
         else if (controllerNumber == 11)
         {
-            expressionSource.setValue (newControllerValue / 127.0f);
+            expressionSource.setValue (static_cast<float> (newControllerValue) / 127.0f);
             if (expressionRawOutput != nullptr)
-                AtomicHelpers::paramStore (*expressionRawOutput, newControllerValue / 127.0f);
+                AtomicHelpers::paramStore (*expressionRawOutput, static_cast<float> (newControllerValue) / 127.0f);
         }
     }
 
     void aftertouchChanged (int newAftertouchValue) override
     {
-        aftertouchSource.setValue (newAftertouchValue / 127.0f);
+        aftertouchSource.setValue (static_cast<float> (newAftertouchValue) / 127.0f);
         if (aftertouchRawOutput != nullptr)
-            AtomicHelpers::paramStore (*aftertouchRawOutput, newAftertouchValue / 127.0f);
+            AtomicHelpers::paramStore (*aftertouchRawOutput, static_cast<float> (newAftertouchValue) / 127.0f);
     }
 
     void renderNextBlock (juce::AudioBuffer<float>& outputBuffer, int startSample, int numSamples) override;
@@ -83,7 +83,7 @@ public:
 
     [[nodiscard]] float frequencyToPhaseIncrement (float frequency) const;
 
-    std::shared_ptr<MyADSR*> getEnvPtr (int index = 0) { return envPtrs[index]; }
+    std::shared_ptr<MyADSR*> getEnvPtr (int index = 0) { return envPtrs[static_cast<size_t> (index)]; }
 
     float getOversamplingLatency() const { return juneOscillator.getLatencyInSamples(); }
 
@@ -100,9 +100,9 @@ public:
     {
         filterResonance.setBaseValue (newFilterResonance);
     }
-    void setLFORate (int index, float rate) { lfos[index].setRate (rate); }
-    void setLFOPhase (int index, float phase) { lfos[index].setPhase (phase); }
-    float getLFOPhase (int index) const { return lfos[index].getPhase(); }
+    void setLFORate (int index, float rate) { lfos[static_cast<size_t> (index)].setRate (rate); }
+    void setLFOPhase (int index, float phase) { lfos[static_cast<size_t> (index)].setPhase (phase); }
+    float getLFOPhase (int index) const { return lfos[static_cast<size_t> (index)].getPhase(); }
     uint64_t getVoiceStartOrder() const { return voiceStartOrder; }
 
 
@@ -255,7 +255,6 @@ private:
     };
     WaveformBuffer waveformBuffer;
     uint64_t voiceStartOrder = 0;
-    double startTime = 0.0;
     int waveLength = 1024;
 
     std::vector<MyADSR*> envs = { &adsr1, &adsr2, &adsr3, &adsr4 };

@@ -20,22 +20,22 @@ class DualParameterComponent : public juce::Component,
                                private juce::AudioProcessorParameter::Listener
 {
 public:
-    DualParameterComponent (juce::RangedAudioParameter* param1,
-        juce::RangedAudioParameter* param2,
-        juce::AudioParameterBool* activeParam = nullptr,
+    DualParameterComponent (juce::RangedAudioParameter* param1ToUse,
+        juce::RangedAudioParameter* param2ToUse,
+        juce::AudioParameterBool* activeParamToUse = nullptr,
         const UIContext& ctx = {},
-        const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {},
+        const juce::String& param1DestIDToUse = {},
+        const juce::String& param2DestIDToUse = {},
         const juce::String& label = {})
-        : param1 (param1),
-          param2 (param2),
-          activeParam (activeParam),
+        : param1 (param1ToUse),
+          param2 (param2ToUse),
+          activeParam (activeParamToUse),
           componentLabel (label),
           undoManager (ctx.undoManager),
           gestureCount (ctx.gestureCount),
           modModeState (ctx.modModeState),
-          param1DestID (param1DestID),
-          param2DestID (param2DestID)
+          param1DestID (param1DestIDToUse),
+          param2DestID (param2DestIDToUse)
     {
         // Register as a listener for both parameters
         param1->addListener (this);
@@ -278,13 +278,13 @@ public:
 
             if (modParam1Engaged && param1DestID.isNotEmpty())
             {
-                float verticalDelta = (modParam1RefY - e.y) / (bounds.getHeight() - padding);
+                float verticalDelta = static_cast<float> (modParam1RefY - e.y) / (static_cast<float> (bounds.getHeight()) - padding);
                 float newDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialDepth1 + verticalDelta);
                 modModeState->setDepth (sourceID, param1DestID, newDepth);
             }
             if (modParam2Engaged && param2DestID.isNotEmpty())
             {
-                float horizontalDelta = (e.x - modParam2RefX) / (bounds.getWidth() - padding);
+                float horizontalDelta = static_cast<float> (e.x - modParam2RefX) / (static_cast<float> (bounds.getWidth()) - padding);
                 float newDepth = juce::jlimit (-1.0f, 1.0f, modDragInitialDepth2 + horizontalDelta);
                 modModeState->setDepth (sourceID, param2DestID, newDepth);
             }
@@ -331,12 +331,12 @@ public:
 
         if (param1Engaged)
         {
-            const float verticalDelta = (param1RefY - e.y) / (bounds.getHeight() - padding);
+            const float verticalDelta = static_cast<float> (param1RefY - e.y) / (static_cast<float> (bounds.getHeight()) - padding);
             param1->setValueNotifyingHost (juce::jlimit (0.0f, 1.0f, initialParam1Value + verticalDelta));
         }
         if (param2Engaged)
         {
-            const float horizontalDelta = (e.x - param2RefX) / (bounds.getWidth() - padding);
+            const float horizontalDelta = static_cast<float> (e.x - param2RefX) / (static_cast<float> (bounds.getWidth()) - padding);
             param2->setValueNotifyingHost (juce::jlimit (0.0f, 1.0f, initialParam2Value + horizontalDelta));
         }
     }

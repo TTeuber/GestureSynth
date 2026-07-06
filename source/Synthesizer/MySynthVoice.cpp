@@ -27,8 +27,8 @@ MySynthVoice::MySynthVoice (
       expressionRawOutput (expressionRawOut)
 {
     for (int i = 0; i < 4; ++i)
-        if (lfoData[i])
-            lfos[i].setLFOData (lfoData[i]);
+        if (lfoData[static_cast<size_t> (i)])
+            lfos[static_cast<size_t> (i)].setLFOData (lfoData[static_cast<size_t> (i)]);
     modTree.addListener (this);
 
     parameters.addParameterListener (ParamIDs::filterOn, this);
@@ -46,7 +46,7 @@ MySynthVoice::MySynthVoice (
     for (int i = 0; i < modTree.getNumChildren() && i < static_cast<int> (slotCache.size()); ++i)
     {
         auto child = modTree.getChild (i);
-        slotCache[i] = { child.getProperty ("source").toString(),
+        slotCache[static_cast<size_t> (i)] = { child.getProperty ("source").toString(),
                          child.getProperty ("destination").toString() };
     }
 
@@ -88,7 +88,7 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     juce::dsp::AudioBlock<float> block (tempBuffer);
     const juce::dsp::ProcessContextReplacing context (block);
 
-    if (frequency != targetFrequency)
+    if (! juce::exactlyEqual (frequency, targetFrequency))
     {
         if (portamentoTimeMs > 0.0f)
         {
@@ -140,7 +140,7 @@ void MySynthVoice::renderNextBlock (juce::AudioBuffer<float>& outputBuffer, cons
     if (filterEnabled)
     {
         filter.setCutoffFrequency (filterCutoff.getCurrentValue());
-        filter.setResonance (juce::jmax<float> (0.01, filterResonance.getCurrentValue()));
+        filter.setResonance (juce::jmax<float> (0.01f, filterResonance.getCurrentValue()));
         filter.process (context);
     }
 
@@ -203,9 +203,9 @@ void MySynthVoice::addNodeToMatrix (const juce::ValueTree& childNode)
     const int slotIndex = childNode.getParent().indexOf (childNode);
     modMatrix.queueAddModulation (destination, source, depth, isBipolar, slotIndex);
 }
-float MySynthVoice::frequencyToPhaseIncrement (const float frequency) const
+float MySynthVoice::frequencyToPhaseIncrement (const float frequencyToUse) const
 {
-    return 2.0f * juce::MathConstants<float>::pi * frequency / currentSampleRate;
+    return 2.0f * juce::MathConstants<float>::pi * frequencyToUse / currentSampleRate;
 }
 
 void MySynthVoice::parameterChanged (const juce::String& parameterID, float newValue)
@@ -235,14 +235,14 @@ void MySynthVoice::valueTreeChildAdded (juce::ValueTree& parentTree, juce::Value
     const int slotIndex = parentTree.indexOf (childWhichHasBeenAdded);
     if (slotIndex >= 0 && slotIndex < static_cast<int> (slotCache.size()))
     {
-        slotCache[slotIndex] = {
+        slotCache[static_cast<size_t> (slotIndex)] = {
             childWhichHasBeenAdded.getProperty ("source").toString(),
             childWhichHasBeenAdded.getProperty ("destination").toString()
         };
     }
     addNodeToMatrix (childWhichHasBeenAdded);
 }
-void MySynthVoice::valueTreeChildRemoved (juce::ValueTree& parentTree, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved)
+void MySynthVoice::valueTreeChildRemoved (juce::ValueTree& /*parentTree*/, juce::ValueTree& childWhichHasBeenRemoved, int indexFromWhichChildWasRemoved)
 {
     auto dstIt = modDestinations.find (childWhichHasBeenRemoved.getProperty ("destination").toString());
     if (dstIt == modDestinations.end())
@@ -265,7 +265,7 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
     if (property.toString() == "depth")
     {
         // Use cached source/dest (they haven't changed)
-        const auto& [cachedSrc, cachedDst] = slotCache[slotIndex];
+        const auto& [cachedSrc, cachedDst] = slotCache[static_cast<size_t> (slotIndex)];
         auto srcIt = modSources.find (cachedSrc);
         auto dstIt = modDestinations.find (cachedDst);
         if (srcIt == modSources.end() || dstIt == modDestinations.end())
@@ -280,7 +280,7 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
     else if (property.toString() == "source" || property.toString() == "destination")
     {
         // Remove OLD routing using cached values
-        const auto& [oldSrc, oldDst] = slotCache[slotIndex];
+        const auto& [oldSrc, oldDst] = slotCache[static_cast<size_t> (slotIndex)];
         auto oldSrcIt = modSources.find (oldSrc);
         auto oldDstIt = modDestinations.find (oldDst);
         if (oldSrcIt != modSources.end() && oldDstIt != modDestinations.end()
@@ -292,7 +292,7 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
         // Update cache with new values
         const juce::String newSrc = treeWhosePropertyHasChanged.getProperty ("source").toString();
         const juce::String newDst = treeWhosePropertyHasChanged.getProperty ("destination").toString();
-        slotCache[slotIndex] = { newSrc, newDst };
+        slotCache[static_cast<size_t> (slotIndex)] = { newSrc, newDst };
 
         // Add NEW routing
         auto newSrcIt = modSources.find (newSrc);
@@ -310,7 +310,7 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
     else if (property.toString() == "isBipolar")
     {
         // Update cache source/dest haven't changed, but we need to re-add with new bipolar setting
-        const auto& [cachedSrc, cachedDst] = slotCache[slotIndex];
+        const auto& [cachedSrc, cachedDst] = slotCache[static_cast<size_t> (slotIndex)];
         auto srcIt = modSources.find (cachedSrc);
         auto dstIt = modDestinations.find (cachedDst);
         if (srcIt == modSources.end() || dstIt == modDestinations.end())
@@ -326,7 +326,7 @@ void MySynthVoice::valueTreePropertyChanged (juce::ValueTree& treeWhosePropertyH
     }
     else if (property.toString() == "bypassed")
     {
-        const auto& [cachedSrc, cachedDst] = slotCache[slotIndex];
+        const auto& [cachedSrc, cachedDst] = slotCache[static_cast<size_t> (slotIndex)];
         auto dstIt = modDestinations.find (cachedDst);
         if (dstIt == modDestinations.end() || dstIt->second == nullptr)
             return;
@@ -353,8 +353,8 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     for (auto* env : envs)
         env->setSampleRate (sampleRate);
     spec.sampleRate = sampleRate;
-    spec.maximumBlockSize = samplesPerBlock;
-    spec.numChannels = numChannels;
+    spec.maximumBlockSize = static_cast<juce::uint32> (samplesPerBlock);
+    spec.numChannels = static_cast<juce::uint32> (numChannels);
 
     juneOscillator.prepare (spec);
     filter.prepare (spec);
@@ -372,11 +372,11 @@ void MySynthVoice::prepare (const double sampleRate, const int samplesPerBlock, 
     waveformBuffer.reset();
 }
 
-void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, juce::SynthesiserSound*, int currentPitchWheelPosition)
+void MySynthVoice::startNote (const int midiNoteNumber, const float velocityToUse, juce::SynthesiserSound*, int currentPitchWheelPosition)
 {
     static uint64_t globalStartCounter = 0;
     voiceStartOrder = ++globalStartCounter;
-    pitchBendValue = (currentPitchWheelPosition - 8192) / 8192.0f;
+    pitchBendValue = static_cast<float> (currentPitchWheelPosition - 8192) / 8192.0f;
     targetFrequency = static_cast<float> (juce::MidiMessage::getMidiNoteInHertz (midiNoteNumber));
 
     if (portamentoTimeMs > 0.0f && portamentoFromFrequency > 0.0f && !skipPortamento)
@@ -390,7 +390,7 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
 
     juneOscillator.setFrequency (frequency);
     vibrato.reset();
-    this->velocity = juce::jlimit (0.0f, 1.0f, velocity);
+    this->velocity = juce::jlimit (0.0f, 1.0f, velocityToUse);
 
     velocitySource.setValue (this->velocity);
     velocitySource.setCurve (velocityCurveParam.getValue());
@@ -409,13 +409,13 @@ void MySynthVoice::startNote (const int midiNoteNumber, const float velocity, ju
     *envPtrs[2] = &adsr3;
     *envPtrs[3] = &adsr4;
     for (int i = 0; i < 4; ++i)
-        *lfoPtrs[i] = &lfos[i];
+        *lfoPtrs[static_cast<size_t> (i)] = &lfos[static_cast<size_t> (i)];
     pitchTracker->updateFrequency (frequency);
     waveLength = static_cast<int> (std::ceil (2 * currentSampleRate / frequency));
     while (waveLength > WaveformBuffer::kBufferSize)
         waveLength /= 2;
 }
-void MySynthVoice::stopNote (float velocity, const bool allowTailOff)
+void MySynthVoice::stopNote (float /*velocity*/, const bool allowTailOff)
 {
     if (allowTailOff)
     {

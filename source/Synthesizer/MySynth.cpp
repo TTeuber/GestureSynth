@@ -16,11 +16,11 @@ MySynth::MySynth (juce::AudioProcessorValueTreeState& p, juce::ValueTree& mt, st
 
     for (int i = 0; i < 4; ++i)
     {
-        lfoParams[i].rate         = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "Rate"));
-        lfoParams[i].tempoSync    = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "TempoSync"));
-        lfoParams[i].noteDivision = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "NoteDivision"));
-        lfoParams[i].beatSync     = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "BeatSync"));
-        lfoParams[i].mono         = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "Mono"));
+        lfoParams[static_cast<size_t> (i)].rate         = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "Rate"));
+        lfoParams[static_cast<size_t> (i)].tempoSync    = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "TempoSync"));
+        lfoParams[static_cast<size_t> (i)].noteDivision = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "NoteDivision"));
+        lfoParams[static_cast<size_t> (i)].beatSync     = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "BeatSync"));
+        lfoParams[static_cast<size_t> (i)].mono         = parameters.getRawParameterValue (ParamIDs::lfoParamID (i + 1, "Mono"));
     }
 
     // Note-tracking vectors never exceed the MIDI note range, so reserving up
@@ -114,7 +114,7 @@ void MySynth::setVoiceCount (int count)
 void MySynth::updateParameters (const TempoInfo& tempoInfo)
 {
     const float newVolume = volumeParam->load();
-    if (prevVolume != newVolume)
+    if (! juce::exactlyEqual (prevVolume, newVolume))
     {
         prevVolume = newVolume;
         applyToAllVoices ([newVolume] (MySynthVoice* voice) { voice->setVolume (newVolume); });
@@ -128,14 +128,14 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
     }
 
     const float newFilterCutoff = filterCutoffParam->load();
-    if (prevFilterCutoff != newFilterCutoff)
+    if (! juce::exactlyEqual (prevFilterCutoff, newFilterCutoff))
     {
         prevFilterCutoff = newFilterCutoff;
         applyToAllVoices ([newFilterCutoff] (MySynthVoice* voice) { voice->setFilterCutoff (newFilterCutoff); });
     }
 
     const float newFilterResonance = filterResonanceParam->load();
-    if (prevFilterResonance != newFilterResonance)
+    if (! juce::exactlyEqual (prevFilterResonance, newFilterResonance))
     {
         prevFilterResonance = newFilterResonance;
         applyToAllVoices ([newFilterResonance] (MySynthVoice* voice) { voice->setFilterResonance (newFilterResonance); });
@@ -146,18 +146,18 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
 
     for (int li = 0; li < 4; ++li)
     {
-        const bool newTempoSync = lfoParams[li].tempoSync->load() > 0.5f;
-        const int newNoteDivision = static_cast<int> (lfoParams[li].noteDivision->load());
-        const bool newBeatSync = lfoParams[li].beatSync->load() > 0.5f;
+        const bool newTempoSync = lfoParams[static_cast<size_t> (li)].tempoSync->load() > 0.5f;
+        const int newNoteDivision = static_cast<int> (lfoParams[static_cast<size_t> (li)].noteDivision->load());
+        const bool newBeatSync = lfoParams[static_cast<size_t> (li)].beatSync->load() > 0.5f;
 
         if (newTempoSync)
         {
             const double effectiveBpm = tempoInfo.hostTempoAvailable ? tempoInfo.bpm : static_cast<double> (newManualBpm);
             const float syncedRate = static_cast<float> (TempoSync::noteDivisionToHz (effectiveBpm, newNoteDivision));
 
-            if (prevLfoRates[li] != syncedRate)
+            if (! juce::exactlyEqual (prevLfoRates[static_cast<size_t> (li)], syncedRate))
             {
-                prevLfoRates[li] = syncedRate;
+                prevLfoRates[static_cast<size_t> (li)] = syncedRate;
                 applyToAllVoices ([li, syncedRate] (MySynthVoice* voice) { voice->setLFORate (li, syncedRate); });
             }
 
@@ -169,16 +169,16 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
         }
         else
         {
-            const float newLfoRate = lfoParams[li].rate->load();
-            if (prevLfoRates[li] != newLfoRate)
+            const float newLfoRate = lfoParams[static_cast<size_t> (li)].rate->load();
+            if (! juce::exactlyEqual (prevLfoRates[static_cast<size_t> (li)], newLfoRate))
             {
-                prevLfoRates[li] = newLfoRate;
+                prevLfoRates[static_cast<size_t> (li)] = newLfoRate;
                 applyToAllVoices ([li, newLfoRate] (MySynthVoice* voice) { voice->setLFORate (li, newLfoRate); });
             }
         }
 
         // Mono LFO: copy oldest active voice's phase to all others
-        const bool isMono = lfoParams[li].mono->load() > 0.5f;
+        const bool isMono = lfoParams[static_cast<size_t> (li)].mono->load() > 0.5f;
         if (isMono)
         {
             MySynthVoice* oldest = nullptr;
@@ -205,7 +205,7 @@ void MySynth::updateParameters (const TempoInfo& tempoInfo)
     }
 
     const float newPortamentoTime = portamentoTimeParam->load();
-    if (prevPortamentoTime != newPortamentoTime)
+    if (! juce::exactlyEqual (prevPortamentoTime, newPortamentoTime))
     {
         prevPortamentoTime = newPortamentoTime;
         applyToAllVoices ([newPortamentoTime] (MySynthVoice* voice) { voice->setPortamentoTime (newPortamentoTime); });
@@ -361,7 +361,7 @@ void MySynth::handleController (int midiChannel, int controllerNumber, int contr
 
     if (controllerNumber == 1 || controllerNumber == 11)
     {
-        const float normalized = controllerValue / 127.0f;
+        const float normalized = static_cast<float> (controllerValue) / 127.0f;
         AtomicHelpers::paramStore (controllerNumber == 1 ? currentModWheelRaw : currentExpressionRaw, normalized);
         applyToAllVoices ([controllerNumber, controllerValue] (MySynthVoice* voice)
         {
@@ -374,7 +374,7 @@ void MySynth::handleAftertouch (int midiChannel, int midiNoteNumber, int afterto
 {
     Synthesiser::handleAftertouch (midiChannel, midiNoteNumber, aftertouchValue);
 
-    AtomicHelpers::paramStore (currentAftertouchRaw, aftertouchValue / 127.0f);
+    AtomicHelpers::paramStore (currentAftertouchRaw, static_cast<float> (aftertouchValue) / 127.0f);
     applyToAllVoices ([aftertouchValue] (MySynthVoice* voice)
     {
         voice->aftertouchChanged (aftertouchValue);

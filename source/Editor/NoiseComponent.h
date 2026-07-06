@@ -14,20 +14,20 @@ class NoiseComponent final : public DualParameterComponent, public AnimationFram
 public:
     NoiseComponent (const juce::AudioProcessorValueTreeState& apvts,
         const UIContext& ctx = {},
-        std::atomic<float>* modLevelOutput = nullptr,
-        std::atomic<float>* modToneOutput = nullptr,
-        const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {})
+        std::atomic<float>* modLevelOutputToUse = nullptr,
+        std::atomic<float>* modToneOutputToUse = nullptr,
+        const juce::String& param1DestIDToUse = {},
+        const juce::String& param2DestIDToUse = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::noiseLevel),
               apvts.getParameter (ParamIDs::noiseTone),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::noiseOn)),
               ctx,
-              param1DestID,
-              param2DestID,
+              param1DestIDToUse,
+              param2DestIDToUse,
               "Noise"),
-          modLevelOutput (modLevelOutput),
-          modToneOutput (modToneOutput),
+          modLevelOutput (modLevelOutputToUse),
+          modToneOutput (modToneOutputToUse),
           animSource (ctx.animationSource)
     {
         if ((modLevelOutput != nullptr || modToneOutput != nullptr) && animSource != nullptr)

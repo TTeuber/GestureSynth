@@ -118,7 +118,7 @@ void LFOComponent::onAnimationFrame()
     if (myLFO != nullptr && *myLFO != nullptr)
     {
         const float phase = (*myLFO)->getPhase();
-        if (phase != currentPhase || !showPhaseIndicator)
+        if (!juce::exactlyEqual (phase, currentPhase) || !showPhaseIndicator)
         {
             currentPhase = phase;
             showPhaseIndicator = true;
@@ -179,8 +179,8 @@ int LFOComponent::hitTestPoint (float x, float y) const
     auto points = lfoData->getPoints();
     for (int i = 0; i < static_cast<int> (points.size()); ++i)
     {
-        float px = positionToX (points[i].position);
-        float py = valueToY (points[i].value);
+        float px = positionToX (points[static_cast<size_t>(i)].position);
+        float py = valueToY (points[static_cast<size_t>(i)].value);
         float dx = x - px;
         float dy = y - py;
         if (dx * dx + dy * dy <= kHitRadius * kHitRadius)
@@ -296,8 +296,8 @@ void LFOComponent::paint (juce::Graphics& g)
     // Control points
     for (int i = 0; i < static_cast<int> (points.size()); ++i)
     {
-        float px = positionToX (points[i].position);
-        float py = valueToY (points[i].value);
+        float px = positionToX (points[static_cast<size_t>(i)].position);
+        float py = valueToY (points[static_cast<size_t>(i)].value);
         bool isBoundary = (i == 0 || i == static_cast<int> (points.size()) - 1);
 
         // Boundary indicator ring
@@ -339,7 +339,6 @@ void LFOComponent::resized()
         auto graphBounds = getGraphBounds();
         const float gap = 4.0f;
         const int numButtons = 6;
-        const float totalHeight = kShapeButtonSize * static_cast<float> (numButtons) + gap * static_cast<float> (numButtons - 1);
         const float startY = graphBounds.getY();
         const float btnX = kTotalPadding;
 
@@ -467,13 +466,13 @@ void LFOComponent::mouseDrag (const juce::MouseEvent& e)
             float newValue = yToValue (my);
 
             // Get neighbor positions for clamping
-            float leftNeighborPos = points[selectedPointIndex - 1].position;
-            float rightNeighborPos = points[selectedPointIndex + 1].position;
+            float leftNeighborPos = points[static_cast<size_t>(selectedPointIndex - 1)].position;
+            float rightNeighborPos = points[static_cast<size_t>(selectedPointIndex + 1)].position;
 
             if (isStuck)
             {
                 // Accumulate drag distance
-                float pixelDelta = mx - positionToX (points[selectedPointIndex].position);
+                float pixelDelta = mx - positionToX (points[static_cast<size_t>(selectedPointIndex)].position);
                 stickAccumulator += std::abs (pixelDelta);
 
                 if (stickAccumulator > kStickThreshold)
@@ -485,7 +484,7 @@ void LFOComponent::mouseDrag (const juce::MouseEvent& e)
                 else
                 {
                     // Stay stuck — don't move X
-                    newPos = points[selectedPointIndex].position;
+                    newPos = points[static_cast<size_t>(selectedPointIndex)].position;
                 }
             }
 
@@ -515,15 +514,15 @@ void LFOComponent::mouseDrag (const juce::MouseEvent& e)
                 }
             }
 
-            float currentCurve = points[selectedPointIndex].curve;
+            float currentCurve = points[static_cast<size_t>(selectedPointIndex)].curve;
             lfoData->updatePoint (static_cast<size_t> (selectedPointIndex), newPos, newValue, currentCurve);
 
             // After sort, our point may have moved index. Find it.
             auto updatedPoints = lfoData->getPoints();
             for (int i = 0; i < static_cast<int> (updatedPoints.size()); ++i)
             {
-                if (std::abs (updatedPoints[i].position - newPos) < 0.0001f
-                    && std::abs (updatedPoints[i].value - newValue) < 0.0001f)
+                if (std::abs (updatedPoints[static_cast<size_t>(i)].position - newPos) < 0.0001f
+                    && std::abs (updatedPoints[static_cast<size_t>(i)].value - newValue) < 0.0001f)
                 {
                     selectedPointIndex = i;
                     break;
@@ -537,8 +536,8 @@ void LFOComponent::mouseDrag (const juce::MouseEvent& e)
         if (selectedCurveIndex >= static_cast<int> (points.size()) - 1)
             return;
 
-        const auto& p1 = points[selectedCurveIndex];
-        const auto& p2 = points[selectedCurveIndex + 1];
+        const auto& p1 = points[static_cast<size_t>(selectedCurveIndex)];
+        const auto& p2 = points[static_cast<size_t>(selectedCurveIndex + 1)];
 
         float mouseValue = yToValue (my);
         float range = p2.value - p1.value;

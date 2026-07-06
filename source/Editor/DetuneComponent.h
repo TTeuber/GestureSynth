@@ -17,20 +17,20 @@ class DetuneComponent final : public DualParameterComponent, public AnimationFra
 public:
     DetuneComponent (juce::AudioProcessorValueTreeState& apvts,
         const UIContext& ctx = {},
-        std::atomic<float>* modDetuneOutput = nullptr,
-        std::atomic<float>* modWidthOutput = nullptr,
-        const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {})
+        std::atomic<float>* modDetuneOutputToUse = nullptr,
+        std::atomic<float>* modWidthOutputToUse = nullptr,
+        const juce::String& param1DestIDToUse = {},
+        const juce::String& param2DestIDToUse = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::oscDetune),
               apvts.getParameter (ParamIDs::oscWidth),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::oscOn)),
               ctx,
-              param1DestID,
-              param2DestID,
+              param1DestIDToUse,
+              param2DestIDToUse,
               "Detune"),
-          modDetuneOutput (modDetuneOutput),
-          modWidthOutput (modWidthOutput),
+          modDetuneOutput (modDetuneOutputToUse),
+          modWidthOutput (modWidthOutputToUse),
           animSource (ctx.animationSource)
     {
         if ((modDetuneOutput != nullptr || modWidthOutput != nullptr) && animSource != nullptr)
@@ -95,7 +95,7 @@ private:
     {
         // Create path
         juce::Path path;
-        const float width = bounds.getWidth();
+        const float width = static_cast<float> (bounds.getWidth());
 
         auto pointsL = generateWavyCircle (150, 1.0, 8, p1 * 0.5);
         auto started = false;
@@ -103,11 +103,11 @@ private:
         {
             if (!started)
             {
-                path.startNewSubPath (x + bounds.getCentreX() + p2 * width * 0.2, y + bounds.getCentreY());
+                path.startNewSubPath (static_cast<float> (x + bounds.getCentreX() + p2 * width * 0.2), static_cast<float> (y + bounds.getCentreY()));
                 started = true;
             }
             else
-                path.lineTo (x + bounds.getCentreX() + p2 * width * 0.2, y + bounds.getCentreY());
+                path.lineTo (static_cast<float> (x + bounds.getCentreX() + p2 * width * 0.2), static_cast<float> (y + bounds.getCentreY()));
         }
         path.closeSubPath();
 
@@ -120,11 +120,11 @@ private:
         {
             if (!started)
             {
-                path.startNewSubPath (x + bounds.getCentreX() - p2 * width * 0.2, y + bounds.getCentreY());
+                path.startNewSubPath (static_cast<float> (x + bounds.getCentreX() - p2 * width * 0.2), static_cast<float> (y + bounds.getCentreY()));
                 started = true;
             }
             else
-                path.lineTo (x + bounds.getCentreX() - p2 * width * 0.2, y + bounds.getCentreY());
+                path.lineTo (static_cast<float> (x + bounds.getCentreX() - p2 * width * 0.2), static_cast<float> (y + bounds.getCentreY()));
         }
         path.closeSubPath();
 
@@ -181,7 +181,7 @@ private:
         double waveDepth = 0.2) const
     {
         std::vector<std::pair<double, double>> points;
-        points.reserve (numPoints);
+        points.reserve (static_cast<size_t> (numPoints));
 
         // Generate points evenly spaced around the circle
         for (int i = 0; i < numPoints; ++i)

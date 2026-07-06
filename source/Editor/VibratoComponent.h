@@ -14,20 +14,20 @@ class VibratoComponent final : public DualParameterComponent, public AnimationFr
 public:
     VibratoComponent (const juce::AudioProcessorValueTreeState& apvts,
         const UIContext& ctx = {},
-        std::atomic<float>* modDepthOutput = nullptr,
-        std::atomic<float>* modRateOutput = nullptr,
-        const juce::String& param1DestID = {},
-        const juce::String& param2DestID = {})
+        std::atomic<float>* modDepthOutputToUse = nullptr,
+        std::atomic<float>* modRateOutputToUse = nullptr,
+        const juce::String& param1DestIDToUse = {},
+        const juce::String& param2DestIDToUse = {})
         : DualParameterComponent (
               apvts.getParameter (ParamIDs::vibratoDepth),
               apvts.getParameter (ParamIDs::vibratoRate),
               dynamic_cast<juce::AudioParameterBool*> (apvts.getParameter (ParamIDs::vibratoOn)),
               ctx,
-              param1DestID,
-              param2DestID,
+              param1DestIDToUse,
+              param2DestIDToUse,
               "Vibrato"),
-          modDepthOutput (modDepthOutput),
-          modRateOutput (modRateOutput),
+          modDepthOutput (modDepthOutputToUse),
+          modRateOutput (modRateOutputToUse),
           animSource (ctx.animationSource)
     {
         if ((modDepthOutput != nullptr || modRateOutput != nullptr) && animSource != nullptr)
@@ -97,7 +97,7 @@ private:
 
         juce::Path path;
         const float midY = static_cast<float> (bounds.getCentreY());
-        const float amplitude = bounds.getHeight() * 0.40f;
+        const float amplitude = static_cast<float> (bounds.getHeight()) * 0.40f;
         const float width = static_cast<float> (bounds.getWidth());
 
         for (float px = 0; px <= width; px += 2.0f)
