@@ -104,6 +104,14 @@ clap_juce_extensions_plugin(TARGET "${PROJECT_NAME}"
 # Enable fast math, C++20 and a few other target defaults
 include(SharedCodeDefaults)
 
+# -Ofast is deprecated in newer Clang/GCC; replace the submodule's flag with
+# the equivalent -O3 -ffast-math (same semantics, no deprecation warning)
+if (NOT MSVC)
+    get_target_property(shared_code_options SharedCode INTERFACE_COMPILE_OPTIONS)
+    list(TRANSFORM shared_code_options REPLACE "-Ofast" "-O3;-ffast-math")
+    set_target_properties(SharedCode PROPERTIES INTERFACE_COMPILE_OPTIONS "${shared_code_options}")
+endif ()
+
 
 # Manually list all .h and .cpp files for the plugin
 # If you are like me, you'll use globs for your sanity.
