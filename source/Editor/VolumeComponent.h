@@ -29,9 +29,15 @@ protected:
         const float driverH = h * 0.25f;
         const float coneW = w * 0.15f;
         const float coneH = h * 0.45f;
+        const float speakerW = driverW + coneW;
 
-        // Position the speaker on the left side of center
-        const float speakerStartX = x + w * 0.2f;
+        // The waves span from the cone out to (gap + outermost arc radius), which
+        // both scale with the value. Centre the whole picture (speaker + waves)
+        // so the speaker slides left exactly as far as the waves push right.
+        const float arcGap = w * 0.04f;
+        const float maxArcRadius = juce::jmin (w * 0.6f, h * 0.6f);
+        const float waveExtent = (arcGap + maxArcRadius) * paramValue;
+        const float speakerStartX = x + (w - (speakerW + waveExtent)) * 0.5f;
         const float centreY = y + h * 0.5f;
 
         // Draw the speaker as a single combined shape (driver + cone)
@@ -52,8 +58,7 @@ protected:
         // Arc i exists when size >= i; the outermost arc continuously grows
         // and new arcs are born at the cone (same emerge-and-grow pattern
         // as the concentric-circle components).
-        const float arcStartX = coneRight + w * 0.04f;
-        const float maxArcRadius = w * 0.35f;
+        const float arcStartX = coneRight + arcGap * paramValue;
         const float halfArc = juce::MathConstants<float>::pi * 0.25f; // 45°
         const float centreAngle = juce::MathConstants<float>::pi * 0.5f; // 3 o'clock
         constexpr float numArcs = 3.0f;

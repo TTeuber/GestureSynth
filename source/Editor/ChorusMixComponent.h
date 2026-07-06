@@ -19,26 +19,33 @@ public:
 protected:
     void drawVisualization (juce::Graphics& g, const juce::Rectangle<int>& bounds) const override
     {
-        const float cx = static_cast<float> (bounds.getCentreX());
+        const float w = static_cast<float> (bounds.getWidth());
+        const float x = static_cast<float> (bounds.getX());
         const float cy = static_cast<float> (bounds.getCentreY());
-        const float dim = static_cast<float> (juce::jmin (bounds.getWidth(), bounds.getHeight()));
-        const float radius = dim * 0.28f;
-        const float maxOffset = radius * 0.6f;
+        const float amplitude = static_cast<float> (bounds.getHeight()) * 0.30f;
 
-        // Three voice circles: concentric at mix = 0 (reads as one dry circle),
-        // sliding apart into a trefoil as the mix increases
-        const float offset = paramValue * maxOffset;
-        constexpr float angles[] = {
-            -juce::MathConstants<float>::halfPi,                          // 90° (top)
-            -juce::MathConstants<float>::halfPi + juce::MathConstants<float>::twoPi / 3.0f,  // 210°
-            -juce::MathConstants<float>::halfPi + juce::MathConstants<float>::twoPi * 2.0f / 3.0f  // 330°
-        };
+        // Three voice waves: coincident at mix = 0 (reads as one dry wave),
+        // fanning out in phase as the mix increases
+        constexpr float cycles = 1.5f;
+        constexpr float maxPhase = juce::MathConstants<float>::twoPi / 3.0f;
 
-        for (const float angle : angles)
+        for (int voice = -1; voice <= 1; ++voice)
         {
-            const float x = cx + offset * std::cos (angle);
-            const float y = cy + offset * std::sin (angle);
-            g.drawEllipse (x - radius, y - radius, radius * 2.0f, radius * 2.0f, 2.0f);
+            const float phase = static_cast<float> (voice) * paramValue * maxPhase;
+
+            juce::Path path;
+            for (float px = 0.0f; px <= w; px += 2.0f)
+            {
+                const float t = px / w;
+                const float y = cy - amplitude * std::sin (juce::MathConstants<float>::twoPi * cycles * t + phase);
+
+                if (px == 0.0f)
+                    path.startNewSubPath (x + px, y);
+                else
+                    path.lineTo (x + px, y);
+            }
+
+            g.strokePath (path, juce::PathStrokeType (1.5f));
         }
     }
 };
