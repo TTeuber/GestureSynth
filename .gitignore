@@ -42,3 +42,5 @@ AGENTS.md
 docs/*.md
 .claude
 worktrees/
+
+*.p12

@@ -72,6 +72,38 @@ install, join the [Apple Developer Program](https://developer.apple.com/programs
 The next tagged build will sign, notarize, and staple the installer
 automatically — no workflow changes needed.
 
+## Windows & Linux signing
+
+**Linux — nothing to sign.** Linux has no Gatekeeper/notarization equivalent;
+running the binary raises no OS trust prompt. "Signing" would only mean
+GPG-signing packages for an apt/rpm repo (irrelevant for a portfolio zip) or
+shipping a checksum for integrity. If desired, publish a `sha256sum` of the zip
+alongside the release — no certificate, cost, or CI credentials required.
+
+**Windows — currently unsigned (deliberate).** The `.exe` installer ships
+unsigned, so SmartScreen shows *"Windows protected your PC" → More info → Run
+anyway* on first launch. Note this workaround in the release notes.
+
+To remove that prompt, use **Azure Trusted Signing** (~$10/month) — the modern,
+CI-friendly path. Traditional OV/EV code-signing certs are a poor fit: since
+June 2023 their private keys must live on a FIPS hardware token or cloud HSM, so
+they can't be handed to GitHub Actions as a file the way the Apple `.p12`s are.
+
+Azure Trusted Signing eligibility note: the individual/public offering requires
+the signing identity to be ~3 years old (Microsoft anti-fraud rule), so a brand
+new Azure account may not qualify yet. When ready, the setup is:
+
+1. In Azure, create a **Trusted Signing account** and a **certificate profile**,
+   and an **app registration** (service principal) with the *Trusted Signing
+   Certificate Profile Signer* role.
+2. Add the repository secrets: `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`,
+   `AZURE_CLIENT_SECRET` (plus the endpoint / account name / profile name as
+   workflow inputs).
+3. Add an `azure/trusted-signing-action` step to the Windows leg of
+   `build_and_test.yml`, after *Generate Installer*, pointing at the built
+   `.exe`. (The project's original template scaffolded this step; it was removed
+   pending an Apple/Azure signing decision and can be restored from git history.)
+
 ## Testing the installer locally
 
 ```sh
