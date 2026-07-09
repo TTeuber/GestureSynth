@@ -11,7 +11,7 @@ void ModMatrix::addModulation (ModDestination* destination, ModSource* source, f
         return;
 
     if (matrix.contains (destination))
-        matrix[destination].emplace_back (source, depth, isBipolar, slotIndex);
+        matrix[destination].push_back ({ source, depth, isBipolar, slotIndex });
     else
         matrix.emplace (destination, std::vector<Modulation> { { source, depth, isBipolar, slotIndex } });
 }
