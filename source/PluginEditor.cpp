@@ -67,8 +67,9 @@ PluginEditor::PluginEditor (PluginProcessor& p)
     presetBar.setAlwaysOnTop (true);
 
     menuButton.onClick = [] { /* TODO: menu items */ };
-    contentWrapper.addAndMakeVisible (menuButton);
-    menuButton.setAlwaysOnTop (true);
+    // TODO: unhide the menu button once it has menu items to show.
+    // contentWrapper.addAndMakeVisible (menuButton);
+    // menuButton.setAlwaysOnTop (true);
 
     // Hidden until the background check finds a newer release
     updateButton.setTooltip ("A new version is available — opens the download page");

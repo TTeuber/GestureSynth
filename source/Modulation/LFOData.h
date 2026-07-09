@@ -121,16 +121,22 @@ public:
                 break;
 
             case LFOShape::RampUp:
+                // First and last points must share a level for a seamless loop,
+                // so the reset back to 0 happens as a steep drop at the very end.
                 points = {
                     { 0.0f, 0.0f, 0.0f },
-                    { 1.0f, 1.0f, 0.0f }
+                    { 0.999f, 1.0f, 0.0f },
+                    { 1.0f, 0.0f, 0.0f }
                 };
                 break;
 
             case LFOShape::RampDown:
+                // First and last points must share a level for a seamless loop,
+                // so the reset back to 1 happens as a steep rise at the very end.
                 points = {
                     { 0.0f, 1.0f, 0.0f },
-                    { 1.0f, 0.0f, 0.0f }
+                    { 0.999f, 0.0f, 0.0f },
+                    { 1.0f, 1.0f, 0.0f }
                 };
                 break;
 
