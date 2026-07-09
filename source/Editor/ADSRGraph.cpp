@@ -531,16 +531,26 @@ void ADSRGraph::mouseDrag (const juce::MouseEvent& event)
     repaint();
 }
 
-void ADSRGraph::mouseWheelMove (const juce::MouseEvent& /*event*/, const juce::MouseWheelDetails& wheel)
+void ADSRGraph::mouseWheelMove (const juce::MouseEvent& event, const juce::MouseWheelDetails& wheel)
 {
-    xOffset = juce::jlimit (0.0f, width * 2, xOffset - wheel.deltaX * 100);
+    // JUCE's Linux backend never reports deltaX or magnify gestures, so fall
+    // back to the vertical delta for panning and ctrl+wheel for zooming.
+    const float delta = wheel.deltaX != 0.0f ? wheel.deltaX : wheel.deltaY;
+
+    if (event.mods.isCtrlDown())
+    {
+        mouseMagnify (event, 1.0f + delta);
+        return;
+    }
+
+    xOffset = juce::jlimit (0.0f, width * 2, xOffset - delta * 100);
 
     repaint();
 }
 
 void ADSRGraph::mouseMagnify (const juce::MouseEvent& /*event*/, float scaleFactor)
 {
-    durationWidth *= 1 + (1 - scaleFactor);
+    durationWidth = juce::jlimit (0.5f, 30.0f, durationWidth * (1 + (1 - scaleFactor)));
 
     repaint();
 }
