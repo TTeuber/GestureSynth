@@ -10,7 +10,7 @@ Built from scratch in modern C++ with JUCE — Standalone, AU, VST3, AUv3, and C
 ![Formats](https://img.shields.io/badge/formats-AU%20%7C%20VST3%20%7C%20AUv3%20%7C%20CLAP%20%7C%20Standalone-blue)
 ![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-lightgrey)
 
-![Gesture Synth](assets/images/img.png)
+![Gesture Synth](assets/images/GestureSynth.gif)
 
 ---
 
