@@ -23,8 +23,8 @@ state-variable filter, lush chorus/delay/reverb, and a deep modulation system.
 Every part of it — the DSP, the modulation engine, and the entire custom UI — was written
 from the ground up rather than assembled from tutorials or stock components. The defining
 feature is its **gesture-based modulation workflow**: instead of hunting through dropdown
-menus, you flip the synth into modulation mode and physically *drag a source onto any
-control* to route it, then drag to dial in the depth — with live connector lines drawn
+menus, you flip the synth into modulation mode and physically _drag a source onto any
+control_ to route it, then drag to dial in the depth — with live connector lines drawn
 between everything that's wired together.
 
 ## Highlights
@@ -62,17 +62,20 @@ and fully **undoable**.
 ## Features
 
 ### Sound engine
+
 - **JuneDCO** — dual sawtooth + pulse/PWM oscillator with **PolyBLEP anti-aliasing** and
   **4× oversampling** (latency reported to the host), plus stereo detune and width.
 - **Sub-oscillator** that morphs continuously across sine → triangle → square → saw.
 - **Noise generator** with a sweepable tone filter.
 
 ### Filters
+
 - Resonant **state-variable (TPT) low-pass** filter.
 - Cascaded **high-pass** filter.
 - Both fully modulatable, with **live frequency-response graphs**.
 
 ### Modulation
+
 - **4 × ADSR envelopes** with independent per-stage curve shaping (log ↔ exp).
 - **4 × LFOs** with a custom point-based waveform editor and host **tempo sync**.
 - **MIDI sources:** velocity (with response curve), keyboard tracking, mod wheel (CC1),
@@ -81,6 +84,7 @@ and fully **undoable**.
   detune, sub level, vibrato, chorus, levels, and more).
 
 ### Effects
+
 - **Chorus** — Juno-style stereo chorus.
 - **BBD delay** — bucket-brigade-style delay with tempo sync, ping-pong, feedback
   saturation, diffusion, and tone controls.
@@ -89,16 +93,19 @@ and fully **undoable**.
 - **Soft-clip limiter** using a tanh Padé approximant for clean polyphonic headroom.
 
 ### Voice & performance
+
 - Polyphonic with a configurable voice count; **mono** and **legato** modes.
 - Exponential **portamento/glide** and sustain-pedal handling.
 
 ### Presets & tempo
+
 - Categorized preset browser with save/load via `ValueTree` serialization.
 - **21 factory presets** across 7 categories (Bass, Leads, Pads, Keys, Plucks, FX, Templates),
   embedded in the binary and installed to the user preset folder on first run.
 - Full host tempo sync for LFOs and delay.
 
 ### Interface
+
 - Tabbed editor (Main / Modulation, plus developer-only Keyboard and Experiment tabs) with a custom LookAndFeel.
 - Real-time oscilloscope plus envelope, LFO, and filter visualizers.
 - Resizable UI (0.5×–1.5×) with an on-screen velocity-sensitive keyboard.
@@ -159,6 +166,7 @@ A few things worth a closer look, depending on what you care about:
 ## Building from source
 
 ### Prerequisites
+
 - A C++20 compiler (Clang, MSVC, or GCC)
 - [CMake](https://cmake.org/) **3.25+**
 - macOS, Windows, or Linux
