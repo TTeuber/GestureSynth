@@ -213,6 +213,8 @@ jobs:
     if: contains(github.ref, 'tags/v')
     runs-on: ubuntu-latest
     needs: build_and_test
+    permissions:
+      contents: write # needed to create the GitHub Release
 
     steps:
       - name: Get Artifacts
